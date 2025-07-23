@@ -1,0 +1,43 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambientes virtuais
+env/
+venv/
+ENV/
+.venv/
+.env/
+
+# Arquivos de configuração locais
+*.env
+*.env.*
+.envrc
+
+# Logs
+*.log
+
+# IDEs e editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# PyInstaller
+dist/
+build/
+*.spec
+
+# Arquivos temporários
+*.bak
+*.tmp
+*.swp
+
+# Arquivos de testes ou deploy locais
+instance/
