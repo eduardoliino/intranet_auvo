@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4">Gestão de Colaboradores</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Total de Colaboradores: <span class="badge bg-primary">{{ total }}</span></h4>
+    <a href="{{ url_for('admin.gerenciar_colaboradores') }}" class="btn btn-auvo">Adicionar / Importar</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome Completo</th>
+                    <th>E-mail</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for col in colaboradores %}
+                <tr>
+                    <td>{{ col.id }}</td>
+                    <td>{{ col.nome }} {{ col.sobrenome }}</td>
+                    <td>{{ col.email_corporativo }}</td>
+                    <td>
+                        <a href="#" class="btn btn-sm btn-secondary">Editar</a>
+                        <a href="#" class="btn btn-sm btn-danger">Remover</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">Nenhum colaborador cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

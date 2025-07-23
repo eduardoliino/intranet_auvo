@@ -1,53 +1,59 @@
-<!-- app/templates/index.html -->
-
 {% extends "base.html" %}
 
 {% block content %}
 <h2 class="mb-4">Dashboard</h2>
 
-<!-- Esta é a seção de cards que vamos preencher com dados -->
 <div class="row">
-    <!-- Card de Avisos do RH -->
     <div class="col-md-8">
         <div class="card card-auvo card-auvo-rh mb-4">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-megaphone-fill"></i> Avisos do RH</h5>
-                <p class="card-text">Próximo feriado: Dia da Independência.</p>
+                
+                {% if aviso %}
+                    <p class="card-text">{{ aviso.conteudo }}</p>
+                {% else %}
+                    <p class="card-text">Nenhum aviso no momento.</p>
+                {% endif %}
+                
                 <a href="#" class="btn btn-auvo">Ver todos</a>
             </div>
         </div>
     </div>
 
-    <!-- Card de Aniversariantes -->
     <div class="col-md-4">
         <div class="card card-auvo mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-cake2-fill"></i> Aniversariantes do Mês</h5>
-                <p class="card-text">Parabéns para a Maria e o João!</p>
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="bi bi-people-fill"></i> Nosso Time</h5>
+                <p class="display-4 fw-bold">{{ total_colaboradores }}</p>
+                <p class="card-text">Colaboradores</p>
             </div>
         </div>
     </div>
 </div>
 
 <div class="row">
-     <!-- Card de Destaques -->
     <div class="col-md-6">
-         <div class="card card-auvo mb-4">
+        <div class="card card-auvo mb-4">
             <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-star-fill"></i> Destaques do Mês</h5>
-                <p class="card-text">Equipe de Atendimento bateu a meta com 120%!</p>
+                <h5 class="card-title"><i class="bi bi-cake2-fill"></i> Aniversariantes do Mês</h5>
+                <ul class="list-unstyled">
+                    {% for aniversariante in aniversariantes %}
+                        <li>{{ aniversariante }}</li>
+                    {% else %}
+                        <li>Nenhum aniversariante este mês.</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
-     <!-- Card da Ouvidoria -->
+
      <div class="col-md-6">
         <div class="card card-auvo mb-4">
-           <div class="card-body">
-               <h5 class="card-title"><i class="bi bi-ear-fill"></i> Ouvidoria</h5>
-               <p class="card-text">Tem alguma sugestão, crítica ou elogio? Fale conosco.</p>
-               <a href="#" class="btn btn-auvo">Acessar formulário</a>
-           </div>
-       </div>
-   </div>
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-star-fill"></i> Destaques do Mês</h5>
+                <p class="card-text">{{ destaque_comercial }}</p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

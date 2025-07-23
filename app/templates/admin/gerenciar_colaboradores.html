@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4">Adicionar e Importar Colaboradores</h2>
+
+<div class="card mb-4">
+    <div class="card-header">
+        Importar em Massa via Planilha (.xlsx)
+    </div>
+    <div class="card-body">
+        <p>Faça o upload de uma planilha com as colunas: <strong>nome, sobrenome, email_corporativo, data_nascimento, senha</strong>.</p>
+        <a href="#">[Baixar Planilha Modelo]</a>
+        <hr>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="planilha_colaboradores" class="form-label">Selecione a planilha:</label>
+                <input class="form-control" type="file" name="planilha_colaboradores" id="planilha_colaboradores" required>
+            </div>
+            <button type="submit" class="btn btn-auvo">Importar Planilha</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
