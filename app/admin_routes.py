@@ -1,11 +1,8 @@
-# app/admin_routes.py
-
 import pandas as pd
 import io
-# 1. Adicione estas importações essenciais
 import os
 import secrets
-from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, current_app
+from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, current_app, jsonify
 from flask_login import login_required
 from app import db
 from app.models import Colaborador, Aviso, Destaque
@@ -248,9 +245,17 @@ def editar_colaborador(id):
 @admin.route('/avisos')
 @login_required
 def gerenciar_avisos():
-
-    avisos = Aviso.query.order_by(Aviso.id.desc()).all()
-    return render_template('admin/gerenciar_avisos.html', avisos=avisos)
+    # Busca todos os avisos para a carga inicial
+    avisos_objetos = Aviso.query.order_by(Aviso.id.desc()).all()
+    # Converte para um formato compatível com JSON para o Alpine.js
+    avisos_json = [{
+        'id': aviso.id,
+        'titulo': aviso.titulo,
+        'conteudo': aviso.conteudo,
+        'link_url': aviso.link_url,
+        'link_texto': aviso.link_texto
+    } for aviso in avisos_objetos]
+    return render_template('admin/gerenciar_avisos.html', avisos=avisos_json)
 
 
 @admin.route('/avisos/adicionar', methods=['POST'])
@@ -258,15 +263,12 @@ def gerenciar_avisos():
 def adicionar_aviso():
     titulo = request.form.get('titulo')
     conteudo = request.form.get('conteudo')
-    # --- Pega os dados dos novos campos ---
     link_url = request.form.get('link_url')
     link_texto = request.form.get('link_texto')
 
     if not titulo or not conteudo:
-        flash('Título e conteúdo são obrigatórios.', 'danger')
-        return redirect(url_for('admin.gerenciar_avisos'))
+        return jsonify({'success': False, 'message': 'Título e conteúdo são obrigatórios.'}), 400
 
-    # --- Adiciona os novos campos ao criar o objeto Aviso ---
     novo_aviso = Aviso(
         titulo=titulo,
         conteudo=conteudo,
@@ -275,19 +277,28 @@ def adicionar_aviso():
     )
     db.session.add(novo_aviso)
     db.session.commit()
-    flash('Aviso publicado com sucesso!', 'success')
-    return redirect(url_for('admin.gerenciar_avisos'))
+
+    # Devolve os dados do aviso criado em formato JSON
+    return jsonify({
+        'success': True,
+        'aviso': {
+            'id': novo_aviso.id,
+            'titulo': novo_aviso.titulo,
+            'conteudo': novo_aviso.conteudo,
+            'link_url': novo_aviso.link_url,
+            'link_texto': novo_aviso.link_texto
+        }
+    })
 
 
-@admin.route('/avisos/remover/<int:id>')
+@admin.route('/avisos/remover/<int:id>', methods=['DELETE'])
 @login_required
 def remover_aviso(id):
     aviso = Aviso.query.get_or_404(id)
     db.session.delete(aviso)
     db.session.commit()
-    flash('Aviso removido com sucesso.', 'info')
-    return redirect(url_for('admin.gerenciar_avisos'))
-
+    # Devolve uma resposta de sucesso em JSON
+    return jsonify({'success': True, 'message': 'Aviso removido com sucesso.'})
 
 @admin.route('/destaques')
 @login_required

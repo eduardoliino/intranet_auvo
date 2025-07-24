@@ -1,79 +1,84 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Gestão de Avisos do RH</h2>
-</div>
+<div x-data="gerenciarAvisos">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Gestão de Avisos do RH</h2>
+    </div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <template x-if="feedback.message">
+        <div :class="`alert alert-${feedback.type} alert-dismissible fade show`" role="alert">
+            <span x-text="feedback.message"></span>
+            <button type="button" class="btn-close" @click="feedback.message = ''"></button>
+        </div>
+    </template>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header fw-bold">Adicionar Novo Aviso</div>
+                <div class="card-body">
+                    <form @submit.prevent="adicionarAviso">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título</label>
+                            <input type="text" x-model="novoAviso.titulo" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="conteudo" class="form-label">Conteúdo do Aviso</label>
+                            <textarea x-model="novoAviso.conteudo" class="form-control" rows="4" required></textarea>
+                        </div>
+                        
+                        <hr>
+                        <p class="text-muted small">Opcional: adicione um link ao aviso.</p>
+                        <div class="mb-3">
+                            <label for="link_url" class="form-label">URL do Link</label>
+                            <input type="url" x-model="novoAviso.link_url" class="form-control" placeholder="https://exemplo.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="link_texto" class="form-label">Texto do Link</label>
+                            <input type="text" x-model="novoAviso.link_texto" class="form-control" placeholder="Clique aqui para saber mais">
+                        </div>
+                        <button type="submit" class="btn btn-auvo w-100">Publicar Aviso</button>
+                    </form>
+                </div>
             </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+        </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header fw-bold">Adicionar Novo Aviso</div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('admin.adicionar_aviso') }}">
-                    <div class="mb-3">
-                        <label for="titulo" class="form-label">Título</label>
-                        <input type="text" class="form-control" id="titulo" name="titulo" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="conteudo" class="form-label">Conteúdo do Aviso</label>
-                        <textarea class="form-control" id="conteudo" name="conteudo" rows="4" required></textarea>
-                    </div>
-                    
-                    <hr>
-                    <p class="text-muted small">Opcional: adicione um link ao aviso.</p>
-                    <div class="mb-3">
-                        <label for="link_url" class="form-label">URL do Link</label>
-                        <input type="url" class="form-control" id="link_url" name="link_url" placeholder="https://exemplo.com">
-                    </div>
-                    <div class="mb-3">
-                        <label for="link_texto" class="form-label">Texto do Link</label>
-                        <input type="text" class="form-control" id="link_texto" name="link_texto" placeholder="Clique aqui para saber mais">
-                    </div>
-                    <button type="submit" class="btn btn-auvo w-100">Publicar Aviso</button>
-                </form>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header fw-bold">Avisos Publicados</div>
+                <div class="card-body">
+                    <template x-if="avisos.length > 0">
+                        <ul class="list-group list-group-flush">
+                            <template x-for="aviso in avisos" :key="aviso.id">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="my-0" x-text="aviso.titulo"></h6>
+                                        <small class="text-muted" x-text="aviso.conteudo.substring(0, 80) + (aviso.conteudo.length > 80 ? '...' : '')"></small>
+                                        <template x-if="aviso.link_url">
+                                            <div>
+                                                <small class="text-primary">Link: <a :href="aviso.link_url" x-text="aviso.link_texto || 'Ver link'" target="_blank"></a></small>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <button @click="removerAviso(aviso.id)" class="btn btn-sm btn-outline-danger ms-3">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                    <template x-if="avisos.length === 0">
+                        <p class="text-center text-muted">Nenhum aviso publicado.</p>
+                    </template>
+                </div>
             </div>
         </div>
     </div>
-
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header fw-bold">Avisos Publicados</div>
-            <div class="card-body">
-                {% if avisos %}
-                    <ul class="list-group list-group-flush">
-                        {% for aviso in avisos %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="my-0">{{ aviso.titulo }}</h6>
-                                    <small class="text-muted">{{ aviso.conteudo|truncate(80) }}</small>
-                                    {% if aviso.link_url %}
-                                        <br>
-                                        <small class="text-primary">Link: <a href="{{ aviso.link_url }}" target="_blank">{{ aviso.link_texto or 'Ver link' }}</a></small>
-                                    {% endif %}
-                                </div>
-                                <a href="{{ url_for('admin.remover_aviso', id=aviso.id) }}" class="btn btn-sm btn-outline-danger ms-3">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-center text-muted">Nenhum aviso publicado.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 </div>
+
+<script>
+    window._avisosData = {{ avisos|tojson|safe }};
+</script>
+<script src="{{ url_for('static', filename='js/gerenciarAvisos.js') }}"></script>
 {% endblock %}

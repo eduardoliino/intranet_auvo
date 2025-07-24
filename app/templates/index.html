@@ -3,8 +3,9 @@
 {% block content %}
 <h2 class="mb-4">Dashboard</h2>
 
-<div class="row">
-    <div class="col-md-8">
+<div class="row" x-data="{}" x-init="$nextTick(() => { document.querySelectorAll('.fade-in-card').forEach((el, index) => { setTimeout(() => { el.classList.add('visible') }, index * 150) }) })">
+
+    <div class="col-md-8 fade-in-card" x-cloak>
         <div class="card card-auvo card-auvo-rh mb-4">
             <div class="card-body">
                 {% if aviso %}
@@ -26,23 +27,35 @@
         </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-4 fade-in-card" x-cloak>
         <div class="card card-auvo mb-4">
-            <div class="card-body text-center">
+            <div class="card-body text-center" 
+                 x-data="{ count: 0 }" 
+                 x-init="() => {
+                    let finalCount = {{ total_colaboradores }};
+                    if (finalCount === 0) return;
+                    let step = finalCount / 100;
+                    let current = 0;
+                    let timer = setInterval(() => {
+                        current += step;
+                        if (current >= finalCount) {
+                            current = finalCount;
+                            clearInterval(timer);
+                        }
+                        count = Math.floor(current);
+                    }, 10);
+                 }">
                 <h5 class="card-title"><i class="bi bi-people-fill"></i> Nosso Time</h5>
-                <p class="display-4 fw-bold">{{ total_colaboradores }}</p>
+                <p class="display-4 fw-bold" x-text="count">{{ total_colaboradores }}</p>
                 <p class="card-text">Colaboradores</p>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6">
+    <div class="col-md-6 fade-in-card" x-cloak>
         <div class="card card-auvo mb-4">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-cake2-fill"></i> Aniversariantes do Mês</h5>
-                
                 {% if aniversariantes %}
                     <ul class="list-group list-group-flush">
                         {% for aniversariante in aniversariantes %}
@@ -66,24 +79,19 @@
         </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-6 fade-in-card" x-cloak>
         <div class="card card-auvo mb-4">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-star-fill"></i> Destaques do Mês</h5>
-
                 {% if destaques %}
                     <div id="carouselDestaques" class="carousel slide" data-bs-ride="carousel">
                         <div class="carousel-inner text-center">
-                            
                             {% for destaque in destaques %}
-                                <div class="carousel-item {% if loop.first %}active{% endif %}" data-bs-interval="5000">
-                                    
+                                <div class="carousel-item {% if loop.first %}active{% endif %}" data-bs-interval="3600">
                                     <img src="{{ url_for('static', filename='fotos_colaboradores/' + destaque.colaborador.foto_filename) if destaque.colaborador.foto_filename else url_for('static', filename='img/default_avatar.png') }}" class="d-block mx-auto" alt="Foto" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
-                                    
                                     <div class="mt-3">
                                         <h6 class="fw-bold">{{ destaque.titulo }}</h6>
                                         <p class="mb-1">{{ destaque.colaborador.nome }} {{ destaque.colaborador.sobrenome }}</p>
-                                        
                                         {% if destaque.certificado_filename %}
                                             <a href="{{ url_for('static', filename='fotos_colaboradores/' + destaque.certificado_filename) }}" target="_blank" class="btn btn-sm btn-outline-success">
                                                 <i class="bi bi-patch-check-fill"></i> Ver Certificado
@@ -92,7 +100,6 @@
                                     </div>
                                 </div>
                             {% endfor %}
-
                         </div>
                         <button class="carousel-control-prev" type="button" data-bs-target="#carouselDestaques" data-bs-slide="prev">
                             <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(1);"></span>
@@ -106,7 +113,6 @@
                 {% else %}
                     <p class="text-center text-muted mt-3">Nenhum destaque recente.</p>
                 {% endif %}
-
             </div>
         </div>
     </div>
