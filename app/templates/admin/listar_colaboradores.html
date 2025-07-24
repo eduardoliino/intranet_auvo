@@ -1,41 +1,98 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<div x-data="colaboradoresFiltro()">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Gestão de Colaboradores</h2>
+    <a
+      href="{{ url_for('admin.gerenciar_colaboradores') }}"
+      class="btn btn-auvo"
+      >Adicionar / Importar</a
+    >
+  </div>
 
-{% block content %}
-<h2 class="mb-4">Gestão de Colaboradores</h2>
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>Total de Colaboradores: <span class="badge bg-primary">{{ total }}</span></h4>
-    <a href="{{ url_for('admin.gerenciar_colaboradores') }}" class="btn btn-auvo">Adicionar / Importar</a>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome Completo</th>
-                    <th>E-mail</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for col in colaboradores %}
-                <tr>
-                    <td>{{ col.id }}</td>
-                    <td>{{ col.nome }} {{ col.sobrenome }}</td>
-                    <td>{{ col.email_corporativo }}</td>
-                    <td>
-                        <a href="#" class="btn btn-sm btn-secondary">Editar</a>
-                        <a href="#" class="btn btn-sm btn-danger">Remover</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-center">Nenhum colaborador cadastrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <h4>
+        Total de Colaboradores:
+        <span
+          class="badge bg-primary"
+          x-text="filteredColaboradores.length"
+        ></span>
+      </h4>
     </div>
+    <div class="col-md-6">
+      <input
+        type="text"
+        x-model="search"
+        class="form-control"
+        placeholder="Buscar por nome ou e-mail..."
+      />
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome Completo</th>
+            <th>E-mail</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="col in filteredColaboradores" :key="col.id">
+            <tr>
+              <td x-text="col.id"></td>
+              <td x-text="`${col.nome} ${col.sobrenome}`"></td>
+              <td x-text="col.email_corporativo"></td>
+              <td>
+                <a
+                  :href="`/admin/colaboradores/editar/${col.id}`"
+                  class="btn btn-sm btn-secondary"
+                  >Editar</a
+                >
+                <a
+                  :href="`/admin/colaboradores/remover/${col.id}`"
+                  class="btn btn-sm btn-danger"
+                  >Remover</a
+                >
+              </td>
+            </tr>
+          </template>
+          <template x-if="filteredColaboradores.length === 0">
+            <tr>
+              <td colspan="4" class="text-center">
+                Nenhum colaborador encontrado.
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
+
+<script>
+  function colaboradoresFiltro() {
+      return {
+          search: '',
+          // O filtro 'tojson' e 'safe' garantem que os dados do Python cheguem corretamente
+          colaboradores: {{ colaboradores|tojson|safe }},
+          get filteredColaboradores() {
+              if (this.search.trim() === '') {
+                  return this.colaboradores;
+              }
+              const searchTerm = this.search.toLowerCase();
+              return this.colaboradores.filter(
+                  col => {
+                      const nomeCompleto = `${col.nome} ${col.sobrenome}`.toLowerCase();
+                      const email = col.email_corporativo.toLowerCase();
+                      return nomeCompleto.includes(searchTerm) || email.includes(searchTerm);
+                  }
+              );
+          }
+      }
+  }
+</script>
 {% endblock %}

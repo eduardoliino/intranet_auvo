@@ -1,33 +1,50 @@
 # app/routes.py
 
 from flask import Blueprint, render_template
-from app.models import Aviso, Colaborador  # Importe os dois modelos aqui
+from datetime import datetime, timedelta
+from sqlalchemy import extract
+from .models import Aviso, Colaborador, Destaque  # Adicione Destaque aqui
 
-# 1. Cria o Blueprint. 'main' é o nome que daremos a este conjunto de rotas.
 main = Blueprint('main', __name__)
-
-# 2. Agora os decoradores de rota usam o Blueprint ('main'), não mais o 'app'.
 
 
 @main.route('/')
 @main.route('/index')
 def index():
-    # --- BUSCANDO DADOS REAIS DO BANCO DE DADOS ---
+    # --- Dados para os cards ---
     aviso_recente = Aviso.query.order_by(Aviso.id.desc()).first()
     total_colaboradores = Colaborador.query.count()
 
-    # --- DADOS QUE AINDA SÃO FALSOS (até criarmos os modelos para eles) ---
-    aniversariantes = ["Carlos (Setor Vendas)", "Juliana (Setor Suporte)"]
-    destaques_comercial = "Equipe Alfa por atingir 125% da meta."
+    # --- Lógica para Aniversariantes do Mês ---
+    mes_atual = datetime.utcnow().month
+    aniversariantes_do_mes = Colaborador.query.filter(
+        extract('month', Colaborador.data_nascimento) == mes_atual
+    ).order_by(extract('day', Colaborador.data_nascimento)).all()
 
-    # --- ENVIANDO TUDO PARA O TEMPLATE ---
+    # --- LÓGICA PARA BUSCAR DESTAQUES RECENTES ---
+    hoje = datetime.utcnow()
+    # Pega destaques dos últimos ~3 meses
+    limite_data = hoje - timedelta(days=90)
+    destaques_recentes = Destaque.query.filter(
+        Destaque.ano >= limite_data.year,
+        Destaque.mes >= limite_data.month
+    ).order_by(Destaque.ano.desc(), Destaque.mes.desc()).all()
+    # --------------------------------------------
+
     return render_template(
         'index.html',
         title='Início',
-        # Variáveis com dados reais:
         aviso=aviso_recente,
         total_colaboradores=total_colaboradores,
-        # Variáveis com dados falsos (temporário):
-        aniversariantes=aniversariantes,
-        destaque_comercial=destaques_comercial
+        aniversariantes=aniversariantes_do_mes,
+        # Envia a lista real de destaques para o template
+        destaques=destaques_recentes
     )
+
+# --- Rota para exibir um aviso completo ---
+
+
+@main.route('/aviso/<int:aviso_id>')
+def aviso_detalhe(aviso_id):
+    aviso = Aviso.query.get_or_404(aviso_id)
+    return render_template('aviso_detalhe.html', title=aviso.titulo, aviso=aviso)

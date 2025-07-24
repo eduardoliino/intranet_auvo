@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Editar Colaborador</h2>
+    <a href="{{ url_for('admin.listar_colaboradores') }}" class="btn btn-secondary">Voltar para a Lista</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.editar_colaborador', id=colaborador.id) }}" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <label class="form-label">Foto Atual</label>
+                    {% if colaborador.foto_filename %}
+                        <img src="{{ url_for('static', filename='fotos_colaboradores/' + colaborador.foto_filename) }}" alt="Foto de {{ colaborador.nome }}" class="img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/default_avatar.png') }}" alt="Avatar Padrão" class="img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
+                    {% endif %}
+                    <div class="mb-3">
+                        <label for="foto" class="form-label">Alterar Foto (Opcional)</label>
+                        <input class="form-control form-control-sm" type="file" id="foto" name="foto" accept="image/png, image/jpeg, image/gif">
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nome" name="nome" value="{{ colaborador.nome }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="sobrenome" class="form-label">Sobrenome</label>
+                            <input type="text" class="form-control" id="sobrenome" name="sobrenome" value="{{ colaborador.sobrenome }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email_corporativo" class="form-label">E-mail Corporativo</label>
+                        <input type="email" class="form-control" id="email_corporativo" name="email_corporativo" value="{{ colaborador.email_corporativo }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cargo" class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="cargo" name="cargo" value="{{ colaborador.cargo or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="time" class="form-label">Time/Equipe</label>
+                            <input type="text" class="form-control" id="time" name="time" value="{{ colaborador.time or '' }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="data_nascimento" class="form-label">Data de Nascimento</label>
+                            <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" value="{{ colaborador.data_nascimento.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="senha" class="form-label">Nova Senha (Opcional)</label>
+                            <input type="password" class="form-control" id="senha" name="senha">
+                            <small class="form-text text-muted">Deixe em branco para não alterar.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="d-grid">
+                 <button type="submit" class="btn btn-auvo">Salvar Alterações</button>
+             </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
