@@ -1,0 +1,120 @@
+/* app/static/css/style.css */
+
+:root {
+  --auvo-roxo-escuro: #2C0E52;
+  --auvo-lilas: #A374D4;
+  --auvo-verde: #31C48D;
+  --auvo-cinza: #CCCCCC;
+  --auvo-branco: #FFFFFF;
+  --cor-fundo-conteudo: #f1f5f9; 
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--cor-fundo-conteudo);
+}
+
+/* --- MENU LATERAL --- */
+.sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    height: 100vh;
+    background: var(--auvo-roxo-escuro);
+    color: var(--auvo-branco);
+    position: sticky;
+    top: 0;
+}
+
+.sidebar .sidebar-header {
+    padding: 20px;
+    background: #1e0938; /* Um pouco mais escuro para destaque */
+    text-align: center;
+}
+
+.sidebar h3 {
+    color: var(--auvo-lilas);
+}
+
+.sidebar ul.components {
+    padding: 20px 0;
+}
+
+.sidebar ul p {
+    color: var(--auvo-branco);
+    padding: 10px;
+}
+
+.sidebar ul li a {
+    padding: 15px 25px;
+    font-size: 1.1em;
+    display: block;
+    color: rgba(255, 255, 255, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.sidebar ul li a:hover {
+    color: var(--auvo-branco);
+    background: var(--auvo-lilas);
+}
+
+.sidebar ul li a i {
+    margin-right: 10px;
+}
+
+.sidebar ul li.active > a, a[aria-expanded="true"] {
+    color: var(--auvo-branco);
+    background: var(--auvo-lilas);
+}
+
+/* --- CONTEÚDO PRINCIPAL --- */
+#content {
+    width: 100%;
+}
+
+/* --- CARDS --- */
+.card-auvo {
+    border-left: 5px solid var(--auvo-lilas);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.card-auvo-rh {
+     border-left: 5px solid var(--auvo-verde);
+}
+
+.card-auvo h5 {
+    color: var(--auvo-roxo-escuro);
+    font-weight: 700;
+}
+
+/* --- Botão ---*/
+.btn-auvo {
+    background-color: var(--auvo-verde);
+    color: var(--auvo-branco);
+    border: none;
+    font-weight: 500;
+}
+
+.btn-auvo:hover {
+    background-color: #28a071; /* um verde um pouco mais escuro */
+    color: var(--auvo-branco);
+}
+
+/* --- ANIMAÇÕES COM ALPINE.JS --- */
+
+/* Estilo inicial dos elementos animados (invisíveis e ligeiramente deslocados) */
+[x-cloak] {
+    display: none !important;
+}
+
+.fade-in-card {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.fade-in-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+}

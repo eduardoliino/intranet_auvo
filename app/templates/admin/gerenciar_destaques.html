@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Gestão de Destaques do Mês</h2>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-4">
+    <div class="card">
+        <div class="card-header fw-bold">Adicionar Novo Destaque</div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.adicionar_destaque') }}" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="titulo" class="form-label">Título do Destaque</label>
+                    <input type="text" class="form-control" id="titulo" name="titulo" placeholder="Ex: Vendedor do Mês" required>
+                </div>
+                <div class="mb-3">
+                    <label for="colaborador" class="form-label">Colaborador em Destaque</label>
+                    <select class="form-select" id="colaborador" name="colaborador_id" required>
+                        <option selected disabled value="">Selecione um colaborador...</option>
+                        {% for col in colaboradores %}
+                            <option value="{{ col.id }}">{{ col.nome }} {{ col.sobrenome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descrição (Opcional)</label>
+                    <textarea class="form-control" id="descricao" name="descricao" rows="3"></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="mes" class="form-label">Mês (Opcional)</label>
+                        <input type="number" class="form-control" id="mes" name="mes" min="1" max="12" placeholder="Mês atual">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="ano" class="form-label">Ano (Opcional)</label>
+                        <input type="number" class="form-control" id="ano" name="ano" min="2020" placeholder="Ano atual">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="certificado" class="form-label">Certificado (Opcional)</label>
+                    <input class="form-control" type="file" id="certificado" name="certificado" accept="image/png, image/jpeg, image/gif, application/pdf">
+                </div>
+                <button type="submit" class="btn btn-auvo w-100">Adicionar Destaque</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header fw-bold">Destaques Adicionados</div>
+            <div class="card-body">
+                {% if destaques %}
+                    <ul class="list-group list-group-flush">
+                        {% for destaque in destaques %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename='fotos_colaboradores/' + destaque.colaborador.foto_filename) if destaque.colaborador.foto_filename else url_for('static', filename='img/default_avatar.png') }}" alt="Foto" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
+                                    <div>
+                                        <h6 class="my-0">{{ destaque.titulo }} - ({{ "%02d"|format(destaque.mes) }}/{{ destaque.ano }})</h6>
+                                        <small class="text-muted">{{ destaque.colaborador.nome }} {{ destaque.colaborador.sobrenome }}</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('admin.remover_destaque', id=destaque.id) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-center text-muted">Nenhum destaque adicionado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

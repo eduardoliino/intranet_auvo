@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div x-data="colaboradoresFiltro">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Gestão de Colaboradores</h2>
+    <a href="{{ url_for('admin.gerenciar_colaboradores') }}" class="btn btn-auvo">Adicionar / Importar</a>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <h4>
+        Total de Colaboradores:
+        <span class="badge bg-primary" x-text="filteredColaboradores.length"></span>
+      </h4>
+    </div>
+    <div class="col-md-6">
+      <input type="text" x-model="search" class="form-control" placeholder="Buscar por nome ou e-mail..."/>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome Completo</th>
+            <th>E-mail</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="col in filteredColaboradores" :key="col.id">
+            <tr>
+              <td x-text="col.id"></td>
+              <td x-text="`${col.nome} ${col.sobrenome}`"></td>
+              <td x-text="col.email_corporativo"></td>
+              <td>
+                <a :href="`/admin/colaboradores/editar/${col.id}`" class="btn btn-sm btn-secondary">Editar</a>
+                <a :href="`/admin/colaboradores/remover/${col.id}`" class="btn btn-sm btn-danger">Remover</a>
+              </td>
+            </tr>
+          </template>
+          <template x-if="filteredColaboradores.length === 0">
+            <tr>
+              <td colspan="4" class="text-center">
+                Nenhum colaborador encontrado.
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+    window._colaboradoresData = {{ colaboradores|tojson|safe }};
+</script>
+
+<script src="{{ url_for('static', filename='js/listarColaboradores.js') }}"></script>
+{% endblock %}
