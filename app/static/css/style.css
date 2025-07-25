@@ -39,11 +39,6 @@ body {
     padding: 20px 0;
 }
 
-.sidebar ul p {
-    color: var(--auvo-branco);
-    padding: 10px;
-}
-
 .sidebar ul li a {
     padding: 15px 25px;
     font-size: 1.1em;
@@ -63,20 +58,20 @@ body {
     margin-right: 10px;
 }
 
-.sidebar ul li.active > a, a[aria-expanded="true"] {
-    color: var(--auvo-branco);
-    background: var(--auvo-lilas);
-}
-
 /* --- CONTEÚDO PRINCIPAL --- */
 #content {
     width: 100%;
 }
 
 /* --- CARDS --- */
+.card {
+    border-radius: 0.75rem; /* Cantos arredondados para todos os cards */
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
 .card-auvo {
     border-left: 5px solid var(--auvo-lilas);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .card-auvo-rh {
@@ -94,6 +89,9 @@ body {
     color: var(--auvo-branco);
     border: none;
     font-weight: 500;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: background-color 0.2s ease-in-out;
 }
 
 .btn-auvo:hover {
@@ -101,9 +99,49 @@ body {
     color: var(--auvo-branco);
 }
 
+/* --- FORMULÁRIOS MODERNIZADOS --- */
+
+/* Estilo geral para inputs e selects */
+.form-control, .form-select {
+    border-radius: 0.5rem !important; /* Força os cantos arredondados */
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease-in-out;
+    padding: 0.75rem 1rem;
+    background-color: var(--auvo-branco);
+}
+
+/* Efeito ao focar no campo (quando o utilizador clica) */
+.form-control:focus, .form-select:focus {
+    border-color: var(--auvo-lilas);
+    box-shadow: 0 0 0 3px rgba(163, 116, 212, 0.25); /* Sombra suave na cor lilás */
+    outline: none;
+}
+
+/* Estilo para os rótulos dos formulários */
+.form-label {
+    font-weight: 500;
+    color: #4a5568;
+}
+
+/* --- MELHORIAS VISUAIS ESPECÍFICAS --- */
+
+/* Estilo para o Carrossel de Destaques */
+#carouselDestaques .carousel-inner {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+}
+
+#carouselDestaques .carousel-item img {
+    border: 4px solid var(--auvo-branco);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
 /* --- ANIMAÇÕES COM ALPINE.JS --- */
 
-/* Estilo inicial dos elementos animados (invisíveis e ligeiramente deslocados) */
 [x-cloak] {
     display: none !important;
 }

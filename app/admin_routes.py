@@ -5,7 +5,7 @@ import secrets
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, current_app, jsonify
 from flask_login import login_required
 from app import db
-from app.models import Colaborador, Aviso, Destaque
+from app.models import Colaborador, Aviso, Destaque, FaqCategoria, FaqPergunta, Ouvidoria
 from datetime import datetime
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
@@ -300,29 +300,49 @@ def remover_aviso(id):
     # Devolve uma resposta de sucesso em JSON
     return jsonify({'success': True, 'message': 'Aviso removido com sucesso.'})
 
+
 @admin.route('/destaques')
 @login_required
 def gerenciar_destaques():
-    # Busca todos os destaques, do mais novo para o mais antigo
-    destaques = Destaque.query.order_by(
+    destaques_obj = Destaque.query.order_by(
         Destaque.ano.desc(), Destaque.mes.desc()).all()
-    # Busca todos os colaboradores para preencher a lista de seleção
-    colaboradores = Colaborador.query.order_by(Colaborador.nome).all()
-    return render_template('admin/gerenciar_destaques.html', destaques=destaques, colaboradores=colaboradores)
+    colaboradores_obj = Colaborador.query.order_by(Colaborador.nome).all()
+
+    # Converte os dados para um formato compatível com JSON
+    destaques_json = [{
+        'id': d.id, 'titulo': d.titulo, 'descricao': d.descricao, 'mes': d.mes, 'ano': d.ano,
+        'imagem_filename': d.imagem_filename,
+        'colaborador_id': d.colaborador_id,
+        'colaborador_nome': f"{d.colaborador.nome} {d.colaborador.sobrenome}",
+        'colaborador_foto': d.colaborador.foto_filename
+    } for d in destaques_obj]
+    colaboradores_json = [
+        {'id': c.id, 'nome': f"{c.nome} {c.sobrenome}"} for c in colaboradores_obj]
+
+    # ---- CORREÇÃO: Pega todos os anos únicos que existem nos destaques ----
+    anos_disponiveis = sorted(
+        list(set(d.ano for d in destaques_obj)), reverse=True)
+
+    return render_template(
+        'admin/gerenciar_destaques.html',
+        destaques=destaques_json,
+        colaboradores=colaboradores_json,
+        anos=anos_disponiveis  # Envia a lista de anos para o template
+    )
 
 
 @admin.route('/destaques/adicionar', methods=['POST'])
 @login_required
 def adicionar_destaque():
+    # --- Lógica principal (que estava em falta) ---
     titulo = request.form.get('titulo')
     colaborador_id = request.form.get('colaborador_id')
     descricao = request.form.get('descricao')
 
-    # --- LÓGICA PARA DATA OPCIONAL ---
+    # Lógica para data opcional
     mes_form = request.form.get('mes')
     ano_form = request.form.get('ano')
 
-    # Se o mês e o ano não forem fornecidos, usa a data atual
     if mes_form and ano_form:
         mes = int(mes_form)
         ano = int(ano_form)
@@ -330,45 +350,239 @@ def adicionar_destaque():
         hoje = datetime.utcnow()
         mes = hoje.month
         ano = hoje.year
-    # ---------------------------------
 
     if not titulo or not colaborador_id:
-        flash('Título e Colaborador são obrigatórios.', 'danger')
-        return redirect(url_for('admin.gerenciar_destaques'))
+        return jsonify({'success': False, 'message': 'Título e Colaborador são obrigatórios.'}), 400
 
-    # Processa o upload do certificado, se existir
-    certificado_filename = None
-    if 'certificado' in request.files:
-        certificado_enviado = request.files['certificado']
-        if certificado_enviado.filename != '':
-            certificado_filename = salvar_foto(certificado_enviado)
+    # Processa o upload da imagem
+    imagem_filename = None
+    if 'imagem_destaque' in request.files:
+        imagem_enviada = request.files['imagem_destaque']
+        if imagem_enviada.filename != '':
+            imagem_filename = salvar_foto(imagem_enviada)
 
+    # Cria o novo objeto no banco de dados
     novo_destaque = Destaque(
         titulo=titulo,
-        colaborador_id=colaborador_id,
+        colaborador_id=int(colaborador_id),
         descricao=descricao,
         mes=mes,
         ano=ano,
-        certificado_filename=certificado_filename
+        imagem_filename=imagem_filename
     )
     db.session.add(novo_destaque)
     db.session.commit()
-    flash('Destaque adicionado com sucesso!', 'success')
-    return redirect(url_for('admin.gerenciar_destaques'))
+    # ----------------------------------------------
+
+    # No final, depois do db.session.commit(), devolva o objeto completo
+    destaque_json = {
+        'id': novo_destaque.id,
+        'titulo': novo_destaque.titulo,
+        'descricao': novo_destaque.descricao,
+        'mes': novo_destaque.mes,
+        'ano': novo_destaque.ano,
+        'imagem_filename': novo_destaque.imagem_filename,
+        'colaborador_id': novo_destaque.colaborador_id,
+        'colaborador_nome': f"{novo_destaque.colaborador.nome} {novo_destaque.colaborador.sobrenome}",
+        'colaborador_foto': novo_destaque.colaborador.foto_filename
+    }
+    return jsonify({'success': True, 'destaque': destaque_json})
 
 
-@admin.route('/destaques/remover/<int:id>')
+@admin.route('/destaques/remover/<int:id>', methods=['DELETE'])
 @login_required
 def remover_destaque(id):
+    # Esta rota também precisa de ser convertida para devolver JSON
     destaque = Destaque.query.get_or_404(id)
-    # (Opcional, mas recomendado: apagar o arquivo do certificado se ele existir)
-    if destaque.certificado_filename:
-        caminho_certificado = os.path.join(
-            current_app.root_path, 'static/fotos_colaboradores', destaque.certificado_filename)
-        if os.path.exists(caminho_certificado):
-            os.remove(caminho_certificado)
-
+    if destaque.imagem_filename:
+        caminho_imagem = os.path.join(
+            current_app.root_path, 'static/fotos_colaboradores', destaque.imagem_filename)
+        if os.path.exists(caminho_imagem):
+            os.remove(caminho_imagem)
     db.session.delete(destaque)
     db.session.commit()
-    flash('Destaque removido com sucesso.', 'info')
-    return redirect(url_for('admin.gerenciar_destaques'))
+    return jsonify({'success': True, 'message': 'Destaque removido com sucesso.'})
+
+# --- NOVA ROTA PARA EDITAR UM DESTAQUE ---
+
+
+@admin.route('/destaques/editar/<int:id>', methods=['POST'])
+@login_required
+def editar_destaque(id):
+    destaque = Destaque.query.get_or_404(id)
+
+    # --- LÓGICA PARA ATUALIZAR A IMAGEM (CORRIGIDA) ---
+    if 'imagem_destaque' in request.files:
+        imagem_enviada = request.files['imagem_destaque']
+        if imagem_enviada.filename != '':
+            # Se uma imagem antiga existir, apaga-a do servidor
+            if destaque.imagem_filename:
+                caminho_antigo = os.path.join(
+                    current_app.root_path, 'static/fotos_colaboradores', destaque.imagem_filename)
+                if os.path.exists(caminho_antigo):
+                    os.remove(caminho_antigo)
+
+            # Salva a nova imagem e atualiza o nome no banco de dados
+            destaque.imagem_filename = salvar_foto(imagem_enviada)
+    # ---------------------------------------------------
+
+    destaque.titulo = request.form.get('titulo')
+    destaque.colaborador_id = int(request.form.get('colaborador_id'))
+    destaque.descricao = request.form.get('descricao')
+    destaque.mes = int(request.form.get('mes'))
+    destaque.ano = int(request.form.get('ano'))
+
+    db.session.commit()
+
+    # Devolve o objeto atualizado para o JavaScript
+    destaque_json = {
+        'id': destaque.id, 'titulo': destaque.titulo, 'descricao': destaque.descricao,
+        'mes': destaque.mes, 'ano': destaque.ano, 'imagem_filename': destaque.imagem_filename,
+        'colaborador_id': destaque.colaborador_id,
+        'colaborador_nome': f"{destaque.colaborador.nome} {destaque.colaborador.sobrenome}",
+        'colaborador_foto': destaque.colaborador.foto_filename
+    }
+    return jsonify({'success': True, 'destaque': destaque_json})
+
+
+@admin.route('/faq/gerenciar')
+@login_required
+def gerenciar_faq():
+    categorias_obj = FaqCategoria.query.order_by(FaqCategoria.nome).all()
+    perguntas_obj = FaqPergunta.query.order_by(FaqPergunta.id.desc()).all()
+
+    # Converte os dados para um formato compatível com JSON
+    categorias_json = [{'id': cat.id, 'nome': cat.nome}
+                       for cat in categorias_obj]
+    perguntas_json = [{
+        'id': p.id,
+        'pergunta': p.pergunta,
+        'resposta': p.resposta,
+        'palavras_chave': p.palavras_chave,
+        'categoria_id': p.categoria_id,
+        # Adiciona o nome da categoria para facilitar a exibição
+        'categoria_nome': p.categoria.nome
+    } for p in perguntas_obj]
+
+    return render_template('admin/gerenciar_faq.html', categorias=categorias_json, perguntas=perguntas_json)
+
+
+@admin.route('/faq/categorias/adicionar', methods=['POST'])
+@login_required
+def adicionar_categoria_faq():
+    nome = request.form.get('nome')
+    if not nome:
+        return jsonify({'success': False, 'message': 'O nome da categoria é obrigatório.'}), 400
+    if FaqCategoria.query.filter_by(nome=nome).first():
+        return jsonify({'success': False, 'message': 'Essa categoria já existe.'}), 400
+
+    nova_categoria = FaqCategoria(nome=nome)
+    db.session.add(nova_categoria)
+    db.session.commit()
+    return jsonify({'success': True, 'categoria': {'id': nova_categoria.id, 'nome': nova_categoria.nome}})
+
+
+@admin.route('/faq/categorias/remover/<int:id>', methods=['DELETE'])
+@login_required
+def remover_categoria_faq(id):
+    categoria = FaqCategoria.query.get_or_404(id)
+    db.session.delete(categoria)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Categoria removida com sucesso.'})
+
+
+@admin.route('/faq/perguntas/adicionar', methods=['POST'])
+@login_required
+def adicionar_pergunta_faq():
+    data = request.form
+    if not data.get('pergunta') or not data.get('resposta') or not data.get('categoria_id'):
+        return jsonify({'success': False, 'message': 'Pergunta, resposta e categoria são campos obrigatórios.'}), 400
+
+    nova_pergunta = FaqPergunta(
+        pergunta=data.get('pergunta'),
+        resposta=data.get('resposta'),
+        categoria_id=int(data.get('categoria_id')),
+        palavras_chave=data.get('palavras_chave'),
+        link_url=data.get('link_url'),
+        link_texto=data.get('link_texto')
+    )
+    db.session.add(nova_pergunta)
+    db.session.commit()
+
+    pergunta_json = {
+        'id': nova_pergunta.id,
+        'pergunta': nova_pergunta.pergunta,
+        'resposta': nova_pergunta.resposta,
+        'palavras_chave': nova_pergunta.palavras_chave,
+        'categoria_id': nova_pergunta.categoria_id,
+        'categoria_nome': nova_pergunta.categoria.nome
+    }
+    return jsonify({'success': True, 'pergunta': pergunta_json})
+
+
+@admin.route('/faq/perguntas/remover/<int:id>', methods=['DELETE'])
+@login_required
+def remover_pergunta_faq(id):
+    pergunta = FaqPergunta.query.get_or_404(id)
+    db.session.delete(pergunta)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Pergunta removida com sucesso.'})
+
+
+@admin.route('/faq/perguntas/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+def editar_pergunta_faq(id):
+    pergunta = FaqPergunta.query.get_or_404(id)
+    categorias = FaqCategoria.query.order_by(FaqCategoria.nome).all()
+
+    if request.method == 'POST':
+        pergunta.pergunta = request.form.get('pergunta')
+        pergunta.resposta = request.form.get('resposta')
+        pergunta.categoria_id = request.form.get('categoria_id')
+        pergunta.palavras_chave = request.form.get('palavras_chave')
+        pergunta.link_url = request.form.get('link_url')
+        pergunta.link_texto = request.form.get('link_texto')
+
+        try:
+            db.session.commit()
+            flash('Pergunta atualizada com sucesso!', 'success')
+            return redirect(url_for('admin.gerenciar_faq'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar a pergunta: {e}', 'danger')
+
+    return render_template('admin/edit_faq_pergunta.html', pergunta=pergunta, categorias=categorias)
+
+
+@admin.route('/ouvidoria')
+@login_required
+def gerenciar_ouvidoria():
+    entradas_obj = Ouvidoria.query.order_by(Ouvidoria.data_envio.desc()).all()
+
+    entradas_json = [{
+        'id': e.id,
+        'data_envio': e.data_envio.isoformat(),
+        'tipo_denuncia': e.tipo_denuncia,
+        'mensagem': e.mensagem,
+        'anonima': e.anonima,
+        'nome': e.nome,
+        'contato': e.contato,
+        'status': e.status
+    } for e in entradas_obj]
+
+    return render_template('admin/gerenciar_ouvidoria.html', entradas=entradas_json)
+
+
+@admin.route('/ouvidoria/atualizar_status/<int:id>', methods=['POST'])
+@login_required
+def atualizar_status_ouvidoria(id):
+    entrada = Ouvidoria.query.get_or_404(id)
+    data = request.get_json()
+    novo_status = data.get('status')
+
+    if novo_status in ['Nova', 'Em análise', 'Resolvida']:
+        entrada.status = novo_status
+        db.session.commit()
+        return jsonify({'success': True})
+
+    return jsonify({'success': False, 'message': 'Status inválido.'}), 400

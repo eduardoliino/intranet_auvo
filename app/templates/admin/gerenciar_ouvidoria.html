@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div x-data="gerenciarOuvidoria">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Gestão de Entradas da Ouvidoria</h2>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-center">
+                <div class="col-auto"><span class="form-label">Filtrar por Status:</span></div>
+                <div class="col-md-3">
+                    <select x-model="filtroStatus" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Nova">Nova</option>
+                        <option value="Em análise">Em análise</option>
+                        <option value="Resolvida">Resolvida</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion" id="ouvidoriaAccordion">
+        <template x-for="entrada in filteredEntradas" :key="entrada.id">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" :data-bs-toggle="'collapse'" :data-bs-target="`#collapse-${entrada.id}`">
+                        <span class="badge me-3" :class="{ 'bg-primary': entrada.status === 'Nova', 'bg-warning': entrada.status === 'Em análise', 'bg-success': entrada.status === 'Resolvida' }" x-text="entrada.status"></span>
+                        <span class="fw-bold me-2" x-text="entrada.tipo_denuncia"></span>
+                        <span class="text-muted" x-text="`- Enviado em ${new Date(entrada.data_envio).toLocaleDateString('pt-BR')}`"></span>
+                    </button>
+                </h2>
+                <div :id="`collapse-${entrada.id}`" class="accordion-collapse collapse" data-bs-parent="#ouvidoriaAccordion">
+                    <div class="accordion-body">
+                        <h6>Mensagem:</h6>
+                        <p style="white-space: pre-wrap;" x-text="entrada.mensagem"></p>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Remetente</h6>
+                                <p x-show="!entrada.anonima">
+                                    <strong>Nome:</strong> <span x-text="entrada.nome || 'Não fornecido'"></span><br>
+                                    <strong>Contacto:</strong> <span x-text="entrada.contato || 'Não fornecido'"></span>
+                                </p>
+                                <p x-show="entrada.anonima" class="text-muted">O remetente optou por permanecer anónimo.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Gerir Status</h6>
+                                <div class="input-group">
+                                    <select class="form-select" @change="atualizarStatus(entrada.id, $event.target.value)">
+                                        <option :selected="entrada.status === 'Nova'" value="Nova">Nova</option>
+                                        <option :selected="entrada.status === 'Em análise'" value="Em análise">Em análise</option>
+                                        <option :selected="entrada.status === 'Resolvida'" value="Resolvida">Resolvida</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template x-if="filteredEntradas.length === 0">
+            <div class="text-center p-5">
+                <p class="text-muted">Nenhuma entrada encontrada para os filtros selecionados.</p>
+            </div>
+        </template>
+    </div>
+</div>
+
+<script>
+    window._ouvidoriaData = {{ entradas|tojson|safe }};
+</script>
+<script src="{{ url_for('static', filename='js/gerenciarOuvidoria.js') }}"></script>
+{% endblock %}

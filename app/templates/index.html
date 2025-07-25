@@ -1,37 +1,45 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <h2 class="mb-4">Dashboard</h2>
 
-<div class="row" x-data="{}" x-init="$nextTick(() => { document.querySelectorAll('.fade-in-card').forEach((el, index) => { setTimeout(() => { el.classList.add('visible') }, index * 150) }) })">
+<div
+  class="row"
+  x-data="{}"
+  x-init="$nextTick(() => { document.querySelectorAll('.fade-in-card').forEach((el, index) => { setTimeout(() => { el.classList.add('visible') }, index * 150) }) })"
+>
+  <div class="col-md-8 fade-in-card" x-cloak>
+    <div class="card card-auvo card-auvo-rh mb-4">
+      <div class="card-body">
+        {% if aviso %}
+        <h5 class="card-title">
+          <a
+            href="{{ url_for('main.aviso_detalhe', aviso_id=aviso.id) }}"
+            class="text-decoration-none text-dark"
+          >
+            <i class="bi bi-megaphone-fill"></i> {{ aviso.titulo }}
+          </a>
+        </h5>
+        <p class="card-text">{{ aviso.conteudo|truncate(150) }}</p>
 
-    <div class="col-md-8 fade-in-card" x-cloak>
-        <div class="card card-auvo card-auvo-rh mb-4">
-            <div class="card-body">
-                {% if aviso %}
-                    <h5 class="card-title">
-                        <a href="{{ url_for('main.aviso_detalhe', aviso_id=aviso.id) }}" class="text-decoration-none text-dark">
-                            <i class="bi bi-megaphone-fill"></i> {{ aviso.titulo }}
-                        </a>
-                    </h5>
-                    <p class="card-text">{{ aviso.conteudo|truncate(150) }}</p>
-    
-                    {% if aviso.link_url and aviso.link_texto %}
-                        <a href="{{ aviso.link_url }}" target="_blank" class="btn btn-auvo">{{ aviso.link_texto }}</a>
-                    {% endif %}
-                {% else %}
-                    <h5 class="card-title"><i class="bi bi-megaphone-fill"></i> Avisos do RH</h5>
-                    <p class="card-text">Nenhum aviso no momento.</p>
-                {% endif %}
-            </div>
-        </div>
+        {% if aviso.link_url and aviso.link_texto %}
+        <a href="{{ aviso.link_url }}" target="_blank" class="btn btn-auvo"
+          >{{ aviso.link_texto }}</a
+        >
+        {% endif %} {% else %}
+        <h5 class="card-title">
+          <i class="bi bi-megaphone-fill"></i> Avisos do RH
+        </h5>
+        <p class="card-text">Nenhum aviso no momento.</p>
+        {% endif %}
+      </div>
     </div>
+  </div>
 
-    <div class="col-md-4 fade-in-card" x-cloak>
-        <div class="card card-auvo mb-4">
-            <div class="card-body text-center" 
-                 x-data="{ count: 0 }" 
-                 x-init="() => {
+  <div class="col-md-4 fade-in-card" x-cloak>
+    <div class="card card-auvo mb-4">
+      <div
+        class="card-body text-center"
+        x-data="{ count: 0 }"
+        x-init="() => {
                     let finalCount = {{ total_colaboradores }};
                     if (finalCount === 0) return;
                     let step = finalCount / 100;
@@ -44,77 +52,114 @@
                         }
                         count = Math.floor(current);
                     }, 10);
-                 }">
-                <h5 class="card-title"><i class="bi bi-people-fill"></i> Nosso Time</h5>
-                <p class="display-4 fw-bold" x-text="count">{{ total_colaboradores }}</p>
-                <p class="card-text">Colaboradores</p>
-            </div>
-        </div>
+                 }"
+      >
+        <h5 class="card-title"><i class="bi bi-people-fill"></i> Nosso Time</h5>
+        <p class="display-4 fw-bold" x-text="count">
+          {{ total_colaboradores }}
+        </p>
+        <p class="card-text">Colaboradores</p>
+      </div>
     </div>
+  </div>
 
-    <div class="col-md-6 fade-in-card" x-cloak>
-        <div class="card card-auvo mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-cake2-fill"></i> Aniversariantes do Mês</h5>
-                {% if aniversariantes %}
-                    <ul class="list-group list-group-flush">
-                        {% for aniversariante in aniversariantes %}
-                            <li class="list-group-item d-flex align-items-center">
-                                {% if aniversariante.foto_filename %}
-                                    <img src="{{ url_for('static', filename='fotos_colaboradores/' + aniversariante.foto_filename) }}" alt="Foto de {{ aniversariante.nome }}" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
-                                {% else %}
-                                    <img src="{{ url_for('static', filename='img/default_avatar.png') }}" alt="Avatar Padrão" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
+  <div class="col-md-6 fade-in-card" x-cloak>
+    <div class="card card-auvo mb-4">
+      <div class="card-body">
+        <h5 class="card-title">
+          <i class="bi bi-cake2-fill"></i> Aniversariantes do Mês
+        </h5>
+        {% if aniversariantes %}
+        <ul class="list-group list-group-flush">
+          {% for aniversariante in aniversariantes %}
+          <li class="list-group-item d-flex align-items-center">
+            {% if aniversariante.foto_filename %}
+            <img
+              src="{{ url_for('static', filename='fotos_colaboradores/' + aniversariante.foto_filename) }}"
+              alt="Foto de {{ aniversariante.nome }}"
+              class="me-3"
+              style="
+                width: 50px;
+                height: 50px;
+                object-fit: cover;
+                border-radius: 50%;
+              "
+            />
+            {% else %}
+            <img
+              src="{{ url_for('static', filename='img/default_avatar.png') }}"
+              alt="Avatar Padrão"
+              class="me-3"
+              style="
+                width: 50px;
+                height: 50px;
+                object-fit: cover;
+                border-radius: 50%;
+              "
+            />
+            {% endif %}
+            <div>
+              <div class="fw-bold">
+                {{ aniversariante.nome }} {{ aniversariante.sobrenome }}
+              </div>
+              <div class="text-muted">
+                {{ aniversariante.data_nascimento.strftime('%d/%m') }}
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-center text-muted mt-3">
+          Nenhum aniversariante este mês.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 fade-in-card" x-cloak>
+    <div class="card card-auvo mb-4">
+        <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-star-fill"></i> Destaques do Mês</h5>
+
+            {% if destaques %}
+                <div id="carouselDestaques" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner text-center">
+                        
+                        {% for destaque in destaques %}
+                            <div class="carousel-item {% if loop.first %}active{% endif %}" data-bs-interval="5000">
+                                
+                                {% set imagem_url = url_for('static', filename='img/default_avatar.png') %}
+                                {% if destaque.imagem_filename %}
+                                    {% set imagem_url = url_for('static', filename='fotos_colaboradores/' + destaque.imagem_filename) %}
+                                {% elif destaque.colaborador.foto_filename %}
+                                    {% set imagem_url = url_for('static', filename='fotos_colaboradores/' + destaque.colaborador.foto_filename) %}
                                 {% endif %}
-                                <div>
-                                    <div class="fw-bold">{{ aniversariante.nome }} {{ aniversariante.sobrenome }}</div>
-                                    <div class="text-muted">{{ aniversariante.data_nascimento.strftime('%d/%m') }}</div>
+                                
+                                <img src="{{ imagem_url }}" class="d-block mx-auto mb-3 img-fluid" alt="Destaque do Mês" style="max-height: 250px; border-radius: 8px;">
+                                
+                                <div class="mt-2">
+                                    <h6 class="fw-bold">{{ destaque.titulo }}</h6>
+                                    <p class="mb-1">{{ destaque.colaborador.nome }} {{ destaque.colaborador.sobrenome }}</p>
                                 </div>
-                            </li>
+                            </div>
                         {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-center text-muted mt-3">Nenhum aniversariante este mês.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 
-    <div class="col-md-6 fade-in-card" x-cloak>
-        <div class="card card-auvo mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-star-fill"></i> Destaques do Mês</h5>
-                {% if destaques %}
-                    <div id="carouselDestaques" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-inner text-center">
-                            {% for destaque in destaques %}
-                                <div class="carousel-item {% if loop.first %}active{% endif %}" data-bs-interval="3600">
-                                    <img src="{{ url_for('static', filename='fotos_colaboradores/' + destaque.colaborador.foto_filename) if destaque.colaborador.foto_filename else url_for('static', filename='img/default_avatar.png') }}" class="d-block mx-auto" alt="Foto" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
-                                    <div class="mt-3">
-                                        <h6 class="fw-bold">{{ destaque.titulo }}</h6>
-                                        <p class="mb-1">{{ destaque.colaborador.nome }} {{ destaque.colaborador.sobrenome }}</p>
-                                        {% if destaque.certificado_filename %}
-                                            <a href="{{ url_for('static', filename='fotos_colaboradores/' + destaque.certificado_filename) }}" target="_blank" class="btn btn-sm btn-outline-success">
-                                                <i class="bi bi-patch-check-fill"></i> Ver Certificado
-                                            </a>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselDestaques" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(1);"></span>
-                            <span class="visually-hidden">Anterior</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#carouselDestaques" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true" style="filter: invert(1);"></span>
-                            <span class="visually-hidden">Próximo</span>
-                        </button>
                     </div>
-                {% else %}
-                    <p class="text-center text-muted mt-3">Nenhum destaque recente.</p>
-                {% endif %}
-            </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselDestaques" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(1);"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselDestaques" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true" style="filter: invert(1);"></span>
+                    </button>
+                </div>
+            {% else %}
+                <p class="text-center text-muted mt-3">Nenhum destaque recente.</p>
+            {% endif %}
         </div>
     </div>
+</div>
+  </div>
 </div>
 {% endblock %}

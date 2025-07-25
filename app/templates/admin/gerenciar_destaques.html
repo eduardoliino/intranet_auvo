@@ -1,91 +1,213 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<div x-data="gerenciarDestaques">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Gestão de Destaques</h2>
+  </div>
 
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Gestão de Destaques do Mês</h2>
-</div>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-
-<div class="row">
+  <div class="row">
     <div class="col-md-4">
-    <div class="card">
-        <div class="card-header fw-bold">Adicionar Novo Destaque</div>
+      <div class="card">
+        <div
+          class="card-header fw-bold"
+          x-text="isEditing ? 'Editar Destaque' : 'Adicionar Novo Destaque'"
+        ></div>
         <div class="card-body">
-            <form method="POST" action="{{ url_for('admin.adicionar_destaque') }}" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="titulo" class="form-label">Título do Destaque</label>
-                    <input type="text" class="form-control" id="titulo" name="titulo" placeholder="Ex: Vendedor do Mês" required>
-                </div>
-                <div class="mb-3">
-                    <label for="colaborador" class="form-label">Colaborador em Destaque</label>
-                    <select class="form-select" id="colaborador" name="colaborador_id" required>
-                        <option selected disabled value="">Selecione um colaborador...</option>
-                        {% for col in colaboradores %}
-                            <option value="{{ col.id }}">{{ col.nome }} {{ col.sobrenome }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="descricao" class="form-label">Descrição (Opcional)</label>
-                    <textarea class="form-control" id="descricao" name="descricao" rows="3"></textarea>
-                </div>
+          <form @submit.prevent="submitForm" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label class="form-label">Título</label>
+              <input
+                type="text"
+                x-model="form.titulo"
+                class="form-control"
+                required
+              />
+            </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="mes" class="form-label">Mês (Opcional)</label>
-                        <input type="number" class="form-control" id="mes" name="mes" min="1" max="12" placeholder="Mês atual">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="ano" class="form-label">Ano (Opcional)</label>
-                        <input type="number" class="form-control" id="ano" name="ano" min="2020" placeholder="Ano atual">
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="certificado" class="form-label">Certificado (Opcional)</label>
-                    <input class="form-control" type="file" id="certificado" name="certificado" accept="image/png, image/jpeg, image/gif, application/pdf">
-                </div>
-                <button type="submit" class="btn btn-auvo w-100">Adicionar Destaque</button>
-            </form>
+            <div class="mb-3 position-relative">
+              <label class="form-label">Colaborador</label>
+              <input
+                type="text"
+                x-model="filtroColaborador"
+                @focus="showCollaboratorList = true"
+                @blur.debounce.300ms="showCollaboratorList = false"
+                class="form-control"
+                placeholder="Comece a digitar um nome..."
+                autocomplete="off"
+              />
+
+              <div
+                x-show="showCollaboratorList && filteredColaboradores.length > 0"
+                class="list-group position-absolute w-100"
+                style="z-index: 10"
+              >
+                <template x-for="col in filteredColaboradores" :key="col.id">
+                  <a
+                    href="#"
+                    @click.prevent="selectCollaborator(col)"
+                    class="list-group-item list-group-item-action"
+                    x-text="col.nome"
+                  ></a>
+                </template>
+              </div>
+              <input type="hidden" x-model="form.colaborador_id" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Descrição</label>
+              <textarea
+                x-model="form.descricao"
+                class="form-control"
+                rows="3"
+              ></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Mês</label>
+                <input
+                  type="number"
+                  x-model="form.mes"
+                  class="form-control"
+                  placeholder="Mês atual"
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Ano</label>
+                <input
+                  type="number"
+                  x-model="form.ano"
+                  class="form-control"
+                  placeholder="Ano atual"
+                />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label
+                class="form-label"
+                x-text="isEditing ? 'Substituir Imagem (Opcional)' : 'Imagem de Destaque (Opcional)'"
+              ></label>
+              <input
+                class="form-control"
+                type="file"
+                x-ref="imagemInput"
+                accept="image/*"
+              />
+            </div>
+            <button
+              type="submit"
+              class="btn btn-auvo w-100"
+              x-text="isEditing ? 'Salvar Alterações' : 'Adicionar Destaque'"
+            ></button>
+            <button
+              type="button"
+              x-show="isEditing"
+              @click="resetForm"
+              class="btn btn-secondary w-100 mt-2"
+            >
+              Cancelar Edição
+            </button>
+          </form>
         </div>
+      </div>
     </div>
-</div>
 
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header fw-bold">Destaques Adicionados</div>
-            <div class="card-body">
-                {% if destaques %}
-                    <ul class="list-group list-group-flush">
-                        {% for destaque in destaques %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <img src="{{ url_for('static', filename='fotos_colaboradores/' + destaque.colaborador.foto_filename) if destaque.colaborador.foto_filename else url_for('static', filename='img/default_avatar.png') }}" alt="Foto" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
-                                    <div>
-                                        <h6 class="my-0">{{ destaque.titulo }} - ({{ "%02d"|format(destaque.mes) }}/{{ destaque.ano }})</h6>
-                                        <small class="text-muted">{{ destaque.colaborador.nome }} {{ destaque.colaborador.sobrenome }}</small>
-                                    </div>
-                                </div>
-                                <div>
-                                    <a href="{{ url_for('admin.remover_destaque', id=destaque.id) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-center text-muted">Nenhum destaque adicionado.</p>
-                {% endif %}
+      <div class="card">
+        <div class="card-header fw-bold">
+          <div class="row g-2 align-items-center">
+            <div class="col-auto">
+              <span class="form-label">Filtrar por:</span>
             </div>
+            <div class="col">
+              <select x-model="filtroMes" class="form-select form-select-sm">
+                <option value="">Todos os Meses</option>
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+            </div>
+            <div class="col">
+              <select x-model="filtroAno" class="form-select form-select-sm">
+                <option value="">Todos os Anos</option>
+                {% for ano in anos %}
+                <option value="{{ ano }}">{{ ano }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
         </div>
+        <div class="card-body">
+          <template x-if="filteredDestaques.length > 0">
+            <ul class="list-group list-group-flush">
+              <template
+                x-for="destaque in filteredDestaques"
+                :key="destaque.id"
+              >
+                <li
+                  class="list-group-item d-flex justify-content-between align-items-center"
+                >
+                  <div class="d-flex align-items-center">
+                    <img
+                      :src="destaque.colaborador_foto ? `/static/fotos_colaboradores/${destaque.colaborador_foto}` : '/static/img/default_avatar.png'"
+                      class="me-3"
+                      style="
+                        width: 50px;
+                        height: 50px;
+                        object-fit: cover;
+                        border-radius: 50%;
+                      "
+                    />
+                    <div>
+                      <h6
+                        class="my-0"
+                        x-text="`${destaque.titulo} - (${String(destaque.mes).padStart(2, '0')}/${destaque.ano})`"
+                      ></h6>
+                      <small
+                        class="text-muted"
+                        x-text="destaque.colaborador_nome"
+                      ></small>
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      @click="startEdit(destaque)"
+                      class="btn btn-sm btn-outline-secondary me-1"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      @click="removerDestaque(destaque.id)"
+                      class="btn btn-sm btn-outline-danger"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </li>
+              </template>
+            </ul>
+          </template>
+          <template x-if="filteredDestaques.length === 0">
+            <p class="text-center text-muted">
+              Nenhum destaque encontrado para os filtros selecionados.
+            </p>
+          </template>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+
+<script>
+  window._destaquesData = {{ destaques|tojson|safe }};
+  window._colaboradoresData = {{ colaboradores|tojson|safe }};
+</script>
+<script src="{{ url_for('static', filename='js/gerenciarDestaques.js') }}"></script>
 {% endblock %}

@@ -25,7 +25,10 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
   </head>
 
   <body>
@@ -47,7 +50,14 @@
             <a href="#"><i class="bi bi-cake2-fill"></i> Aniversariantes</a>
           </li>
           <li>
-            <a href="#"><i class="bi bi-patch-question-fill"></i> FAQ</a>
+            <a href="{{ url_for('main.ouvidoria') }}"
+              ><i class="bi bi-ear-fill"></i> Ouvidoria</a
+            >
+          </li>
+          <li>
+            <a href="{{ url_for('main.faq_publico') }}"
+              ><i class="bi bi-patch-question-fill"></i> FAQ</a
+            >
           </li>
 
           <hr class="my-2" style="border-color: rgba(255, 255, 255, 0.1)" />
@@ -64,8 +74,20 @@
             >
           </li>
           <li>
-                        <a href="{{ url_for('admin.gerenciar_destaques') }}"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
-                    </li>
+            <a href="{{ url_for('admin.gerenciar_faq') }}"
+              ><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a
+            >
+          </li>
+          <li>
+            <a href="{{ url_for('admin.gerenciar_destaques') }}"
+              ><i class="bi bi-star-fill"></i> Gerir Destaques</a
+            >
+          </li>
+          <li>
+            <a href="{{ url_for('admin.gerenciar_ouvidoria') }}"
+              ><i class="bi bi-ear-fill"></i> Gerir Ouvidoria</a
+            >
+          </li>
           <li>
             <a href="{{ url_for('auth.logout') }}"
               ><i class="bi bi-box-arrow-right"></i> Sair (Logout)</a
