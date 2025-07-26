@@ -21,6 +21,12 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     />
 
+    <!-- ADICIONE O CSS DO FULLCALENDAR -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css"
+      rel="stylesheet"
+    />
+
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
@@ -62,7 +68,9 @@
 
           <hr class="my-2" style="border-color: rgba(255, 255, 255, 0.1)" />
 
-          {% if current_user.is_authenticated %}
+          <!-- O menu agora verifica se o utilizador é um admin -->
+          {% if current_user.is_authenticated %} {% if current_user.is_admin %}
+          <!-- Links que só o Admin (RH) vê -->
           <li>
             <a href="{{ url_for('admin.listar_colaboradores') }}"
               ><i class="bi bi-people-fill"></i> Gerir Colaboradores</a
@@ -74,13 +82,13 @@
             >
           </li>
           <li>
-            <a href="{{ url_for('admin.gerenciar_faq') }}"
-              ><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a
+            <a href="{{ url_for('admin.gerenciar_destaques') }}"
+              ><i class="bi bi-star-fill"></i> Gerir Destaques</a
             >
           </li>
           <li>
-            <a href="{{ url_for('admin.gerenciar_destaques') }}"
-              ><i class="bi bi-star-fill"></i> Gerir Destaques</a
+            <a href="{{ url_for('admin.gerenciar_faq') }}"
+              ><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a
             >
           </li>
           <li>
@@ -89,17 +97,19 @@
             >
           </li>
           <li>
+            <a href="{{ url_for('admin.calendario') }}"
+              ><i class="bi bi-calendar-event-fill"></i> Gerir Calendário</a
+            >
+          </li>
+          {% endif %}
+
+          <!-- Link de Logout que todos os utilizadores logados veem -->
+          <li>
             <a href="{{ url_for('auth.logout') }}"
               ><i class="bi bi-box-arrow-right"></i> Sair (Logout)</a
             >
           </li>
-          {% else %}
-          <li>
-            <a href="{{ url_for('auth.login') }}"
-              ><i class="bi bi-box-arrow-in-right"></i> Login de Admin</a
-            >
-          </li>
-          {% endif %}
+          {% else %} {% endif %}
         </ul>
       </nav>
 
@@ -109,5 +119,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ADICIONE OS SCRIPTS DO FULLCALENDAR -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js"></script>
+    <!-- Para traduzir para português -->
   </body>
 </html>

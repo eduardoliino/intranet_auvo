@@ -3,29 +3,25 @@ import io
 import os
 import secrets
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, current_app, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app import db
-from app.models import Colaborador, Aviso, Destaque, FaqCategoria, FaqPergunta, Ouvidoria
+from app.models import Colaborador, Aviso, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento
 from datetime import datetime
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
 
-# --- NOVA FUNÇÃO HELPER PARA SALVAR A FOTO ---
-# Esta função é responsável por salvar o arquivo de imagem de forma segura
 def salvar_foto(form_foto):
-    # Gera um nome de arquivo aleatório e seguro para evitar conflitos
+
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_foto.filename)
     foto_filename = random_hex + f_ext
-    # Define o caminho completo para onde a foto será salva
+
     foto_path = os.path.join(current_app.root_path,
                              'static/fotos_colaboradores', foto_filename)
 
-    # Cria a pasta 'fotos_colaboradores' se ela não existir
     os.makedirs(os.path.dirname(foto_path), exist_ok=True)
 
-    # Salva o arquivo da foto no caminho definido
     form_foto.save(foto_path)
 
     return foto_filename
@@ -35,28 +31,21 @@ def salvar_foto(form_foto):
 @admin.route('/colaboradores')
 @login_required
 def listar_colaboradores():
-    colaboradores_objetos = Colaborador.query.all()
-
-    
-    colaboradores_json = []
-    for col in colaboradores_objetos:
-        colaboradores_json.append({
-            'id': col.id,
-            'nome': col.nome,
-            'sobrenome': col.sobrenome,
-            'email_corporativo': col.email_corporativo
-            
-        })
- 
+    colaboradores_objetos = Colaborador.query.order_by(Colaborador.nome).all()
+    # Converte os objetos para um formato compatível com JSON para o Alpine.js
+    colaboradores_json = [{'id': c.id, 'nome': c.nome, 'sobrenome': c.sobrenome,
+                           'email_corporativo': c.email_corporativo} for c in colaboradores_objetos]
     return render_template('admin/listar_colaboradores.html', colaboradores=colaboradores_json)
 
+# Rota para a página do formulário de cadastro manual
 
-@admin.route('/colaboradores/gerenciar')
+
+@admin.route('/colaboradores/adicionar-manual', methods=['GET'])
 @login_required
-def gerenciar_colaboradores():
-    return render_template('admin/gerenciar_colaboradores.html')
+def adicionar_colaborador_manual_form():
+    return render_template('admin/adicionar_colaborador_manual.html')
 
-# --- Rota para ADICIONAR um colaborador (CORRIGIDA) ---
+# Rota que processa o envio do formulário manual
 
 
 @admin.route('/colaboradores/adicionar', methods=['POST'])
@@ -69,43 +58,32 @@ def adicionar_colaborador():
     cargo = request.form.get('cargo')
     time = request.form.get('time')
     senha = request.form.get('senha')
-
-    if not nome or not sobrenome or not email or not data_nascimento or not senha:
-        flash('Todos os campos, exceto Cargo e Time, são obrigatórios.', 'danger')
-        return redirect(url_for('admin.gerenciar_colaboradores'))
-
-    if Colaborador.query.filter_by(email_corporativo=email).first():
-        flash('Este e-mail já está cadastrado.', 'warning')
-        return redirect(url_for('admin.gerenciar_colaboradores'))
-
-    # --- Lógica de Upload da Foto (CORRIGIDA) ---
-    foto_filename = None  # Começa com None por defeito
+    foto_filename = None
     if 'foto' in request.files:
         foto_enviada = request.files['foto']
         if foto_enviada.filename != '':
-            # Se um arquivo foi enviado, chama a função para salvar e obtém o nome do arquivo
             foto_filename = salvar_foto(foto_enviada)
-    # ----------------------------------------------
-
     novo_colaborador = Colaborador(
-        nome=nome,
-        sobrenome=sobrenome,
-        email_corporativo=email,
+        nome=nome, sobrenome=sobrenome, email_corporativo=email,
         data_nascimento=pd.to_datetime(data_nascimento).date(),
-        cargo=cargo,
-        time=time,
-        foto_filename=foto_filename  # Salva o nome do arquivo no banco de dados
+        cargo=cargo, time=time, foto_filename=foto_filename
     )
     novo_colaborador.set_password(senha)
     db.session.add(novo_colaborador)
     db.session.commit()
-
     flash('Colaborador adicionado com sucesso!', 'success')
     return redirect(url_for('admin.listar_colaboradores'))
 
+# Rota para a página do formulário de importação
 
-# --- Resto das suas rotas (importar, remover, editar, etc.) ---
-# ... (o seu código para as outras rotas continua aqui) ...
+
+@admin.route('/colaboradores/importar-planilha', methods=['GET'])
+@login_required
+def importar_colaboradores_form():
+    return render_template('admin/importar_colaboradores.html')
+
+# Rota que processa o upload da planilha
+
 
 @admin.route('/colaboradores/importar', methods=['POST'])
 @login_required
@@ -120,45 +98,26 @@ def importar_colaboradores():
                 if not all(coluna in df.columns for coluna in colunas_necessarias):
                     flash(
                         'A planilha não contém todas as colunas necessárias.', 'danger')
-                    return redirect(url_for('admin.gerenciar_colaboradores'))
+                    return redirect(url_for('admin.importar_colaboradores_form'))
 
                 for index, row in df.iterrows():
                     if not Colaborador.query.filter_by(email_corporativo=row['email_corporativo']).first():
                         novo_colaborador = Colaborador(
-                            nome=row['nome'],
-                            sobrenome=row['sobrenome'],
+                            nome=row['nome'], sobrenome=row['sobrenome'],
                             email_corporativo=row['email_corporativo'],
                             data_nascimento=pd.to_datetime(
                                 row['data_nascimento']).date(),
-                            cargo=row['cargo'],
-                            time=row['time']
+                            cargo=row.get('cargo'), time=row.get('time')
                         )
                         novo_colaborador.set_password(str(row['senha']))
                         db.session.add(novo_colaborador)
-
                 db.session.commit()
                 flash('Colaboradores importados com sucesso!', 'success')
             except Exception as e:
-                db.session.rollback()
                 flash(f'Ocorreu um erro ao importar: {e}', 'danger')
-        else:
-            flash('Arquivo inválido. Por favor, envie uma planilha .xlsx.', 'danger')
     return redirect(url_for('admin.listar_colaboradores'))
 
-
-@admin.route('/colaboradores/remover/<int:id>')
-@login_required
-def remover_colaborador(id):
-    colaborador = Colaborador.query.get_or_404(id)
-    try:
-        db.session.delete(colaborador)
-        db.session.commit()
-        flash('Colaborador removido com sucesso!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro ao remover colaborador: {e}', 'danger')
-
-    return redirect(url_for('admin.listar_colaboradores'))
+# Rota para baixar a planilha modelo
 
 
 @admin.route('/colaboradores/baixar_modelo')
@@ -178,24 +137,7 @@ def baixar_modelo_planilha():
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
 
-
-@admin.route('/colaboradores/remover_todos', methods=['POST'])
-@login_required
-def remover_todos_colaboradores():
-    confirmacao = request.form.get('confirmacao')
-    if confirmacao == 'confirmar exclusão':
-        try:
-            num_rows_deleted = db.session.query(Colaborador).delete()
-            db.session.commit()
-            flash(
-                f'{num_rows_deleted} colaboradores foram removidos com sucesso.', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(
-                f'Ocorreu um erro ao remover os colaboradores: {e}', 'danger')
-    else:
-        flash('A confirmação digitada está incorreta. Nenhuma ação foi tomada.', 'warning')
-    return redirect(url_for('admin.listar_colaboradores'))
+# Rota para a página de edição de um colaborador
 
 
 @admin.route('/colaboradores/editar/<int:id>', methods=['GET', 'POST'])
@@ -204,21 +146,21 @@ def editar_colaborador(id):
     colaborador = Colaborador.query.get_or_404(id)
 
     if request.method == 'POST':
-        # ---- LÓGICA PARA ATUALIZAR A FOTO ----
+        # --- LÓGICA PARA ATUALIZAR A FOTO ---
         if 'foto' in request.files:
             foto_enviada = request.files['foto']
             if foto_enviada.filename != '':
-                # (Opcional, mas recomendado: apagar a foto antiga para não ocupar espaço)
+                # Se uma imagem antiga existir, apaga-a do servidor
                 if colaborador.foto_filename:
                     foto_antiga_path = os.path.join(
                         current_app.root_path, 'static/fotos_colaboradores', colaborador.foto_filename)
                     if os.path.exists(foto_antiga_path):
                         os.remove(foto_antiga_path)
 
-                # Salva a nova foto e atualiza o nome do arquivo no banco
-                foto_filename = salvar_foto(foto_enviada)
-                colaborador.foto_filename = foto_filename
+                # Salva a nova imagem e atualiza o nome no banco de dados
+                colaborador.foto_filename = salvar_foto(foto_enviada)
 
+        # --- ATUALIZA OS DADOS DO COLABORADOR ---
         colaborador.nome = request.form.get('nome')
         colaborador.sobrenome = request.form.get('sobrenome')
         colaborador.email_corporativo = request.form.get('email_corporativo')
@@ -239,7 +181,46 @@ def editar_colaborador(id):
             db.session.rollback()
             flash(f'Erro ao atualizar o colaborador: {e}', 'danger')
 
+    # Garante que o template de EDIÇÃO é renderizado para a requisição GET
     return render_template('admin/edit_colaborador.html', colaborador=colaborador)
+
+
+# Rota para remover um colaborador
+
+
+@admin.route('/colaboradores/remover/<int:id>')
+@login_required
+def remover_colaborador(id):
+    colaborador = Colaborador.query.get_or_404(id)
+    try:
+        db.session.delete(colaborador)
+        db.session.commit()
+        flash('Colaborador removido com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao remover colaborador: {e}', 'danger')
+    return redirect(url_for('admin.listar_colaboradores'))
+
+# Rota para remover todos os colaboradores
+
+
+@admin.route('/colaboradores/remover_todos', methods=['POST'])
+@login_required
+def remover_todos_colaboradores():
+    confirmacao = request.form.get('confirmacao')
+    if confirmacao == 'confirmar exclusão':
+        try:
+            num_rows_deleted = db.session.query(Colaborador).delete()
+            db.session.commit()
+            flash(
+                f'{num_rows_deleted} colaboradores foram removidos com sucesso.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(
+                f'Ocorreu um erro ao remover os colaboradores: {e}', 'danger')
+    else:
+        flash('A confirmação digitada está incorreta. Nenhuma ação foi tomada.', 'warning')
+    return redirect(url_for('admin.listar_colaboradores'))
 
 
 @admin.route('/avisos')
@@ -586,3 +567,64 @@ def atualizar_status_ouvidoria(id):
         return jsonify({'success': True})
 
     return jsonify({'success': False, 'message': 'Status inválido.'}), 400
+
+# Rota para renderizar a página do calendário
+
+
+@admin.route('/calendario')
+@login_required
+def calendario():
+    return render_template('admin/calendario.html', title='Calendário de Eventos')
+
+# Rota de API para fornecer os eventos em formato JSON
+
+
+@admin.route('/calendario/eventos')
+@login_required
+def calendario_eventos():
+    eventos = Evento.query.all()
+    eventos_json = [evento.to_dict() for evento in eventos]
+    return jsonify(eventos_json)
+
+
+@admin.route('/calendario/eventos/novo', methods=['POST'])
+@login_required
+def novo_evento():
+    data = request.get_json()
+    novo_evento = Evento(
+        title=data['title'],
+        start=datetime.fromisoformat(data['start']),
+        end=datetime.fromisoformat(data['end']) if data.get('end') else None,
+        description=data.get('description'),
+        location=data.get('location'),
+        color=data.get('color'),
+        user_id=current_user.id
+    )
+    db.session.add(novo_evento)
+    db.session.commit()
+    return jsonify({'success': True, 'id': novo_evento.id})
+
+
+@admin.route('/calendario/eventos/editar/<int:id>', methods=['PUT'])
+@login_required
+def editar_evento(id):
+    evento = Evento.query.get_or_404(id)
+    data = request.get_json()
+    evento.title = data['title']
+    evento.start = datetime.fromisoformat(data['start'])
+    evento.end = datetime.fromisoformat(
+        data['end']) if data.get('end') else None
+    evento.description = data.get('description')
+    evento.location = data.get('location')
+    evento.color = data.get('color')
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+@admin.route('/calendario/eventos/remover/<int:id>', methods=['DELETE'])
+@login_required
+def remover_evento(id):
+    evento = Evento.query.get_or_404(id)
+    db.session.delete(evento)
+    db.session.commit()
+    return jsonify({'success': True})

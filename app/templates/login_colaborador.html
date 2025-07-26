@@ -11,7 +11,8 @@
     <style>
         :root {
             --auvo-roxo-escuro: #2C0E52;
-            --auvo-lilas: #7e3ac6ff;
+            --auvo-lilas: #A374D4;
+            --auvo-verde: #31C48D;
         }
         body {
             font-family: 'Poppins', sans-serif;
@@ -31,7 +32,7 @@
             text-align: center;
         }
         .login-logo {
-            max-width: 180px;
+            max-width: 100px;
             margin-bottom: 1.5rem;
         }
         .login-title {
@@ -62,6 +63,7 @@
 </head>
 <body>
     <div class="login-container">
+        <!-- Substitua 'logo.png' pelo nome do seu ficheiro de logo -->
         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Auvo" class="login-logo">
         <h1 class="login-title">Boas-vindas!</h1>
         <p class="text-muted mb-4">Por favor, faça o seu login</p>
@@ -76,8 +78,8 @@
 
         <form method="POST" action="{{ url_for('auth.login') }}">
             <div class="mb-3 text-start">
-                <label for="email" class="form-label">Utilizador (e-mail)</label>
-                <input type="text" class="form-control" id="email" name="email" required>
+                <label for="email" class="form-label">Usuário (e-mail corporativo)</label>
+                <input type="email" class="form-control" id="email" name="email" required>
             </div>
             <div class="mb-3 text-start">
                 <label for="password" class="form-label">Senha</label>

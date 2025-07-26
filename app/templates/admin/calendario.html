@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Calendário de Eventos</h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div id='calendar'></div>
+    </div>
+</div>
+
+<!-- Modal para Adicionar/Editar Evento -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Adicionar Novo Evento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="eventForm">
+          <input type="hidden" id="eventId">
+          <div class="mb-3">
+            <label for="eventTitle" class="form-label">Título do Evento</label>
+            <input type="text" class="form-control" id="eventTitle" required>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="eventStart" class="form-label">Início</label>
+                <input type="datetime-local" class="form-control" id="eventStart" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="eventEnd" class="form-label">Fim (Opcional)</label>
+                <input type="datetime-local" class="form-control" id="eventEnd">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="eventDescription" class="form-label">Descrição (Opcional)</label>
+            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="eventLocation" class="form-label">Local (Opcional)</label>
+            <input type="text" class="form-control" id="eventLocation">
+          </div>
+          <div class="mb-3">
+            <label for="eventColor" class="form-label">Cor do Evento</label>
+            <input type="color" class="form-control form-control-color" id="eventColor" value="#3788d8">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button type="button" id="deleteEventButton" class="btn btn-danger d-none">Apagar</button>
+        <div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" form="eventForm" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/gerenciarCalendario.js') }}"></script>
+{% endblock %}

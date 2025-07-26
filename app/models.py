@@ -1,18 +1,15 @@
-# app/models.py
-
-# 1. Importe o 'login_manager' junto com o 'db'
 from app import db, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import datetime
 
-# 2. Adicione esta função logo abaixo dos imports.
-#    Ela conecta o Flask-Login ao seu modelo User.
-
-
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    if user_id.startswith('admin-'):
+        return User.query.get(int(user_id.split('-')[1]))
+    elif user_id.startswith('colaborador-'):
+        return Colaborador.query.get(int(user_id.split('-')[1]))
+    return None
 
 
 # O resto do seu código permanece exatamente igual
@@ -24,16 +21,24 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
 
+    # --- ALTERAÇÃO 2: MÉTODO get_id() PARA ADMIN ---
+    def get_id(self):
+        return f"admin-{self.id}"
+
+    # --- ALTERAÇÃO 3: PROPRIEDADE PARA IDENTIFICAR O ADMIN ---
+    @property
+    def is_admin(self):
+        return True
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
 # Modelo para os Colaboradores
 
 
-class Colaborador(db.Model):
+class Colaborador(UserMixin, db.Model):  # --- ALTERAÇÃO 4: ADICIONA UserMixin ---
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     sobrenome = db.Column(db.String(100), nullable=False)
@@ -45,12 +50,20 @@ class Colaborador(db.Model):
     time = db.Column(db.String(100), nullable=True)
     foto_filename = db.Column(db.String(120), nullable=True)
 
+    # --- ALTERAÇÃO 5: MÉTODO get_id() PARA COLABORADOR ---
+    def get_id(self):
+        return f"colaborador-{self.id}"
+
+    # --- ALTERAÇÃO 6: PROPRIEDADE PARA DIFERENCIAR DO ADMIN ---
+    @property
+    def is_admin(self):
+        return False
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
 # Modelo para os Avisos
 
 
@@ -127,3 +140,31 @@ class Ouvidoria(db.Model):
 
     def __repr__(self):
         return f'<Ouvidoria {self.id} - {self.tipo_denuncia}>'
+
+class Evento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    start = db.Column(db.DateTime, nullable=False)
+    end = db.Column(db.DateTime, nullable=True)
+    location = db.Column(db.String(200), nullable=True)
+    color = db.Column(db.String(20), nullable=True, default='#3788d8') # Cor padrão do FullCalendar
+
+    # Chave estrangeira para ligar o evento ao utilizador que o criou
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    def to_dict(self):
+        """Converte o objeto Evento para um dicionário compatível com FullCalendar."""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'start': self.start.isoformat(),
+            'end': self.end.isoformat() if self.end else None,
+            'location': self.location,
+            'color': self.color,
+            'creator': User.query.get(self.user_id).username
+        }
+
+    def __repr__(self):
+        return f'<Evento {self.title}>'
