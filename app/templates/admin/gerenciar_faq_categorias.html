@@ -3,18 +3,8 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Gestão de Categorias do FAQ</h2>
+    <a href="{{ url_for('admin.gerenciar_faq') }}" class="btn btn-secondary">Voltar para a Gestão do FAQ</a>
 </div>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
 
 <div class="row">
     <div class="col-md-4">
@@ -26,7 +16,7 @@
                         <label for="nome" class="form-label">Nome da Categoria</label>
                         <input type="text" class="form-control" id="nome" name="nome" required>
                     </div>
-                    <button type="submit" class="btn btn-auvo w-100">Adicionar Categoria</button>
+                    <button type="submit" class="btn btn-success w-100">Adicionar Categoria</button>
                 </form>
             </div>
         </div>

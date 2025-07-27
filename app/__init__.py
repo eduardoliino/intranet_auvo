@@ -11,7 +11,12 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
-login_manager.login_message = "Por favor, faça o login para acessar esta página."
+
+# --- CORREÇÃO APLICADA AQUI ---
+# Define a mensagem como 'None' para desativá-la
+login_manager.login_message = None
+# --------------------------------
+
 login_manager.login_message_category = "info"
 
 # --- Etapa 2: A Fábrica de Aplicação ---

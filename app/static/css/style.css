@@ -64,6 +64,24 @@ body {
 /* --- CONTEÚDO PRINCIPAL (MAIN CONTENT) --- */
 #content {
     width: 100%;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* CORREÇÃO DEFINITIVA: Aplica a correção de layout apenas quando um modal do Bootstrap está aberto */
+body.modal-open #content {
+    min-width: 0;
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .totalizador-pill {
@@ -162,7 +180,6 @@ body {
     transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-/* === ÁREA DA ALTERAÇÃO: Efeito hover dos botões corrigido === */
 .btn-card-action {
     min-width: 140px;
     text-align: center;
@@ -173,13 +190,11 @@ body {
     transform: scale(1.05); 
 }
 
-/* Regra específica e definitiva para o hover do botão de ouvidoria */
 .btn-ouvidoria:hover {
-    background-color: #2aa87b; /* Um tom de verde um pouco mais escuro */
-    color: white; /* Garante que o texto permanece branco */
+    background-color: #2aa87b;
+    color: white;
     transform: scale(1.05);
 }
-/* === FIM DA ÁREA DA CORREÇÃO === */
 
 
 /* ESTILOS MODERNOS PARA FORMULÁRIOS */

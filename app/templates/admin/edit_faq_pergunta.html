@@ -11,7 +11,7 @@
         <form method="POST" action="{{ url_for('admin.editar_pergunta_faq', id=pergunta.id) }}">
             <div class="mb-3">
                 <label for="categoria" class="form-label">Categoria</label>
-                <select class="form-select" id="categoria" name="categoria_id" required>
+                <select class="form-select custom-select" id="categoria" name="categoria_id" required>
                     {% for categoria in categorias %}
                         <option value="{{ categoria.id }}" {% if categoria.id == pergunta.categoria_id %}selected{% endif %}>
                             {{ categoria.nome }}

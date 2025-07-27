@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Adicionar Nova Pergunta ao FAQ</h2>
+    <a href="{{ url_for('admin.gerenciar_faq') }}" class="btn btn-secondary">Voltar para a Lista</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.adicionar_pergunta_faq') }}">
+            <div class="mb-3">
+                <label for="categoria" class="form-label">Categoria</label>
+                <select class="form-select custom-select" id="categoria" name="categoria_id" required>
+                    <option disabled selected value="">Selecione uma categoria...</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="pergunta" class="form-label">Pergunta</label>
+                <input type="text" class="form-control" id="pergunta" name="pergunta" required>
+            </div>
+            <div class="mb-3">
+                <label for="resposta" class="form-label">Resposta</label>
+                <textarea class="form-control" id="resposta" name="resposta" rows="5" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="palavras_chave" class="form-label">Palavras-chave (separadas por vírgula)</label>
+                <input type="text" class="form-control" id="palavras_chave" name="palavras_chave">
+            </div>
+
+            <hr>
+            <p class="text-muted small">Opcional: adicione um link à resposta.</p>
+            <div class="mb-3">
+                <label for="link_url" class="form-label">URL do Link</label>
+                <input type="url" class="form-control" id="link_url" name="link_url" placeholder="https://exemplo.com">
+            </div>
+            <div class="mb-3">
+                <label for="link_texto" class="form-label">Texto do Link</label>
+                <input type="text" class="form-control" id="link_texto" name="link_texto" placeholder="Clique aqui para saber mais">
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">Adicionar Pergunta</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

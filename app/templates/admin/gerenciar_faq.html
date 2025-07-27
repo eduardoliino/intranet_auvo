@@ -1,205 +1,72 @@
-{% extends "base.html" %} {% block content %}
-<div x-data="gerenciarFaq">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Gestão do FAQ</h2>
+{% extends "base.html" %}
+
+{% block content %}
+<div x-data="{ search: '' }">
+
+  <div class="row mb-4 align-items-center">
+    <div class="col-lg-7">
+        <div style="position: relative; min-height: 70px;" class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='img/logo_nova.png') }}" alt="Intranet Auvo" 
+                 style="position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 185px; height: auto;">
+            <div class="totalizador-pill" style="margin-left: 205px;">
+                <span>Já somos </span>
+                <span class="mx-1 fw-bold">{{ total_colaboradores or 0 }}</span>
+                <span>Auvolovers</span>
+                <i class="bi bi-heart-fill ms-2" style="color: var(--auvo-lilas);"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card card-link-externo card-instagram h-100">
+            <div class="card-body d-flex justify-content-between align-items-center p-3">
+                <div>
+                    <h6 class="card-title mb-1"><i class="bi bi-instagram"></i> Siga o Auvo Talentos</h6>
+                    <p class="card-text small text-muted mb-0">Acompanhe nossa cultura, iniciativas e o dia a dia do time Auvo.</p>
+                </div>
+                <a href="https://www.instagram.com/auvotalentos/" target="_blank" class="btn btn-sm btn-instagram">@auvotalentos</a>
+            </div>
+        </div>
+    </div>
   </div>
 
-  <template x-if="feedback.message">
-    <div
-      :class="`alert alert-${feedback.type} alert-dismissible fade show`"
-      role="alert"
-    >
-      <span x-text="feedback.message"></span>
-      <button
-        type="button"
-        class="btn-close"
-        @click="feedback.message = ''"
-      ></button>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Gestão do FAQ</h2>
+    <div>
+        <a href="{{ url_for('admin.gerenciar_categorias_faq') }}" class="btn btn-secondary me-2">
+            <i class="bi bi-tags-fill me-2"></i>Gerir Categorias
+        </a>
+        <a href="{{ url_for('admin.adicionar_pergunta_faq') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle-fill me-2"></i>Adicionar Pergunta
+        </a>
     </div>
-  </template>
+  </div>
 
-  <div class="row">
-    <div class="col-md-8">
-      <div class="card">
-        <div class="card-header fw-bold">
-          <input
-            type="text"
-            x-model="search"
-            class="form-control"
-            placeholder="Buscar perguntas por título, resposta ou palavra-chave..."
-          />
-        </div>
-        <div class="card-body" style="max-height: 600px; overflow-y: auto">
-          <template x-if="filteredPerguntas.length > 0">
-            <ul class="list-group list-group-flush">
-              <template
-                x-for="pergunta in filteredPerguntas"
-                :key="pergunta.id"
-              >
-                <li
-                  class="list-group-item d-flex justify-content-between align-items-center"
-                >
-                  <div>
-                    <h6 class="my-0" x-text="pergunta.pergunta"></h6>
-                    <small
-                      class="text-muted"
-                      x-text="`Categoria: ${pergunta.categoria_nome}`"
-                    ></small>
-                  </div>
-                  <div>
-                    <a
-                      :href="`/admin/faq/perguntas/editar/${pergunta.id}`"
-                      class="btn btn-sm btn-outline-secondary me-1"
-                    >
-                      <i class="bi bi-pencil"></i>
-                    </a>
-                    <button
-                      @click="removerPergunta(pergunta.id)"
-                      class="btn btn-sm btn-outline-danger"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </li>
-              </template>
-            </ul>
-          </template>
-          <template x-if="filteredPerguntas.length === 0">
-            <p class="text-center text-muted">Nenhuma pergunta encontrada.</p>
-          </template>
-        </div>
-      </div>
+  <div class="card">
+    <div class="card-header fw-bold">
+      <input type="text" x-model="search" class="form-control" placeholder="Buscar perguntas por título, resposta ou palavra-chave...">
     </div>
-
-    <div class="col-md-4">
-      <div class="card mb-4">
-        <div class="card-header fw-bold">Adicionar Nova Pergunta</div>
-        <div class="card-body">
-          <form @submit.prevent="adicionarPergunta">
-            <div class="mb-3">
-              <label class="form-label">Categoria</label>
-              <select
-                x-model="novaPergunta.categoria_id"
-                class="form-select"
-                required
-              >
-                <option disabled value="">Selecione...</option>
-                <template x-for="categoria in categorias" :key="categoria.id">
-                  <option
-                    :value="categoria.id"
-                    x-text="categoria.nome"
-                  ></option>
-                </template>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Pergunta</label>
-              <input
-                type="text"
-                x-model="novaPergunta.pergunta"
-                class="form-control"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Resposta</label>
-              <textarea
-                x-model="novaPergunta.resposta"
-                class="form-control"
-                rows="4"
-                required
-              ></textarea>
-            </div>
-            <div class="mb-3">
-              <label class="form-label"
-                >Palavras-chave (separadas por vírgula)</label
-              >
-              <input
-                type="text"
-                x-model="novaPergunta.palavras_chave"
-                class="form-control"
-              />
-            </div>
-
-            <hr />
-            <p class="text-muted small">
-              Opcional: adicione um link à resposta.
-            </p>
-            <div class="mb-3">
-              <label for="link_url" class="form-label">URL do Link</label>
-              <input
-                type="url"
-                x-model="novaPergunta.link_url"
-                class="form-control"
-                placeholder="https://exemplo.com"
-              />
-            </div>
-            <div class="mb-3">
-              <label for="link_texto" class="form-label">Texto do Link</label>
-              <input
-                type="text"
-                x-model="novaPergunta.link_texto"
-                class="form-control"
-                placeholder="Clique aqui"
-              />
-            </div>
-            <button type="submit" class="btn btn-auvo w-100">
-              Adicionar Pergunta
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header fw-bold">Gerir Categorias</div>
-        <div class="card-body">
-          <form @submit.prevent="adicionarCategoria" class="mb-3">
-            <div class="input-group">
-              <input
-                type="text"
-                x-model="novaCategoriaNome"
-                class="form-control"
-                placeholder="Nova categoria..."
-                required
-              />
-              <button class="btn btn-outline-secondary" type="submit">
-                Adicionar
-              </button>
-            </div>
-          </form>
-          <hr />
-          <h6>Categorias Existentes</h6>
-          <div style="max-height: 200px; overflow-y: auto">
-            <template x-if="categorias.length > 0">
-              <ul class="list-group list-group-flush">
-                <template x-for="categoria in categorias" :key="categoria.id">
-                  <li
-                    class="list-group-item d-flex justify-content-between align-items-center"
-                  >
-                    <span x-text="categoria.nome"></span>
-                    <button
-                      @click="removerCategoria(categoria.id)"
-                      class="btn btn-sm btn-outline-danger"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </li>
-                </template>
-              </ul>
-            </template>
-            <template x-if="categorias.length === 0">
-              <p class="text-center text-muted">Nenhuma categoria criada.</p>
-            </template>
+    <div class="card-body">
+      <ul class="list-group list-group-flush">
+        {% for pergunta in perguntas %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="my-0">{{ pergunta.pergunta }}</h6>
+            <small class="text-muted">Categoria: {{ pergunta.categoria_nome }}</small>
           </div>
-        </div>
-      </div>
+          <div>
+            <a href="{{ url_for('admin.editar_pergunta_faq', id=pergunta.id) }}" class="btn btn-sm btn-outline-secondary me-1">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{{ url_for('admin.remover_pergunta_faq', id=pergunta.id) }}" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </li>
+        {% else %}
+        <li class="list-group-item text-center text-muted">Nenhuma pergunta encontrada.</li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 </div>
-
-<script>
-  window._categoriasData = {{ categorias|tojson|safe }};
-  window._perguntasData = {{ perguntas|tojson|safe }};
-</script>
-<script src="{{ url_for('static', filename='js/gerenciarFaq.js') }}"></script>
 {% endblock %}
