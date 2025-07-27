@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
-from flask_login import login_required  # Importe o login_required
-from datetime import datetime, timedelta
-from sqlalchemy import extract
-# Adicione 'db' aqui para que a rota da ouvidoria funcione
+from flask_login import login_required, current_user
+from datetime import datetime, date, timedelta
+from sqlalchemy import extract, desc
 from . import db
 from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento
 
@@ -11,43 +10,42 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 @main.route('/index')
-@login_required  # <-- Adicione esta proteção
+@login_required
 def index():
-    # --- Dados para os cards ---
-    aviso_recente = Aviso.query.order_by(Aviso.id.desc()).first()
+    # --- BUSCANDO DADOS PARA O DASHBOARD ---
     total_colaboradores = Colaborador.query.count()
 
-    # --- Lógica para Aniversariantes do Mês ---
-    mes_atual = datetime.utcnow().month
+    # 1. Avisos: Busca os 10 mais recentes, ordenados pela data de criação
+    # (É necessário adicionar a coluna 'data_criacao' no modelo 'Aviso')
+    avisos_obj = Aviso.query.order_by(
+        Aviso.data_criacao.desc()).limit(10).all()
+    # --- NOVA LINHA PARA CONVERTER OS OBJETOS ---
+    avisos_dict = [aviso.to_dict() for aviso in avisos_obj]
+
+    # 2. Aniversariantes: Busca TODOS os aniversariantes do mês atual
+    hoje = datetime.utcnow()
     aniversariantes_do_mes = Colaborador.query.filter(
-        extract('month', Colaborador.data_nascimento) == mes_atual
+        extract('month', Colaborador.data_nascimento) == hoje.month
     ).order_by(extract('day', Colaborador.data_nascimento)).all()
 
-    # --- LÓGICA PARA BUSCAR DESTAQUES RECENTES ---
-    hoje = datetime.utcnow()
-    # Pega destaques dos últimos ~3 meses
-    limite_data = hoje - timedelta(days=90)
-    destaques_recentes = Destaque.query.filter(
-        Destaque.ano >= limite_data.year,
-        Destaque.mes >= limite_data.month
-    ).order_by(Destaque.ano.desc(), Destaque.mes.desc()).all()
+    # 3. Destaques: Busca todos os destaques do mês e ano atuais
+    destaques_do_mes = Destaque.query.filter_by(
+        ano=hoje.year, mes=hoje.month).all()
 
-    # ---- NOVA LÓGICA PARA BUSCAR PRÓXIMOS EVENTOS ----
-    proximos_eventos_obj = Evento.query.filter(
-        Evento.start >= hoje).order_by(Evento.start.asc()).limit(10).all()
-    # Converte para um formato compatível com JSON para o Alpine.js
-    proximos_eventos_json = [evento.to_dict()
-                             for evento in proximos_eventos_obj]
-    # ----------------------------------------------------
+    # 4. Eventos: Busca os 5 próximos eventos a partir de hoje
+    eventos_proximos = Evento.query.filter(
+        Evento.start >= hoje
+    ).order_by(Evento.start.asc()).limit(5).all()
 
     return render_template(
-        'index.html',
-        title='Início',
-        aviso=aviso_recente,
+        'index.html',  # <-- Mude esta linha!
         total_colaboradores=total_colaboradores,
+        avisos=avisos_dict,  # <-- Passe a lista de dicionários, não de objetos
+        # <-- Corrigido para enviar todos do mês
         aniversariantes=aniversariantes_do_mes,
-        destaques=destaques_recentes,
-        eventos=proximos_eventos_json  # Envia os eventos para o template
+        destaques=destaques_do_mes,
+        eventos=eventos_proximos,  # <-- Enviando os objetos diretamente
+        current_user=current_user  # Garante que current_user está disponível no template
     )
 
 # --- Rota para exibir um aviso completo ---

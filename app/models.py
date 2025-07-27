@@ -68,11 +68,31 @@ class Colaborador(UserMixin, db.Model):  # --- ALTERAÇÃO 4: ADICIONA UserMixin
 
 
 class Aviso(db.Model):
+    # GARANTA QUE ESTA LINHA ESTÁ EXATAMENTE ASSIM:
     id = db.Column(db.Integer, primary_key=True)
+
+    # ... e que as outras colunas estão aqui embaixo
     titulo = db.Column(db.String(100), nullable=False)
     conteudo = db.Column(db.String(500), nullable=False)
     link_url = db.Column(db.String(length=200), nullable=True)
     link_texto = db.Column(db.String(length=100), nullable=True)
+    data_criacao = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def to_dict(self):
+        """Converte o objeto Aviso para um dicionário, incluindo data formatada."""
+        return {
+            'id': self.id,
+            'titulo': self.titulo,
+            'conteudo': self.conteudo,
+            'link_url': self.link_url,
+            'link_texto': self.link_texto,
+            
+            'data_criacao_iso': self.data_criacao.isoformat() if self.data_criacao else None,
+            
+            'data_criacao_fmt': self.data_criacao.strftime('%d/%m') if self.data_criacao else None
+        }
+
 
 
 class Destaque(db.Model):

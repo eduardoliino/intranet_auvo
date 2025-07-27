@@ -1,158 +1,217 @@
-/* app/static/css/style.css */
-
+/* --- VARIÁVEIS DE CORES GLOBAIS E CONFIGURAÇÕES --- */
 :root {
   --auvo-roxo-escuro: #2C0E52;
   --auvo-lilas: #A374D4;
   --auvo-verde: #31C48D;
-  --auvo-cinza: #CCCCCC;
-  --auvo-branco: #FFFFFF;
-  --cor-fundo-conteudo: #f1f5f9; 
+  --cor-fundo-conteudo: #f4f7fa; /* Um cinza azulado mais profissional */
 }
 
+/* --- ESTILOS GERAIS DO CORPO DA PÁGINA --- */
 body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--cor-fundo-conteudo);
+    color: #495057; /* Cor de texto padrão um pouco mais suave que preto puro */
 }
 
-/* --- MENU LATERAL --- */
+/* --- MENU LATERAL (SIDEBAR) --- */
 .sidebar {
     min-width: 250px;
     max-width: 250px;
     height: 100vh;
     background: var(--auvo-roxo-escuro);
-    color: var(--auvo-branco);
+    color: white;
     position: sticky;
     top: 0;
+    z-index: 1000;
+    transition: all 0.3s;
 }
 
 .sidebar .sidebar-header {
     padding: 20px;
-    background: #1e0938; /* Um pouco mais escuro para destaque */
+    background: #1e0938; /* Um roxo um pouco mais escuro para destaque */
     text-align: center;
 }
 
 .sidebar h3 {
     color: var(--auvo-lilas);
+    font-weight: 700;
 }
 
-.sidebar ul.components {
-    padding: 20px 0;
-}
-
-.sidebar ul li a {
-    padding: 15px 25px;
-    font-size: 1.1em;
-    display: block;
-    color: rgba(255, 255, 255, 0.8);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.sidebar ul.components li a {
+    padding: 16px 25px;
+    font-size: 1.05em;
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    border-left: 4px solid transparent; /* Espaço para o indicador de item ativo */
 }
 
-.sidebar ul li a:hover {
-    color: var(--auvo-branco);
+.sidebar ul.components li a:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar ul.components li.active > a {
+    color: white;
     background: var(--auvo-lilas);
+    border-left: 4px solid white; /* Indicador de item ativo */
 }
 
 .sidebar ul li a i {
-    margin-right: 10px;
+    margin-right: 15px;
+    font-size: 1.2em;
+    min-width: 25px; /* Garante que os textos fiquem alinhados mesmo com ícones de larguras diferentes */
 }
 
-/* --- CONTEÚDO PRINCIPAL --- */
+/* --- CONTEÚDO PRINCIPAL (MAIN CONTENT) --- */
 #content {
     width: 100%;
 }
 
-/* --- CARDS --- */
-.card {
-    border-radius: 0.75rem; /* Cantos arredondados para todos os cards */
-    border: none;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-
-.card-auvo {
-    border-left: 5px solid var(--auvo-lilas);
-}
-
-.card-auvo-rh {
-     border-left: 5px solid var(--auvo-verde);
-}
-
-.card-auvo h5 {
-    color: var(--auvo-roxo-escuro);
+.dashboard-title {
+    font-size: 28px;
     font-weight: 700;
+    color: #343a40;
 }
 
-/* --- Botão ---*/
-.btn-auvo {
-    background-color: var(--auvo-verde);
-    color: var(--auvo-branco);
-    border: none;
-    font-weight: 500;
-    border-radius: 0.5rem;
-    padding: 0.75rem 1rem;
-    transition: background-color 0.2s ease-in-out;
-}
-
-.btn-auvo:hover {
-    background-color: #28a071; /* um verde um pouco mais escuro */
-    color: var(--auvo-branco);
-}
-
-/* --- FORMULÁRIOS MODERNIZADOS --- */
-
-/* Estilo geral para inputs e selects */
-.form-control, .form-select {
-    border-radius: 0.5rem !important; /* Força os cantos arredondados */
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease-in-out;
-    padding: 0.75rem 1rem;
-    background-color: var(--auvo-branco);
-}
-
-/* Efeito ao focar no campo (quando o utilizador clica) */
-.form-control:focus, .form-select:focus {
-    border-color: var(--auvo-lilas);
-    box-shadow: 0 0 0 3px rgba(163, 116, 212, 0.25); /* Sombra suave na cor lilás */
-    outline: none;
-}
-
-/* Estilo para os rótulos dos formulários */
-.form-label {
-    font-weight: 500;
-    color: #4a5568;
-}
-
-/* --- MELHORIAS VISUAIS ESPECÍFICAS --- */
-
-/* Estilo para o Carrossel de Destaques */
-#carouselDestaques .carousel-inner {
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-    min-height: 320px;
+.totalizador-pill {
+    background-color: white;
+    border-radius: 50px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
+    font-size: 0.9em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-#carouselDestaques .carousel-item img {
-    border: 4px solid var(--auvo-branco);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+.totalizador-pill i {
+    color: var(--auvo-roxo-escuro);
+    font-size: 1.4rem;
+    margin-right: 8px;
 }
 
-/* --- ANIMAÇÕES COM ALPINE.JS --- */
-
-[x-cloak] {
-    display: none !important;
+/* --- ESTILO GERAL DOS CARDS --- */
+.card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    /* Borda lateral padrão (será sobrescrita por classes específicas) */
+    border-left: 5px solid transparent; 
 }
 
-.fade-in-card {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+.card-header.bg-transparent {
+    border-bottom: 1px solid #eee;
+    padding: 1rem 1.5rem; /* Ajusta o padding do cabeçalho do card */
 }
 
-.fade-in-card.visible {
-    opacity: 1;
-    transform: translateY(0);
+.card .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* === BORDAS E ESTILOS ESPECÍFICOS PARA CADA CARD === */
+
+/* Card de Destaques */
+.card-destaque { 
+    background: linear-gradient(135deg, var(--auvo-roxo-escuro) 0%, #4a2f7c 100%); 
+    color: white;
+    border-left-color: var(--auvo-lilas);
+}
+
+/* (ALTERAÇÃO) Classe adicionada para o novo card de eventos */
+.card-eventos {
+    border-left-color: #0d6efd; /* Azul do ícone de eventos */
+}
+
+/* Card de Aniversariantes */
+.card-aniversariantes {
+    border-left-color: #e74a3b; /* Vermelho/rosa para bolo */
+}
+
+/* Card da Ouvidoria */
+.card-ouvidoria {
+    border-left-color: var(--auvo-verde);
+}
+
+/* Removido o estilo do Acordeão que não é mais usado para eventos */
+
+
+/* --- COMPONENTES INTERNOS DOS CARDS --- */
+
+/* Carrossel de Destaques */
+.destaque-img {
+    height: 120px;
+    width: 120px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* Sombra mais pronunciada */
+}
+
+#carouselDestaques .carousel-control-prev-icon, 
+#carouselDestaques .carousel-control-next-icon {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    background-size: 50%;
+}
+
+/* Removido o estilo dos indicadores do Carrossel */
+
+
+/* Aniversariantes */
+.aniversariante-avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Eventos */
+.evento-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #eef2f6;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-weight: 600;
+    color: var(--auvo-roxo-escuro);
+    min-width: 55px;
+    text-align: center;
+}
+
+.evento-data span {
+    font-size: 1.2rem;
+    line-height: 1.2;
+}
+
+.evento-data small {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+/* --- BOTÕES E LINKS EXTERNOS --- */
+.card-link-externo {
+    border-left-color: #0d6efd; /* Azul padrão Bootstrap para links */
+}
+
+.btn-instagram {
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    color: white;
+    font-weight: 500;
+}
+
+.btn-ouvidoria {
+    background-color: var(--auvo-verde);
+    color: white;
+    font-weight: 500;
+}
+
+.btn-ouvidoria:hover, .btn-instagram:hover {
+    color: white;
+    opacity: 0.9;
 }

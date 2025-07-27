@@ -1,128 +1,95 @@
 <!DOCTYPE html>
 <html lang="pt-br" class="h-100">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Intranet Auvo</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
-    <!-- ADICIONE O CSS DO FULLCALENDAR -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
 
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-    ></script>
-  </head>
-
-  <body>
+<body>
     <div class="d-flex">
-      <nav class="sidebar">
-        <div class="sidebar-header">
-          <h3>Intranet Auvo</h3>
+        <!-- 🧭 6. MENU LATERAL APRIMORADO -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h3>Intranet Auvo</h3>
+            </div>
+            <ul class="list-unstyled components">
+                <!-- Verificamos a rota atual para aplicar a classe 'active' -->
+                <li class="{{ 'active' if request.endpoint == 'main.index' else '' }}">
+                    <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i> Início</a>
+                </li>
+                <li><a href="#"><i class="bi bi-megaphone-fill"></i> Avisos RH</a></li>
+                <li><a href="#"><i class="bi bi-cake2-fill"></i> Aniversariantes</a></li>
+                <li class="{{ 'active' if request.endpoint == 'main.ouvidoria' else '' }}">
+                    <a href="{{ url_for('main.ouvidoria') }}"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
+                </li>
+                <li class="{{ 'active' if request.endpoint == 'main.faq_publico' else '' }}">
+                    <a href="{{ url_for('main.faq_publico') }}"><i class="bi bi-patch-question-fill"></i> FAQ</a>
+                </li>
+
+                <hr class="sidebar-divider" />
+
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_admin %}
+                    <!-- Links que só o Admin (RH) vê -->
+                    <li class="{{ 'active' if 'colaborador' in request.endpoint else '' }}">
+                        <a href="{{ url_for('admin.listar_colaboradores') }}"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
+                    </li>
+                    <li class="{{ 'active' if 'aviso' in request.endpoint else '' }}">
+                        <a href="{{ url_for('admin.gerenciar_avisos') }}"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
+                    </li>
+                    <li class="{{ 'active' if 'destaque' in request.endpoint else '' }}">
+                        <a href="{{ url_for('admin.gerenciar_destaques') }}"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
+                    </li>
+                    <li class="{{ 'active' if 'faq' in request.endpoint else '' }}">
+                        <a href="{{ url_for('admin.gerenciar_faq') }}"><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a>
+                    </li>
+                    <li class="{{ 'active' if 'ouvidoria' in request.endpoint else '' }}">
+                        <a href="{{ url_for('admin.gerenciar_ouvidoria') }}"><i class="bi bi-ear-fill"></i> Gerir Ouvidoria</a>
+                    </li>
+                     <li class="{{ 'active' if request.endpoint == 'admin.calendario' else '' }}">
+                        <a href="{{ url_for('admin.calendario') }}"><i class="bi bi-calendar-event-fill"></i> Gerir Calendário</a>
+                    </li>
+                    {% endif %}
+
+                    <hr class="sidebar-divider" />
+                    
+                    <li>
+                        <a href="{{ url_for('auth.logout') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Sair do sistema">
+                            <i class="bi bi-box-arrow-right"></i> Sair
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <div id="content" class="p-4 p-md-5">
+            {% block content %}{% endblock %}
         </div>
-        <ul class="list-unstyled components">
-          <li class="active">
-            <a href="{{ url_for('main.index') }}"
-              ><i class="bi bi-house-door-fill"></i> Início</a
-            >
-          </li>
-          <li>
-            <a href="#"><i class="bi bi-megaphone-fill"></i> Avisos RH</a>
-          </li>
-          <li>
-            <a href="#"><i class="bi bi-cake2-fill"></i> Aniversariantes</a>
-          </li>
-          <li>
-            <a href="{{ url_for('main.ouvidoria') }}"
-              ><i class="bi bi-ear-fill"></i> Ouvidoria</a
-            >
-          </li>
-          <li>
-            <a href="{{ url_for('main.faq_publico') }}"
-              ><i class="bi bi-patch-question-fill"></i> FAQ</a
-            >
-          </li>
-
-          <hr class="my-2" style="border-color: rgba(255, 255, 255, 0.1)" />
-
-          <!-- O menu agora verifica se o utilizador é um admin -->
-          {% if current_user.is_authenticated %} {% if current_user.is_admin %}
-          <!-- Links que só o Admin (RH) vê -->
-          <li>
-            <a href="{{ url_for('admin.listar_colaboradores') }}"
-              ><i class="bi bi-people-fill"></i> Gerir Colaboradores</a
-            >
-          </li>
-          <li>
-            <a href="{{ url_for('admin.gerenciar_avisos') }}"
-              ><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a
-            >
-          </li>
-          <li>
-            <a href="{{ url_for('admin.gerenciar_destaques') }}"
-              ><i class="bi bi-star-fill"></i> Gerir Destaques</a
-            >
-          </li>
-          <li>
-            <a href="{{ url_for('admin.gerenciar_faq') }}"
-              ><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a
-            >
-          </li>
-          <li>
-            <a href="{{ url_for('admin.gerenciar_ouvidoria') }}"
-              ><i class="bi bi-ear-fill"></i> Gerir Ouvidoria</a
-            >
-          </li>
-          <li>
-            <a href="{{ url_for('admin.calendario') }}"
-              ><i class="bi bi-calendar-event-fill"></i> Gerir Calendário</a
-            >
-          </li>
-          {% endif %}
-
-          <!-- Link de Logout que todos os utilizadores logados veem -->
-          <li>
-            <a href="{{ url_for('auth.logout') }}"
-              ><i class="bi bi-box-arrow-right"></i> Sair (Logout)</a
-            >
-          </li>
-          {% else %} {% endif %}
-        </ul>
-      </nav>
-
-      <div id="content" class="p-4 p-md-5">
-        {% block content %}{% endblock %}
-      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- ADICIONE OS SCRIPTS DO FULLCALENDAR -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js"></script>
-    <!-- Para traduzir para português -->
-  </body>
+    
+    <!-- Script para inicializar os tooltips do Bootstrap -->
+    <script>
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+      })
+    </script>
+</body>
 </html>

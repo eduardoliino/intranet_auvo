@@ -1,192 +1,161 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- 1. A div principal agora apenas chama o nosso componente 'dashboard' -->
 <div x-data="dashboard">
-    <h2 class="mb-4">Dashboard</h2>
+  <div class="row align-items-center mb-4">
+    <div class="col-md-7">
+      <div class="d-flex align-items-center">
+        <h2 class="dashboard-title mb-0">Dashboard</h2>
+        <div class="totalizador-pill ms-3">
+          <i class="bi bi-people-fill"></i>
+          <span x-text="count"></span>
+          <span class="ms-1">Auvolovers</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-5">
+      <div class="card card-link-externo card-instagram h-100">
+        <div class="card-body d-flex justify-content-between align-items-center p-3">
+          <div>
+            <h6 class="card-title mb-1"><i class="bi bi-instagram"></i> Siga o Auvo Talentos</h6>
+            <p class="card-text small text-muted mb-0">Nossa cultura e vagas abertas.</p>
+          </div>
+          <a href="https://www.instagram.com/auvotalentos/" target="_blank" class="btn btn-sm btn-instagram">Ver no Instagram</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Primeira Linha: Avisos e Nosso Time -->
-    <div class="row">
-      <div class="col-md-8 fade-in-card" x-cloak>
-        <div class="card card-auvo card-auvo-rh mb-4">
-          <div class="card-body">
-            {% if aviso %}
-            <h5 class="card-title">
-              <a href="{{ url_for('main.aviso_detalhe', aviso_id=aviso.id) }}" class="text-decoration-none text-dark">
-                <i class="bi bi-megaphone-fill"></i> {{ aviso.titulo }}
+  <div class="row">
+    <div class="col-lg-7">
+      <div class="card card-comunicados mb-4">
+        <div class="card-header bg-transparent">
+          <h5 class="card-title mb-0"><i class="bi bi-megaphone-fill text-auvo-verde"></i> Comunicados Importantes</h5>
+        </div>
+        <div class="card-body p-0" style="max-height: 250px; overflow-y: auto;">
+          <div class="list-group list-group-flush">
+            {% if avisos %}
+              {% for aviso in avisos %}
+              <a href="#" @click.prevent="openAvisoModal({{ aviso }})" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                  <h6 class="mb-1 fw-bold small">{{ aviso.titulo }}</h6>
+                  <small class="text-muted">{{ aviso.data_criacao_fmt }}</small>
+                </div>
+                <p class="mb-1 text-muted small">{{ aviso.conteudo|truncate(80) }}</p>
               </a>
-            </h5>
-            <p class="card-text">{{ aviso.conteudo|truncate(150) }}</p>
-            {% if aviso.link_url and aviso.link_texto %}
-            <a href="{{ aviso.link_url }}" target="_blank" class="btn btn-auvo">{{ aviso.link_texto }}</a>
-            {% endif %}
+              {% endfor %}
             {% else %}
-            <h5 class="card-title"><i class="bi bi-megaphone-fill"></i> Avisos do RH</h5>
-            <p class="card-text">Nenhum aviso no momento.</p>
+              <p class="text-muted text-center p-3 small">Nenhum comunicado recente.</p>
             {% endif %}
           </div>
         </div>
       </div>
-    
-      <div class="col-md-4 fade-in-card" x-cloak>
-        <div class="card card-auvo mb-4">
-          <!-- O contador agora é controlado pelo componente 'dashboard' -->
-          <div class="card-body text-center">
-            <h5 class="card-title"><i class="bi bi-people-fill"></i> Nosso Time</h5>
-            <p class="display-4 fw-bold" x-text="count"></p>
-            <p class="card-text">Colaboradores</p>
+      
+      <div class="card card-destaque mb-4">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0 text-white"><i class="bi bi-star-fill" style="color: var(--auvo-lilas);"></i> Destaques do Mês</h5>
+        </div>
+        <div class="card-body text-center pt-2">
+          {% if destaques %}
+          <div id="carouselDestaques" class="carousel slide carousel-fade" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              {% for destaque in destaques %}
+              <div class="carousel-item {{ 'active' if loop.first else '' }}">
+                {% set imagem_url = url_for('static', filename='fotos_colaboradores/' + (destaque.imagem_filename or destaque.colaborador.foto_filename or 'img/default_avatar.png')) %}
+                <img src="{{ imagem_url }}" class="img-fluid rounded mb-3" style="max-height: 350px;" alt="Destaque do Mês">
+                <h6 class="fw-bold mb-1">{{ destaque.colaborador.nome }} {{ destaque.colaborador.sobrenome }}</h6>
+                <p class="text-white-50 fst-italic">“{{ destaque.descricao or 'Destaque do Mês!' }}”</p>
+              </div>
+              {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#carouselDestaques" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#carouselDestaques" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
           </div>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="bi bi-star-fill fs-1 text-white-50"></i>
+            <h6 class="mt-3">Nenhum Destaque do Mês</h6>
+            <p class="text-white-50 small">Aguardando os novos talentos brilharem!</p>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
 
-    <!-- Segunda Linha: Aniversariantes e Próximos Eventos -->
-    <div class="row">
-        <div class="col-md-6 fade-in-card" x-cloak>
-          <div class="card card-auvo mb-4">
-            <div class="card-body">
-              <h5 class="card-title"><i class="bi bi-cake2-fill"></i> Aniversariantes do Mês</h5>
-              {% if aniversariantes %}
-              <ul class="list-group list-group-flush">
-                {% for aniversariante in aniversariantes %}
+    <div class="col-lg-5">
+      <div class="card card-ouvidoria mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center p-3">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-chat-quote-fill fs-3 text-auvo-verde me-3"></i>
+            <div>
+              <h6 class="card-title mb-1">Canal de Ouvidoria</h6>
+              <p class="card-text small text-muted mb-0">Envie sugestões ou críticas.</p>
+            </div>
+          </div>
+          <a href="{{ url_for('main.ouvidoria') }}" class="btn btn-sm btn-ouvidoria">Enviar</a>
+        </div>
+      </div>
+        
+      <div class="card card-eventos mb-4">
+        <div class="card-header bg-transparent">
+            <h5 class="card-title mb-0"><i class="bi bi-calendar-event-fill text-primary me-2"></i> Próximos Eventos</h5>
+        </div>
+        <div class="card-body p-0" style="max-height: 250px; overflow-y: auto;">
+            <ul class="list-group list-group-flush">
+                {% if eventos %}
+                {% for evento in eventos %}
                 <li class="list-group-item d-flex align-items-center">
-                  {% if aniversariante.foto_filename %}
-                  <img src="{{ url_for('static', filename='fotos_colaboradores/' + aniversariante.foto_filename) }}" alt="Foto de {{ aniversariante.nome }}" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;"/>
-                  {% else %}
-                  <img src="{{ url_for('static', filename='img/default_avatar.png') }}" alt="Avatar Padrão" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;"/>
-                  {% endif %}
-                  <div>
-                    <div class="fw-bold">{{ aniversariante.nome }} {{ aniversariante.sobrenome }}</div>
-                    <div class="text-muted">{{ aniversariante.data_nascimento.strftime('%d/%m') }}</div>
-                  </div>
+                <div class="evento-data">
+                    <span>{{ evento.start.strftime('%d') }}</span>
+                    <small>{{ evento.start.strftime('%b') }}</small>
+                </div>
+                <div class="ms-3">
+                    <h6 class="fw-bold mb-0 small">{{ evento.title }}</h6>
+                </div>
                 </li>
                 {% endfor %}
-              </ul>
-              {% else %}
-              <p class="text-center text-muted mt-3">Nenhum aniversariante este mês.</p>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-    
-        <div class="col-md-6 fade-in-card" x-cloak>
-            <div class="card card-auvo mb-4">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-calendar-event-fill"></i> Próximos Eventos</h5>
-                    <div style="max-height: 280px; overflow-y: auto;">
-                        <template x-if="eventos.length > 0">
-                            <ul class="list-group list-group-flush">
-                                <template x-for="evento in eventos" :key="evento.id">
-                                    <li class="list-group-item">
-                                        <a href="#" @click.prevent="openEventModal(evento.id)" class="text-decoration-none text-dark d-flex align-items-center">
-                                            <div class="me-3 text-center" style="min-width: 50px;">
-                                                <div class="fw-bold fs-5" x-text="new Date(evento.start).getDate()"></div>
-                                                <div class="small text-muted" x-text="new Date(evento.start).toLocaleString('pt-BR', { month: 'short' })"></div>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0" x-text="evento.title"></h6>
-                                                <p class="mb-1 small text-muted" x-text="evento.location || 'Local a definir'"></p>
-                                            </div>
-                                        </a>
-                                    </li>
-                                </template>
-                            </ul>
-                        </template>
-                        <template x-if="eventos.length === 0">
-                            <p class="text-center text-muted mt-3">Nenhum evento futuro agendado.</p>
-                        </template>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Terceira Linha: Destaques e Outros -->
-    <div class="row">
-        <div class="col-md-6 fade-in-card" x-cloak>
-            <div class="card card-auvo mb-4">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-star-fill"></i> Destaques do Mês</h5>
-                    {% if destaques %}
-                        <div id="carouselDestaques" class="carousel slide" data-bs-ride="carousel">
-                            <div class="carousel-inner text-center">
-                                {% for destaque in destaques %}
-                                    <div class="carousel-item {% if loop.first %}active{% endif %}" data-bs-interval="5000">
-                                        {% set imagem_url = url_for('static', filename='img/default_avatar.png') %}
-                                        {% if destaque.imagem_filename %}
-                                            {% set imagem_url = url_for('static', filename='fotos_colaboradores/' + destaque.imagem_filename) %}
-                                        {% elif destaque.colaborador.foto_filename %}
-                                            {% set imagem_url = url_for('static', filename='fotos_colaboradores/' + destaque.colaborador.foto_filename) %}
-                                        {% endif %}
-                                        <img src="{{ imagem_url }}" class="d-block mx-auto mb-3 img-fluid" alt="Destaque do Mês" style="max-height: 250px; border-radius: 8px;">
-                                        <div class="mt-2">
-                                            <h6 class="fw-bold">{{ destaque.titulo }}</h6>
-                                            <p class="mb-1">{{ destaque.colaborador.nome }} {{ destaque.colaborador.sobrenome }}</p>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselDestaques" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(1);"></span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#carouselDestaques" data-bs-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true" style="filter: invert(1);"></span>
-                            </button>
-                        </div>
-                    {% else %}
-                        <p class="text-center text-muted mt-3">Nenhum destaque recente.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="fade-in-card" x-cloak>
-                <div class="card card-auvo mb-4">
-                   <div class="card-body">
-                       <h5 class="card-title"><i class="bi bi-ear-fill"></i> Ouvidoria</h5>
-                       <p class="card-text">Tem alguma sugestão, crítica ou elogio anónimo para a empresa? A sua voz é importante para nós.</p>
-                       <a href="{{ url_for('main.ouvidoria') }}" class="btn btn-auvo">Aceder ao formulário</a>
-                   </div>
-               </div>
-           </div>
-           <div class="fade-in-card" x-cloak>
-                <div class="card card-auvo mb-4">
-                   <div class="card-body">
-                       <h5 class="card-title"><i class="bi bi-instagram"></i> Junte-se a Nós</h5>
-                       <p class="card-text">Fique a par das nossas vagas e da cultura da Auvo. Siga o nosso perfil de talentos no Instagram!</p>
-                       <a href="https://www.instagram.com/auvotalentos/" target="_blank" class="btn btn-auvo">Seguir @auvotalentos</a>
-                   </div>
-               </div>
-           </div>
-        </div>
-    </div>
-
-    <!-- Modal de Detalhes do Evento (Pop-up) -->
-    <div class="modal fade" id="eventDetailModal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" x-show="selectedEvent">
-          <div class="modal-header">
-            <h5 class="modal-title" x-text="selectedEvent?.title"></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <p><strong>Início:</strong> <span x-text="new Date(selectedEvent?.start).toLocaleString('pt-BR', {dateStyle: 'long', timeStyle: 'short'})"></span></p>
-            <p x-show="selectedEvent?.end"><strong>Fim:</strong> <span x-text="new Date(selectedEvent?.end).toLocaleString('pt-BR', {dateStyle: 'long', timeStyle: 'short'})"></span></p>
-            <p x-show="selectedEvent?.location"><strong>Local:</strong> <span x-text="selectedEvent?.location"></span></p>
-            <hr x-show="selectedEvent?.description">
-            <p style="white-space: pre-wrap;" x-text="selectedEvent?.description"></p>
-          </div>
+                {% else %}
+                <p class="text-muted text-center p-3 small">Nenhum evento agendado.</p>
+                {% endif %}
+            </ul>
         </div>
       </div>
+
+      <div class="card card-aniversariantes mb-4">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0"><i class="bi bi-cake2-fill text-danger"></i> Aniversariantes do Mês</h5>
+        </div>
+        <div class="card-body" style="max-height: 350px; overflow-y: auto;">
+          {% if aniversariantes %}
+          <ul class="list-group list-group-flush">
+            {% for aniversariante in aniversariantes %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <img src="{{ url_for('static', filename='fotos_colaboradores/' + (aniversariante.foto_filename or 'img/default_avatar.png')) }}" class="aniversariante-avatar" alt="Foto">
+                <span class="ms-2"> {{ aniversariante.nome }}</span>
+              </div>
+              <span class="badge bg-light text-dark">{{ aniversariante.data_nascimento.strftime('%d/%m') }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p class="text-muted text-center mt-3">Nenhum aniversariante este mês.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="avisoDetailModal" tabindex="-1" aria-labelledby="avisoDetailModalLabel" aria-hidden="true">
     </div>
 </div>
 
-<!-- 2. Passamos os dados do Flask para variáveis JS -->
 <script>
-    window._eventosData = {{ eventos|tojson|safe }};
-    window._totalColaboradoresData = {{ total_colaboradores }};
+  window._totalColaboradores = {{ total_colaboradores or 0 }};
 </script>
-<!-- 3. Carregamos o nosso ficheiro JS externo -->
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

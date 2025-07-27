@@ -1,28 +1,17 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('dashboard', () => ({
-        // --- Dados Iniciais (vindos do Flask) ---
-        eventos: window._eventosData || [],
-        totalColaboradores: window._totalColaboradoresData || 0,
+        // --- Dados Iniciais ---
+        totalColaboradores: window._totalColaboradores || 0,
         
         // --- Estado da Página ---
-        selectedEvent: null,
+        selectedAviso: null,
         count: 0,
 
         // --- Método de Inicialização ---
-        // Este método é executado assim que a página carrega
         init() {
-            // Lógica para o efeito de "fade-in" dos cards
-            this.$nextTick(() => {
-                document.querySelectorAll('.fade-in-card').forEach((el, index) => {
-                    setTimeout(() => {
-                        el.classList.add('visible');
-                    }, index * 100);
-                });
-            });
-
-            // Lógica para a animação do contador de colaboradores
+            // Animação do contador de colaboradores
             if (this.totalColaboradores > 0) {
-                let step = this.totalColaboradores / 100;
+                let step = Math.max(1, this.totalColaboradores / 100);
                 let current = 0;
                 let timer = setInterval(() => {
                     current += step;
@@ -31,16 +20,15 @@ document.addEventListener('alpine:init', () => {
                         clearInterval(timer);
                     }
                     this.count = Math.floor(current);
-                }, 10);
+                }, 15);
             }
         },
 
-        // --- Métodos de Ação ---
-        // Função para abrir o modal com os detalhes do evento
-        openEventModal(eventId) {
-            this.selectedEvent = this.eventos.find(e => e.id === eventId);
-            const eventModal = new bootstrap.Modal(document.getElementById('eventDetailModal'));
-            eventModal.show();
+        // Abre o modal de detalhes do Aviso
+        openAvisoModal(aviso) {
+            this.selectedAviso = aviso;
+            const avisoModal = new bootstrap.Modal(document.getElementById('avisoDetailModal'));
+            avisoModal.show();
         }
     }));
 });
