@@ -1,63 +1,72 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header text-center">
-                <h2 class="mb-0">Canal de Ouvidoria</h2>
-            </div>
-            <div class="card-body" x-data="formOuvidoria">
-                <p class="text-center text-muted mb-4">Este é um espaço seguro para registar denúncias, reclamações ou sugestões.</p>
+<div x-data="formOuvidoria">
 
-                <template x-if="feedback.message">
-                    <div :class="`alert alert-${feedback.type}`" x-text="feedback.message" x-transition></div>
-                </template>
-
-                <form @submit.prevent="submitForm">
-                    <div class="mb-3">
-                        <label for="tipo_denuncia" class="form-label">Assunto</label>
-                        <select class="form-select" id="tipo_denuncia" x-model="formData.tipo_denuncia" required>
-                            <option selected disabled value="">Selecione o tipo...</option>
-                            <option value="Sugestão">Sugestão</option>
-                            <option value="Reclamação">Reclamação</option>
-                            <option value="Assédio">Assédio</option>
-                            <option value="Outros">Outros</option>
-                        </select>
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <img src="{{ url_for('static', filename='img/logo_nova.png') }}" alt="Intranet Auvo" style="max-height: 50px;">
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-body p-lg-5">
+                    <div class="text-center">
+                        <i class="bi bi-ear-fill fs-1" style="color: var(--auvo-verde);"></i>
+                        <h2 class="mt-3 mb-1">Canal de Ouvidoria</h2>
+                        <p class="text-center text-muted mb-4">Este é um espaço seguro e confidencial para as suas manifestações.</p>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="mensagem" class="form-label">Mensagem</label>
-                        <textarea class="form-control" id="mensagem" x-model="formData.mensagem" rows="6" required placeholder="Descreva a sua mensagem em detalhe..."></textarea>
-                    </div>
+                    <template x-if="feedback.message">
+                        <div :class="`alert alert-${feedback.type}`" x-text="feedback.message" x-transition></div>
+                    </template>
 
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="identificacaoSwitch" x-model="formData.identificado">
-                        <label class="form-check-label" for="identificacaoSwitch">Desejo identificar-me</label>
-                    </div>
+                    <form @submit.prevent="submitForm">
+                        <div class="mb-3">
+                            <label for="tipo_denuncia" class="form-label">Assunto</label>
+                            <select class="form-select" id="tipo_denuncia" x-model="formData.tipo_denuncia" required>
+                                <option selected disabled value="">Selecione o tipo...</option>
+                                <option value="Sugestão">Sugestão</option>
+                                <option value="Reclamação">Reclamação</option>
+                                <option value="Assédio">Assédio</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
 
-                    <div x-show="formData.identificado" x-transition.opacity.duration.500ms>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="nome" class="form-label">Nome (Opcional)</label>
-                                <input type="text" class="form-control" id="nome" x-model="formData.nome">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="contato" class="form-label">Contacto (Opcional)</label>
-                                <input type="text" class="form-control" id="contato" x-model="formData.contato">
+                        <div class="mb-3">
+                            <label for="mensagem" class="form-label">Mensagem</label>
+                            <textarea class="form-control" id="mensagem" x-model="formData.mensagem" rows="6" required placeholder="Descreva a sua mensagem em detalhe..."></textarea>
+                        </div>
+
+                        <div class="form-check form-switch mb-4">
+                            <input class="form-check-input" type="checkbox" role="switch" id="identificacaoSwitch" x-model="formData.identificado">
+                            <label class="form-check-label" for="identificacaoSwitch">Desejo identificar-me (opcional)</label>
+                        </div>
+
+                        <div x-show="formData.identificado" x-transition.opacity.duration.500ms>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="nome" class="form-label">Nome</label>
+                                    <input type="text" class="form-control" id="nome" x-model="formData.nome" placeholder="O seu nome">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="contato" class="form-label">Contacto (E-mail ou Telefone)</label>
+                                    <input type="text" class="form-control" id="contato" x-model="formData.contato" placeholder="O seu contacto">
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="alert alert-info small" x-show="!formData.identificado" x-transition.opacity.duration.500ms>
-                        <b>Aviso de Anonimato:</b> Se optar por não se identificar, respeitaremos o seu anonimato. No entanto, não poderemos entrar em contacto para esclarecer dúvidas ou dar retorno sobre a sua mensagem.
-                    </div>
+                        
+                        <div class="alert alert-info small" x-show="!formData.identificado" x-transition.opacity.duration.500ms>
+                            <b>A sua mensagem será enviada como anónima.</b> Respeitaremos o seu anonimato, mas não poderemos dar seguimento ou retorno sobre a sua manifestação.
+                        </div>
 
-                    <button type="submit" class="btn btn-auvo w-100" :disabled="submitting">
-                        <span x-show="!submitting">Enviar Mensagem</span>
-                        <span x-show="submitting">A Enviar...</span>
-                    </button>
-                </form>
+                        <button type="submit" class="btn btn-auvo w-100 mt-3" :disabled="submitting">
+                            <span x-show="!submitting">Enviar Mensagem</span>
+                            <span x-show="submitting">A Enviar...</span>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

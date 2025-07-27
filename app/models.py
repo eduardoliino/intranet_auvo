@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import datetime
 
+
 @login_manager.user_loader
 def load_user(user_id):
     if user_id.startswith('admin-'):
@@ -87,12 +88,11 @@ class Aviso(db.Model):
             'conteudo': self.conteudo,
             'link_url': self.link_url,
             'link_texto': self.link_texto,
-            
+
             'data_criacao_iso': self.data_criacao.isoformat() if self.data_criacao else None,
-            
+
             'data_criacao_fmt': self.data_criacao.strftime('%d/%m') if self.data_criacao else None
         }
-
 
 
 class Destaque(db.Model):
@@ -111,6 +111,7 @@ class Destaque(db.Model):
         'colaborador.id'), nullable=False)
     # Relação para aceder facilmente aos dados do colaborador a partir de um destaque
     colaborador = db.relationship('Colaborador', backref='destaques')
+
 
 class FaqCategoria(db.Model):
     __tablename__ = 'faq_categoria'
@@ -155,11 +156,12 @@ class Ouvidoria(db.Model):
     nome = db.Column(db.String(150), nullable=True)
     contato = db.Column(db.String(150), nullable=True)
     status = db.Column(db.String(50), nullable=False,
-                       default='Nova') 
+                       default='Nova')
     responsavel = db.Column(db.String(150), nullable=True)
 
     def __repr__(self):
         return f'<Ouvidoria {self.id} - {self.tipo_denuncia}>'
+
 
 class Evento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -168,11 +170,12 @@ class Evento(db.Model):
     start = db.Column(db.DateTime, nullable=False)
     end = db.Column(db.DateTime, nullable=True)
     location = db.Column(db.String(200), nullable=True)
-    color = db.Column(db.String(20), nullable=True, default='#3788d8') # Cor padrão do FullCalendar
+    # Cor padrão do FullCalendar
+    color = db.Column(db.String(20), nullable=True, default='#3788d8')
 
     # Chave estrangeira para ligar o evento ao utilizador que o criou
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
+
     def to_dict(self):
         """Converte o objeto Evento para um dicionário compatível com FullCalendar."""
         return {

@@ -1,16 +1,16 @@
 /* --- VARIÁVEIS DE CORES GLOBAIS E CONFIGURAÇÕES --- */
 :root {
-  --auvo-roxo-escuro: #2C0E52;
+  --auvo-roxo-escuro: #6D26C2;
   --auvo-lilas: #A374D4;
   --auvo-verde: #31C48D;
-  --cor-fundo-conteudo: #f4f7fa; /* Um cinza azulado mais profissional */
+  --cor-fundo-conteudo: #f4f7fa;
 }
 
 /* --- ESTILOS GERAIS DO CORPO DA PÁGINA --- */
 body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--cor-fundo-conteudo);
-    color: #495057; /* Cor de texto padrão um pouco mais suave que preto puro */
+    color: #495057;
 }
 
 /* --- MENU LATERAL (SIDEBAR) --- */
@@ -28,13 +28,9 @@ body {
 
 .sidebar .sidebar-header {
     padding: 20px;
-    background: #1e0938; /* Um roxo um pouco mais escuro para destaque */
+    background: #6D26C2;
     text-align: center;
-}
-
-.sidebar h3 {
-    color: var(--auvo-lilas);
-    font-weight: 700;
+    height: 100px;
 }
 
 .sidebar ul.components li a {
@@ -45,7 +41,7 @@ body {
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     transition: all 0.2s;
-    border-left: 4px solid transparent; /* Espaço para o indicador de item ativo */
+    border-left: 4px solid transparent;
 }
 
 .sidebar ul.components li a:hover {
@@ -56,24 +52,18 @@ body {
 .sidebar ul.components li.active > a {
     color: white;
     background: var(--auvo-lilas);
-    border-left: 4px solid white; /* Indicador de item ativo */
+    border-left: 4px solid white;
 }
 
 .sidebar ul li a i {
     margin-right: 15px;
     font-size: 1.2em;
-    min-width: 25px; /* Garante que os textos fiquem alinhados mesmo com ícones de larguras diferentes */
+    min-width: 25px;
 }
 
 /* --- CONTEÚDO PRINCIPAL (MAIN CONTENT) --- */
 #content {
     width: 100%;
-}
-
-.dashboard-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #343a40;
 }
 
 .totalizador-pill {
@@ -86,24 +76,17 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.totalizador-pill i {
-    color: var(--auvo-roxo-escuro);
-    font-size: 1.4rem;
-    margin-right: 8px;
-}
-
 /* --- ESTILO GERAL DOS CARDS --- */
 .card {
     border-radius: 12px;
     border: none;
     box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-    /* Borda lateral padrão (será sobrescrita por classes específicas) */
     border-left: 5px solid transparent; 
 }
 
 .card-header.bg-transparent {
     border-bottom: 1px solid #eee;
-    padding: 1rem 1.5rem; /* Ajusta o padding do cabeçalho do card */
+    padding: 1rem 1.5rem;
 }
 
 .card .card-title {
@@ -111,58 +94,25 @@ body {
     font-weight: 600;
 }
 
-/* === BORDAS E ESTILOS ESPECÍFICOS PARA CADA CARD === */
-
-/* Card de Destaques */
-.card-destaque { 
-    background: linear-gradient(135deg, var(--auvo-roxo-escuro) 0%, #4a2f7c 100%); 
-    color: white;
-    border-left-color: var(--auvo-lilas);
-}
-
-/* (ALTERAÇÃO) Classe adicionada para o novo card de eventos */
-.card-eventos {
-    border-left-color: #0d6efd; /* Azul do ícone de eventos */
-}
-
-/* Card de Aniversariantes */
-.card-aniversariantes {
-    border-left-color: #e74a3b; /* Vermelho/rosa para bolo */
-}
-
-/* Card da Ouvidoria */
+/* BORDAS E ESTILOS ESPECÍFICOS PARA CADA CARD */
+.card-comunicados,
 .card-ouvidoria {
     border-left-color: var(--auvo-verde);
 }
 
-/* Removido o estilo do Acordeão que não é mais usado para eventos */
+.card-eventos,
+.card-aniversariantes,
+.card-link-externo {
+    border-left-color: var(--auvo-lilas);
+}
 
+.card-destaque { 
+    background: linear-gradient(135deg, var(--auvo-roxo-escuro) 0%, #4a2f7c 100%); 
+    color: white;
+    border-left-color: transparent;
+}
 
 /* --- COMPONENTES INTERNOS DOS CARDS --- */
-
-/* Carrossel de Destaques */
-.destaque-img {
-    height: 120px;
-    width: 120px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 4px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* Sombra mais pronunciada */
-}
-
-#carouselDestaques .carousel-control-prev-icon, 
-#carouselDestaques .carousel-control-next-icon {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
-    background-size: 50%;
-}
-
-/* Removido o estilo dos indicadores do Carrossel */
-
-
-/* Aniversariantes */
 .aniversariante-avatar {
     width: 40px;
     height: 40px;
@@ -170,7 +120,6 @@ body {
     border-radius: 50%;
 }
 
-/* Eventos */
 .evento-data {
     display: flex;
     flex-direction: column;
@@ -184,34 +133,76 @@ body {
     text-align: center;
 }
 
-.evento-data span {
-    font-size: 1.2rem;
-    line-height: 1.2;
+/* --- BOTÕES --- */
+.btn-auvo {
+    background: linear-gradient(90deg, var(--auvo-lilas), var(--auvo-roxo-escuro));
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-weight: 500;
+    transition: transform 0.2s;
 }
-
-.evento-data small {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-}
-
-/* --- BOTÕES E LINKS EXTERNOS --- */
-.card-link-externo {
-    border-left-color: #0d6efd; /* Azul padrão Bootstrap para links */
+.btn-auvo:hover {
+    transform: scale(1.02);
+    color: white;
 }
 
 .btn-instagram {
     background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
     color: white;
     font-weight: 500;
+    transition: transform 0.2s ease;
 }
 
 .btn-ouvidoria {
     background-color: var(--auvo-verde);
     color: white;
     font-weight: 500;
+    transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-.btn-ouvidoria:hover, .btn-instagram:hover {
-    color: white;
-    opacity: 0.9;
+/* === ÁREA DA ALTERAÇÃO: Efeito hover dos botões corrigido === */
+.btn-card-action {
+    min-width: 140px;
+    text-align: center;
 }
+
+.btn-instagram:hover {
+    color: white;
+    transform: scale(1.05); 
+}
+
+/* Regra específica e definitiva para o hover do botão de ouvidoria */
+.btn-ouvidoria:hover {
+    background-color: #2aa87b; /* Um tom de verde um pouco mais escuro */
+    color: white; /* Garante que o texto permanece branco */
+    transform: scale(1.05);
+}
+/* === FIM DA ÁREA DA CORREÇÃO === */
+
+
+/* ESTILOS MODERNOS PARA FORMULÁRIOS */
+.form-control, .form-select {
+    border-radius: 0.5rem !important;
+    background-color: #f1f5f9 !important;
+    border: none !important;
+    padding: 0.75rem 1rem !important;
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 2px var(--auvo-lilas) !important;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+    color: var(--auvo-roxo-escuro);
+}
+
+/* Barra de rolagem customizada */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-button { display: none; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: #d1d1d1; border-radius: 20px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #a8a8a8; }
+.custom-scrollbar { scrollbar-width: thin; scrollbar-color: #d1d1d1 transparent; }

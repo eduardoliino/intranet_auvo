@@ -20,18 +20,14 @@
 
 <body>
     <div class="d-flex">
-        <!-- 🧭 6. MENU LATERAL APRIMORADO -->
         <nav class="sidebar">
-            <div class="sidebar-header">
-                <h3>Intranet Auvo</h3>
-            </div>
+            <div class="sidebar-header" style="height: 60px;">
+                </div>
             <ul class="list-unstyled components">
-                <!-- Verificamos a rota atual para aplicar a classe 'active' -->
                 <li class="{{ 'active' if request.endpoint == 'main.index' else '' }}">
                     <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i> Início</a>
                 </li>
-                <li><a href="#"><i class="bi bi-megaphone-fill"></i> Avisos RH</a></li>
-                <li><a href="#"><i class="bi bi-cake2-fill"></i> Aniversariantes</a></li>
+                
                 <li class="{{ 'active' if request.endpoint == 'main.ouvidoria' else '' }}">
                     <a href="{{ url_for('main.ouvidoria') }}"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
                 </li>
@@ -43,7 +39,6 @@
 
                 {% if current_user.is_authenticated %}
                     {% if current_user.is_admin %}
-                    <!-- Links que só o Admin (RH) vê -->
                     <li class="{{ 'active' if 'colaborador' in request.endpoint else '' }}">
                         <a href="{{ url_for('admin.listar_colaboradores') }}"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
                     </li>
@@ -60,7 +55,7 @@
                         <a href="{{ url_for('admin.gerenciar_ouvidoria') }}"><i class="bi bi-ear-fill"></i> Gerir Ouvidoria</a>
                     </li>
                      <li class="{{ 'active' if request.endpoint == 'admin.calendario' else '' }}">
-                        <a href="{{ url_for('admin.calendario') }}"><i class="bi bi-calendar-event-fill"></i> Gerir Calendário</a>
+                        <a href="{{ url_for('admin.calendario') }}"><i class="bi bi-calendar-event-fill"></i> Gerir Eventos</a>
                     </li>
                     {% endif %}
 
@@ -84,7 +79,8 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js"></script>
     
-    <!-- Script para inicializar os tooltips do Bootstrap -->
+    {% block page_scripts %}{% endblock %}
+
     <script>
       var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
       var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

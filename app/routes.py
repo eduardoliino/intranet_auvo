@@ -4,6 +4,10 @@ from datetime import datetime, date, timedelta
 from sqlalchemy import extract, desc
 from . import db
 from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento
+import locale  # Importe a biblioteca de localização
+
+# Defina a localização para português do Brasil para obter nomes de meses corretos
+locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
 
 main = Blueprint('main', __name__)
 
@@ -12,56 +16,59 @@ main = Blueprint('main', __name__)
 @main.route('/index')
 @login_required
 def index():
-    # --- BUSCANDO DADOS PARA O DASHBOARD ---
     total_colaboradores = Colaborador.query.count()
-
-    # 1. Avisos: Busca os 10 mais recentes, ordenados pela data de criação
-    # (É necessário adicionar a coluna 'data_criacao' no modelo 'Aviso')
     avisos_obj = Aviso.query.order_by(
         Aviso.data_criacao.desc()).limit(10).all()
-    # --- NOVA LINHA PARA CONVERTER OS OBJETOS ---
     avisos_dict = [aviso.to_dict() for aviso in avisos_obj]
 
-    # 2. Aniversariantes: Busca TODOS os aniversariantes do mês atual
     hoje = datetime.utcnow()
     aniversariantes_do_mes = Colaborador.query.filter(
         extract('month', Colaborador.data_nascimento) == hoje.month
     ).order_by(extract('day', Colaborador.data_nascimento)).all()
 
-    # 3. Destaques: Busca todos os destaques do mês e ano atuais
-    destaques_do_mes = Destaque.query.filter_by(
-        ano=hoje.year, mes=hoje.month).all()
+    # --- ÁREA DA ALTERAÇÃO: Lógica para buscar destaques do mês anterior ---
+    primeiro_dia_do_mes_atual = hoje.replace(day=1)
+    ultimo_dia_do_mes_anterior = primeiro_dia_do_mes_atual - timedelta(days=1)
 
-    # 4. Eventos: Busca os 5 próximos eventos a partir de hoje
-    eventos_proximos = Evento.query.filter(
+    ano_destaque = ultimo_dia_do_mes_anterior.year
+    mes_destaque = ultimo_dia_do_mes_anterior.month
+
+    # Obtém o nome do mês em português (Ex: "Julho")
+    nome_mes_destaque = ultimo_dia_do_mes_anterior.strftime('%B').capitalize()
+
+    destaques_do_mes = Destaque.query.filter_by(
+        ano=ano_destaque, mes=mes_destaque).all()
+    # --- FIM DA ÁREA DA ALTERAÇÃO ---
+
+    eventos_proximos_obj = Evento.query.filter(
         Evento.start >= hoje
     ).order_by(Evento.start.asc()).limit(5).all()
+    eventos_proximos_dict = [evento.to_dict()
+                             for evento in eventos_proximos_obj]
 
     return render_template(
-        'index.html',  # <-- Mude esta linha!
+        'index.html',
         total_colaboradores=total_colaboradores,
-        avisos=avisos_dict,  # <-- Passe a lista de dicionários, não de objetos
-        # <-- Corrigido para enviar todos do mês
+        avisos=avisos_dict,
         aniversariantes=aniversariantes_do_mes,
         destaques=destaques_do_mes,
-        eventos=eventos_proximos,  # <-- Enviando os objetos diretamente
-        current_user=current_user  # Garante que current_user está disponível no template
+        nome_mes_destaque=nome_mes_destaque,  # Passa o nome do mês para o template
+        eventos=eventos_proximos_dict,
+        current_user=current_user
     )
-
-# --- Rota para exibir um aviso completo ---
 
 
 @main.route('/aviso/<int:aviso_id>')
-@login_required  # <-- Adicione esta proteção
+@login_required
 def aviso_detalhe(aviso_id):
     aviso = Aviso.query.get_or_404(aviso_id)
     return render_template('aviso_detalhe.html', title=aviso.titulo, aviso=aviso)
 
 
 @main.route('/faq')
-@login_required  # <-- Adicione esta proteção
+@login_required
 def faq_publico():
-    # ... (o seu código do FAQ permanece igual)
+    total_colaboradores = Colaborador.query.count()
     categorias_obj = FaqCategoria.query.order_by(FaqCategoria.nome).all()
     perguntas_obj = FaqPergunta.query.order_by(FaqPergunta.id.desc()).all()
     categorias_json = [{'id': cat.id, 'nome': cat.nome}
@@ -75,13 +82,20 @@ def faq_publico():
         'link_texto': p.link_texto,
         'categoria_id': p.categoria_id
     } for p in perguntas_obj]
-    return render_template('faq.html', title='FAQ', categorias=categorias_json, perguntas=perguntas_json)
+    return render_template(
+        'faq.html',
+        title='FAQ',
+        categorias=categorias_json,
+        perguntas=perguntas_json,
+        total_colaboradores=total_colaboradores
+    )
 
 
 @main.route('/ouvidoria', methods=['GET', 'POST'])
-@login_required  # <-- Adicione esta proteção
+@login_required
 def ouvidoria():
-    # ... (o seu código da Ouvidoria permanece igual)
+    total_colaboradores = Colaborador.query.count()
+
     if request.method == 'POST':
         tipo_denuncia = request.form.get('tipo_denuncia')
         mensagem = request.form.get('mensagem')
@@ -104,4 +118,8 @@ def ouvidoria():
             'success': True,
             'message': 'A sua mensagem foi enviada com sucesso! Agradecemos a sua contribuição.'
         })
-    return render_template('ouvidoria.html', title='Ouvidoria')
+    return render_template(
+        'ouvidoria.html',
+        title='Ouvidoria',
+        total_colaboradores=total_colaboradores
+    )

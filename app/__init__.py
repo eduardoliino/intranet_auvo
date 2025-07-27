@@ -4,10 +4,9 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
+from datetime import datetime
 
 # --- Etapa 1: Criar as extensões ---
-# As extensões são criadas aqui fora, sem estarem ligadas a nenhuma app ainda.
-# Elas ficam prontas para serem importadas por outros arquivos (como models.py).
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
@@ -16,7 +15,6 @@ login_manager.login_message = "Por favor, faça o login para acessar esta págin
 login_manager.login_message_category = "info"
 
 # --- Etapa 2: A Fábrica de Aplicação ---
-# Esta função monta e retorna a aplicação Flask.
 
 
 def create_app():
@@ -32,8 +30,20 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
+    # --- NOVO: REGISTAR O FILTRO DE TEMPLATE ---
+    @app.template_filter('datetimeformat')
+    def datetimeformat(value, format='%d/%m/%Y %H:%M'):
+        if isinstance(value, str):
+            # Tenta converter a string ISO para um objeto datetime
+            try:
+                value = datetime.fromisoformat(value)
+            except (ValueError, TypeError):
+                return value  # Retorna a string original se a conversão falhar
+        if isinstance(value, datetime):
+            return value.strftime(format)
+        return value
+
     # --- Registrando os Blueprints (conjuntos de rotas) ---
-    # É crucial que os imports sejam feitos aqui DENTRO da função.
     from .routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
 

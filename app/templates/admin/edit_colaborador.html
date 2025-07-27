@@ -12,6 +12,7 @@
             <div class="row">
                 <div class="col-md-4 text-center">
                     <label class="form-label">Foto Atual</label>
+                    
                     {% if colaborador.foto_filename %}
                         <img src="{{ url_for('static', filename='fotos_colaboradores/' + colaborador.foto_filename) }}" alt="Foto de {{ colaborador.nome }}" class="img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
                     {% else %}
