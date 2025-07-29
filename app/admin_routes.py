@@ -6,7 +6,7 @@ from functools import wraps
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, current_app, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Colaborador, Aviso, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento
+from app.models import Colaborador, Aviso, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink
 from datetime import datetime
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
@@ -40,7 +40,7 @@ def listar_colaboradores():
     colaboradores_objetos = Colaborador.query.order_by(Colaborador.nome).all()
     colaboradores_json = [{'id': c.id, 'nome': c.nome, 'sobrenome': c.sobrenome,
                            'email_corporativo': c.email_corporativo} for c in colaboradores_objetos]
-    return render_template('admin/listar_colaboradores.html', colaboradores=colaboradores_json, total_colaboradores=len(colaboradores_objetos))
+    return render_template('admin/listar_colaboradores.html', colaboradores=colaboradores_json)
 
 
 @admin.route('/colaboradores/adicionar-manual', methods=['GET'])
@@ -65,6 +65,7 @@ def adicionar_colaborador():
     nome = request.form.get('nome')
     sobrenome = request.form.get('sobrenome')
     data_nascimento = request.form.get('data_nascimento')
+    data_inicio = request.form.get('data_inicio')
     cargo = request.form.get('cargo')
     time = request.form.get('time')
     senha = request.form.get('senha')
@@ -77,6 +78,7 @@ def adicionar_colaborador():
     novo_colaborador = Colaborador(
         nome=nome, sobrenome=sobrenome, email_corporativo=email,
         data_nascimento=pd.to_datetime(data_nascimento).date(),
+        data_inicio=pd.to_datetime(data_inicio).date(),
         cargo=cargo, time=time, foto_filename=foto_filename
     )
     novo_colaborador.set_password(senha)
@@ -103,10 +105,10 @@ def importar_colaboradores():
             try:
                 df = pd.read_excel(arquivo)
                 colunas_necessarias = [
-                    'nome', 'sobrenome', 'email_corporativo', 'data_nascimento', 'cargo', 'time', 'senha']
+                    'nome', 'sobrenome', 'email_corporativo', 'data_nascimento', 'data_inicio', 'cargo', 'time', 'senha']
                 if not all(coluna in df.columns for coluna in colunas_necessarias):
                     flash(
-                        'A planilha não contém todas as colunas necessárias.', 'danger')
+                        'A planilha não contém todas as colunas necessárias (nome, sobrenome, email_corporativo, data_nascimento, data_inicio, cargo, time, senha).', 'danger')
                     return redirect(url_for('admin.importar_colaboradores_form'))
 
                 for index, row in df.iterrows():
@@ -116,6 +118,8 @@ def importar_colaboradores():
                             email_corporativo=row['email_corporativo'],
                             data_nascimento=pd.to_datetime(
                                 row['data_nascimento']).date(),
+                            data_inicio=pd.to_datetime(
+                                row['data_inicio']).date(),
                             cargo=row.get('cargo'), time=row.get('time')
                         )
                         novo_colaborador.set_password(str(row['senha']))
@@ -132,7 +136,7 @@ def importar_colaboradores():
 @admin_required
 def baixar_modelo_planilha():
     colunas = ['nome', 'sobrenome', 'email_corporativo',
-               'data_nascimento', 'cargo', 'time', 'senha']
+               'data_nascimento', 'data_inicio', 'cargo', 'time', 'senha']
     df_modelo = pd.DataFrame(columns=colunas)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
@@ -169,6 +173,8 @@ def editar_colaborador(id):
         colaborador.time = request.form.get('time')
         colaborador.data_nascimento = pd.to_datetime(
             request.form.get('data_nascimento')).date()
+        colaborador.data_inicio = pd.to_datetime(
+            request.form.get('data_inicio')).date()
         nova_senha = request.form.get('senha')
         if nova_senha:
             colaborador.set_password(nova_senha)
@@ -221,11 +227,10 @@ def remover_todos_colaboradores():
 @login_required
 @admin_required
 def gerenciar_avisos():
-    total_colaboradores = Colaborador.query.count()
     avisos_objetos = Aviso.query.order_by(Aviso.id.desc()).all()
     avisos_json = [{'id': aviso.id, 'titulo': aviso.titulo, 'conteudo': aviso.conteudo,
                     'link_url': aviso.link_url, 'link_texto': aviso.link_texto} for aviso in avisos_objetos]
-    return render_template('admin/gerenciar_avisos.html', avisos=avisos_json, total_colaboradores=total_colaboradores)
+    return render_template('admin/gerenciar_avisos.html', avisos=avisos_json)
 
 
 @admin.route('/avisos/adicionar', methods=['POST'])
@@ -259,7 +264,6 @@ def remover_aviso(id):
 @login_required
 @admin_required
 def gerenciar_destaques():
-    total_colaboradores = Colaborador.query.count()
     destaques_obj = Destaque.query.order_by(
         Destaque.ano.desc(), Destaque.mes.desc()).all()
     colaboradores_obj = Colaborador.query.order_by(Colaborador.nome).all()
@@ -269,7 +273,7 @@ def gerenciar_destaques():
         {'id': c.id, 'nome': f"{c.nome} {c.sobrenome}"} for c in colaboradores_obj]
     anos_disponiveis = sorted(
         list(set(d.ano for d in destaques_obj)), reverse=True)
-    return render_template('admin/gerenciar_destaques.html', destaques=destaques_json, colaboradores=colaboradores_json, anos=anos_disponiveis, total_colaboradores=total_colaboradores)
+    return render_template('admin/gerenciar_destaques.html', destaques=destaques_json, colaboradores=colaboradores_json, anos=anos_disponiveis)
 
 
 @admin.route('/destaques/adicionar', methods=['POST'])
@@ -348,11 +352,10 @@ def editar_destaque(id):
 @login_required
 @admin_required
 def gerenciar_faq():
-    total_colaboradores = Colaborador.query.count()
     perguntas_obj = FaqPergunta.query.order_by(FaqPergunta.id.desc()).all()
     perguntas_json = [{'id': p.id, 'pergunta': p.pergunta, 'resposta': p.resposta,
                        'categoria_nome': p.categoria.nome} for p in perguntas_obj]
-    return render_template('admin/gerenciar_faq.html', perguntas=perguntas_json, total_colaboradores=total_colaboradores)
+    return render_template('admin/gerenciar_faq.html', perguntas=perguntas_json)
 
 
 @admin.route('/faq/categorias', methods=['GET'])
@@ -449,11 +452,10 @@ def editar_pergunta_faq(id):
 @login_required
 @admin_required
 def gerenciar_ouvidoria():
-    total_colaboradores = Colaborador.query.count()
     entradas_obj = Ouvidoria.query.order_by(Ouvidoria.data_envio.desc()).all()
     entradas_json = [{'id': e.id, 'data_envio': e.data_envio.isoformat(), 'tipo_denuncia': e.tipo_denuncia, 'mensagem': e.mensagem,
                       'anonima': e.anonima, 'nome': e.nome, 'contato': e.contato, 'status': e.status} for e in entradas_obj]
-    return render_template('admin/gerenciar_ouvidoria.html', entradas=entradas_json, total_colaboradores=total_colaboradores)
+    return render_template('admin/gerenciar_ouvidoria.html', entradas=entradas_json)
 
 
 @admin.route('/ouvidoria/atualizar_status/<int:id>', methods=['POST'])
@@ -474,10 +476,9 @@ def atualizar_status_ouvidoria(id):
 @login_required
 @admin_required
 def gerenciar_eventos():
-    total_colaboradores = Colaborador.query.count()
     eventos = Evento.query.order_by(Evento.start.desc()).all()
     eventos_json = [evento.to_dict() for evento in eventos]
-    return render_template('admin/gerenciar_eventos.html', eventos=eventos_json, total_colaboradores=total_colaboradores)
+    return render_template('admin/gerenciar_eventos.html', eventos=eventos_json)
 
 
 @admin.route('/eventos/novo', methods=['POST'])
@@ -528,3 +529,37 @@ def remover_evento(id):
     db.session.delete(evento)
     db.session.commit()
     return jsonify({'success': True, 'message': 'Evento removido com sucesso.'})
+
+
+@admin.route('/links', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def gerenciar_links():
+    if request.method == 'POST':
+        link_vagas_url = request.form.get('link_vagas')
+        link_indicacao_url = request.form.get('link_indicacao')
+
+        def upsert_link(chave, valor):
+            link = ConfigLink.query.filter_by(chave=chave).first()
+            if link:
+                link.valor = valor
+            else:
+                link = ConfigLink(chave=chave, valor=valor)
+                db.session.add(link)
+
+        upsert_link('link_vagas', link_vagas_url)
+        upsert_link('link_indicacao', link_indicacao_url)
+
+        db.session.commit()
+        flash('Links atualizados com sucesso!', 'success')
+        return redirect(url_for('admin.gerenciar_links'))
+
+    link_vagas = ConfigLink.query.filter_by(chave='link_vagas').first()
+    link_indicacao = ConfigLink.query.filter_by(chave='link_indicacao').first()
+
+    links = {
+        'vagas': link_vagas.valor if link_vagas else '',
+        'indicacao': link_indicacao.valor if link_indicacao else ''
+    }
+
+    return render_template('admin/gerenciar_links.html', links=links)

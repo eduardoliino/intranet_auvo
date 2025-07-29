@@ -3,10 +3,9 @@ from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
 from sqlalchemy import extract, desc
 from . import db
-from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento
-import locale  # Importe a biblioteca de localização
+from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink
+import locale
 
-# Defina a localização para português do Brasil para obter nomes de meses corretos
 locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
 
 main = Blueprint('main', __name__)
@@ -26,19 +25,27 @@ def index():
         extract('month', Colaborador.data_nascimento) == hoje.month
     ).order_by(extract('day', Colaborador.data_nascimento)).all()
 
-    # --- ÁREA DA ALTERAÇÃO: Lógica para buscar destaques do mês anterior ---
+    aniversariantes_empresa = Colaborador.query.filter(
+        extract('month', Colaborador.data_inicio) == hoje.month,
+        Colaborador.data_inicio.isnot(None)
+    ).order_by(extract('day', Colaborador.data_inicio)).all()
+
+    for aniv in aniversariantes_empresa:
+        anos_de_casa = hoje.year - aniv.data_inicio.year
+        if (hoje.month, hoje.day) < (aniv.data_inicio.month, aniv.data_inicio.day):
+            anos_de_casa -= 1
+        aniv.anos_de_casa = anos_de_casa if anos_de_casa > 0 else 1
+
     primeiro_dia_do_mes_atual = hoje.replace(day=1)
     ultimo_dia_do_mes_anterior = primeiro_dia_do_mes_atual - timedelta(days=1)
 
     ano_destaque = ultimo_dia_do_mes_anterior.year
     mes_destaque = ultimo_dia_do_mes_anterior.month
 
-    # Obtém o nome do mês em português (Ex: "Julho")
     nome_mes_destaque = ultimo_dia_do_mes_anterior.strftime('%B').capitalize()
 
     destaques_do_mes = Destaque.query.filter_by(
         ano=ano_destaque, mes=mes_destaque).all()
-    # --- FIM DA ÁREA DA ALTERAÇÃO ---
 
     eventos_proximos_obj = Evento.query.filter(
         Evento.start >= hoje
@@ -46,14 +53,24 @@ def index():
     eventos_proximos_dict = [evento.to_dict()
                              for evento in eventos_proximos_obj]
 
+    link_vagas_obj = ConfigLink.query.filter_by(chave='link_vagas').first()
+    link_indicacao_obj = ConfigLink.query.filter_by(
+        chave='link_indicacao').first()
+    links_carreira = {
+        'vagas': link_vagas_obj.valor if link_vagas_obj else None,
+        'indicacao': link_indicacao_obj.valor if link_indicacao_obj else None
+    }
+
     return render_template(
         'index.html',
         total_colaboradores=total_colaboradores,
         avisos=avisos_dict,
         aniversariantes=aniversariantes_do_mes,
         destaques=destaques_do_mes,
-        nome_mes_destaque=nome_mes_destaque,  # Passa o nome do mês para o template
+        nome_mes_destaque=nome_mes_destaque,
+        aniversariantes_empresa=aniversariantes_empresa,
         eventos=eventos_proximos_dict,
+        links_carreira=links_carreira,
         current_user=current_user
     )
 

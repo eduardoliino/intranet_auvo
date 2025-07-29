@@ -3,32 +3,6 @@
 {% block content %}
 <div x-data="{ search: '' }">
 
-  <div class="row mb-4 align-items-center">
-    <div class="col-lg-7">
-        <div style="position: relative; min-height: 70px;" class="d-flex align-items-center">
-            <img src="{{ url_for('static', filename='img/logo_nova.png') }}" alt="Intranet Auvo" 
-                 style="position: absolute; top: 50%; left: 0; transform: translateY(-50%); width: 185px; height: auto;">
-            <div class="totalizador-pill" style="margin-left: 205px;">
-                <span>Já somos </span>
-                <span class="mx-1 fw-bold">{{ total_colaboradores or 0 }}</span>
-                <span>Auvolovers</span>
-                <i class="bi bi-heart-fill ms-2" style="color: var(--auvo-lilas);"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-5">
-        <div class="card card-link-externo card-instagram h-100">
-            <div class="card-body d-flex justify-content-between align-items-center p-3">
-                <div>
-                    <h6 class="card-title mb-1"><i class="bi bi-instagram"></i> Siga o Auvo Talentos</h6>
-                    <p class="card-text small text-muted mb-0">Acompanhe nossa cultura, iniciativas e o dia a dia do time Auvo.</p>
-                </div>
-                <a href="https://www.instagram.com/auvotalentos/" target="_blank" class="btn btn-sm btn-instagram">@auvotalentos</a>
-            </div>
-        </div>
-    </div>
-  </div>
-
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Gestão do FAQ</h2>
     <div>

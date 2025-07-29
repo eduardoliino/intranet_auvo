@@ -11,67 +11,124 @@ body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--cor-fundo-conteudo);
     color: #495057;
+    padding-top: 80px; 
 }
 
-/* --- MENU LATERAL (SIDEBAR) --- */
-.sidebar {
-    min-width: 250px;
-    max-width: 250px;
-    height: 100vh;
-    background: var(--auvo-roxo-escuro);
-    color: white;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    transition: all 0.3s;
+/* --- NOVA NAVBAR SUPERIOR --- */
+.navbar-auvo {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.5rem 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    z-index: 1050; 
 }
 
-.sidebar .sidebar-header {
-    padding: 20px;
-    background: #6D26C2;
-    text-align: center;
-    height: 100px;
+.navbar-auvo .navbar-brand img {
+    height: 50px;
 }
 
-.sidebar ul.components li a {
-    padding: 16px 25px;
-    font-size: 1.05em;
+.navbar-auvo .nav-link, .navbar-auvo .navbar-toggler {
+    color: #495057;
+}
+
+.navbar-auvo .navbar-toggler {
+    border: none;
+}
+
+.navbar-auvo .perfil-avatar {
+    height: 40px;
+    width: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* --- BOTÃO DO INSTAGRAM NA NAVBAR --- */
+.btn-instagram-nav {
     display: flex;
     align-items: center;
-    color: rgba(255, 255, 255, 0.7);
+    gap: 0.5rem;
+    background-color: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 50px;
     text-decoration: none;
-    transition: all 0.2s;
-    border-left: 4px solid transparent;
+    color: #495057;
+    font-weight: 500;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
 }
-
-.sidebar ul.components li a:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.sidebar ul.components li.active > a {
-    color: white;
-    background: var(--auvo-lilas);
-    border-left: 4px solid white;
-}
-
-.sidebar ul li a i {
-    margin-right: 15px;
+.btn-instagram-nav i {
     font-size: 1.2em;
-    min-width: 25px;
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
+.btn-instagram-nav:hover {
+    background-color: #e2e8f0;
+    transform: translateY(-2px);
+}
+
+
+/* --- CONTADOR DE COLABORADORES NA NAVBAR --- */
+.totalizador-pill-nav {
+    background-color: #f1f5f9;
+    border-radius: 50px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* --- NOVO MENU OFFCANVAS --- */
+.offcanvas-auvo {
+    background-color: var(--auvo-roxo-escuro);
+    color: white;
+}
+.offcanvas-auvo.offcanvas-start {
+    width: 280px;
+}
+.offcanvas-auvo.offcanvas-end {
+    width: 260px;
+}
+
+
+.offcanvas-auvo .offcanvas-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.offcanvas-auvo .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.offcanvas-auvo .list-group-item {
+    background-color: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.05em;
+    transition: all 0.2s;
+}
+
+.offcanvas-auvo .list-group-item:hover {
+    background-color: var(--auvo-lilas);
+    color: white;
+}
+.offcanvas-auvo .list-group-item i {
+    font-size: 1.2em;
+}
+
 
 /* --- CONTEÚDO PRINCIPAL (MAIN CONTENT) --- */
 #content {
     width: 100%;
     animation: fadeIn 0.5s ease-in-out;
+    padding: 1.5rem; 
 }
-
-/* CORREÇÃO DEFINITIVA: Aplica a correção de layout apenas quando um modal do Bootstrap está aberto */
-body.modal-open #content {
-    min-width: 0;
-}
-
 
 @keyframes fadeIn {
     from {

@@ -23,10 +23,83 @@
 </head>
 
 <body>
+    <nav class="navbar navbar-auvo fixed-top">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center" id="menuPrincipalTrigger">
+                <a class="navbar-brand" href="{{ url_for('main.index') }}" style="cursor: pointer;">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Intranet Auvo Logo">
+                </a>
+            </div>
+
+            <div x-data="counterAnimation()" class="totalizador-pill-nav d-none d-lg-flex">
+                <span>Já somos </span>
+                <span x-text="count" class="mx-1 fw-bold" style="min-width: 20px; text-align: center;"></span>
+                <span>Auvolovers</span>
+                <i class="bi bi-heart-fill ms-2" style="color: var(--auvo-lilas);"></i>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <a href="https://www.instagram.com/auvotalentos/" target="_blank" class="btn-instagram-nav d-none d-md-flex">
+                    <i class="bi bi-instagram"></i>
+                    <span>Auvo Talentos</span>
+                </a>
+                <div id="menuUsuarioTrigger" style="cursor: pointer;" class="d-flex align-items-center">
+                    <span class="d-none d-md-inline me-2">
+                        Boas-vindas, <strong class="fw-bold">{% if current_user.is_admin %}{{ current_user.username }}{% else %}{{ current_user.nome }}{% endif %}</strong>
+                    </span>
+                    {% set foto_perfil = 'img/default_avatar.png' %}
+                    {% if not current_user.is_admin and current_user.foto_filename %}
+                        {% set foto_perfil = 'fotos_colaboradores/' + current_user.foto_filename %}
+                    {% endif %}
+                    <img src="{{ url_for('static', filename=foto_perfil) }}" class="perfil-avatar" alt="Foto de Perfil">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="offcanvas offcanvas-start offcanvas-auvo" tabindex="-1" id="menuPrincipal" aria-labelledby="menuPrincipalLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="menuPrincipalLabel">Navegação</h5>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('main.index') }}" class="list-group-item"><i class="bi bi-house-door-fill"></i> Início</a>
+                <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
+                <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="offcanvas offcanvas-end offcanvas-auvo" tabindex="-1" id="menuUsuario" aria-labelledby="menuUsuarioLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="menuUsuarioLabel">Opções de Usuário</h5>
+        </div>
+        <div class="offcanvas-body p-0">
+             <div class="list-group list-group-flush">
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.listar_colaboradores') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
+                    <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
+                    <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
+                    <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a>
+                    <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Gerir Ouvidoria</a>
+                    <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Gerir Eventos</a>
+                    <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Gerir Links</a>
+                    <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
+                {% endif %}
+                <a href="{{ url_for('auth.logout') }}" class="list-group-item"><i class="bi bi-box-arrow-right"></i> Sair do Sistema</a>
+            </div>
+        </div>
+    </div>
+
+
+    <main id="content">
+        {% block content %}{% endblock %}
+    </main>
+
     <div 
         x-data="toastHandler()" 
         class="position-fixed top-0 end-0 p-3" 
-        style="z-index: 1100"
+        style="z-index: 1100; margin-top: 60px;"
         @toast.window="addToast($event.detail)"
     >
         <template x-for="toast in toasts" :key="toast.id">
@@ -57,66 +130,32 @@
         </template>
     </div>
 
-    <div class="d-flex">
-        <nav class="sidebar">
-            <div class="sidebar-header" style="height: 60px;">
-                </div>
-            <ul class="list-unstyled components">
-                <li class="{{ 'active' if request.endpoint == 'main.index' else '' }}">
-                    <a href="{{ url_for('main.index') }}"><i class="bi bi-house-door-fill"></i> Início</a>
-                </li>
-                
-                <li class="{{ 'active' if request.endpoint == 'main.ouvidoria' else '' }}">
-                    <a href="{{ url_for('main.ouvidoria') }}"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
-                </li>
-                <li class="{{ 'active' if request.endpoint == 'main.faq_publico' else '' }}">
-                    <a href="{{ url_for('main.faq_publico') }}"><i class="bi bi-patch-question-fill"></i> FAQ</a>
-                </li>
-
-                <hr class="sidebar-divider" />
-
-                {% if current_user.is_authenticated %}
-                    {% if current_user.is_admin %}
-                    <li class="{{ 'active' if 'colaborador' in request.endpoint else '' }}">
-                        <a href="{{ url_for('admin.listar_colaboradores') }}"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
-                    </li>
-                    <li class="{{ 'active' if 'aviso' in request.endpoint else '' }}">
-                        <a href="{{ url_for('admin.gerenciar_avisos') }}"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
-                    </li>
-                    <li class="{{ 'active' if 'destaque' in request.endpoint else '' }}">
-                        <a href="{{ url_for('admin.gerenciar_destaques') }}"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
-                    </li>
-                    <li class="{{ 'active' if 'faq' in request.endpoint else '' }}">
-                        <a href="{{ url_for('admin.gerenciar_faq') }}"><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a>
-                    </li>
-                    <li class="{{ 'active' if 'ouvidoria' in request.endpoint else '' }}">
-                        <a href="{{ url_for('admin.gerenciar_ouvidoria') }}"><i class="bi bi-ear-fill"></i> Gerir Ouvidoria</a>
-                    </li>
-                     <li class="{{ 'active' if 'evento' in request.endpoint else '' }}">
-                        <a href="{{ url_for('admin.gerenciar_eventos') }}"><i class="bi bi-calendar-event-fill"></i> Gerir Eventos</a>
-                    </li>
-                    {% endif %}
-
-                    <hr class="sidebar-divider" />
-                    
-                    <li>
-                        <a href="{{ url_for('auth.logout') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Sair do sistema">
-                            <i class="bi bi-box-arrow-right"></i> Sair
-                        </a>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
-
-        <div id="content" class="p-4 p-md-5">
-            {% block content %}{% endblock %}
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js"></script>
+    
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('counterAnimation', () => ({
+                count: 0,
+                totalColaboradores: {{ total_colaboradores or 0 }},
+                init() {
+                    if (this.totalColaboradores <= 0) return;
+                    let step = Math.max(1, Math.ceil(this.totalColaboradores / 100));
+                    let current = 0;
+                    let timer = setInterval(() => {
+                        current += step;
+                        if (current >= this.totalColaboradores) {
+                            current = this.totalColaboradores;
+                            clearInterval(timer);
+                        }
+                        this.count = Math.floor(current);
+                    }, 15);
+                }
+            }));
+        });
+    </script>
     
     {% block page_scripts %}{% endblock %}
 
@@ -173,7 +212,37 @@
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl)
-            })
+            });
+
+            function setupHoverMenu(triggerId, menuId) {
+                const triggerEl = document.getElementById(triggerId);
+                const menuEl = document.getElementById(menuId);
+                if (!triggerEl || !menuEl) return;
+
+                const menu = new bootstrap.Offcanvas(menuEl);
+                let timeoutId;
+
+                function showMenu() {
+                    clearTimeout(timeoutId);
+                    if (!menu._isShown) {
+                        menu.show();
+                    }
+                }
+
+                function hideMenu() {
+                    timeoutId = setTimeout(() => {
+                        menu.hide();
+                    }, 200);
+                }
+
+                [triggerEl, menuEl].forEach(el => {
+                    el.addEventListener('mouseenter', showMenu);
+                    el.addEventListener('mouseleave', hideMenu);
+                });
+            }
+
+            setupHoverMenu('menuPrincipalTrigger', 'menuPrincipal');
+            setupHoverMenu('menuUsuarioTrigger', 'menuUsuario');
         });
     </script>
 </body>

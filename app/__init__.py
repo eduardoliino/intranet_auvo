@@ -12,11 +12,8 @@ migrate = Migrate()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
-# --- CORREÇÃO APLICADA AQUI ---
-# Define a mensagem como 'None' para desativá-la
-login_manager.login_message = None
-# --------------------------------
 
+login_manager.login_message = None
 login_manager.login_message_category = "info"
 
 # --- Etapa 2: A Fábrica de Aplicação ---
@@ -47,6 +44,15 @@ def create_app():
         if isinstance(value, datetime):
             return value.strftime(format)
         return value
+
+    # --- NOVO: CONTEXT PROCESSOR PARA VARIÁVEIS GLOBAIS ---
+    @app.context_processor
+    def inject_global_vars():
+        # A IMPORTAÇÃO FOI MOVIDA PARA DENTRO DA FUNÇÃO PARA EVITAR O ERRO
+        from .models import Colaborador
+        total_colaboradores = Colaborador.query.count()
+        return dict(total_colaboradores=total_colaboradores)
+    # --------------------------------------------------------
 
     # --- Registrando os Blueprints (conjuntos de rotas) ---
     from .routes import main as main_blueprint

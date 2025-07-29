@@ -46,6 +46,11 @@ class Colaborador(UserMixin, db.Model):  # --- ALTERAÇÃO 4: ADICIONA UserMixin
     email_corporativo = db.Column(
         db.String(120), unique=True, nullable=False, index=True)
     data_nascimento = db.Column(db.Date, nullable=False)
+
+    # --- NOVO CAMPO ADICIONADO ---
+    data_inicio = db.Column(db.Date, nullable=True)
+    # -----------------------------
+
     password_hash = db.Column(db.String(256))
     cargo = db.Column(db.String(100), nullable=True)
     time = db.Column(db.String(100), nullable=True)
@@ -191,3 +196,13 @@ class Evento(db.Model):
 
     def __repr__(self):
         return f'<Evento {self.title}>'
+
+
+class ConfigLink(db.Model):
+    __tablename__ = 'config_link'
+    id = db.Column(db.Integer, primary_key=True)
+    chave = db.Column(db.String(50), unique=True, nullable=False)
+    valor = db.Column(db.String(300), nullable=True)
+
+    def __repr__(self):
+        return f'<ConfigLink {self.chave}>'

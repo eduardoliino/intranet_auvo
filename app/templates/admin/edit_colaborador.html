@@ -55,10 +55,14 @@
                             <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" value="{{ colaborador.data_nascimento.strftime('%Y-%m-%d') }}" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="senha" class="form-label">Nova Senha (Opcional)</label>
-                            <input type="password" class="form-control" id="senha" name="senha">
-                            <small class="form-text text-muted">Deixe em branco para não alterar.</small>
+                           <label for="data_inicio" class="form-label">Data de Início</label>
+                           <input type="date" class="form-control" id="data_inicio" name="data_inicio" value="{{ colaborador.data_inicio.strftime('%Y-%m-%d') if colaborador.data_inicio else '' }}" required>
                         </div>
+                    </div>
+                     <div class="mb-3">
+                        <label for="senha" class="form-label">Nova Senha (Opcional)</label>
+                        <input type="password" class="form-control" id="senha" name="senha">
+                        <small class="form-text text-muted">Deixe em branco para não alterar.</small>
                     </div>
                 </div>
             </div>
