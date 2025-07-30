@@ -25,8 +25,11 @@
 <body>
     <nav class="navbar navbar-auvo fixed-top">
         <div class="container-fluid">
-            <div class="d-flex align-items-center" id="menuPrincipalTrigger">
-                <a class="navbar-brand" href="{{ url_for('main.index') }}" style="cursor: pointer;">
+            <div class="d-flex align-items-center">
+                <button class="d-lg-none btn me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
+                    <i class="bi bi-list fs-3"></i>
+                </button>
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">
                     <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Intranet Auvo Logo">
                 </a>
             </div>
@@ -35,15 +38,11 @@
                 <span>Já somos </span>
                 <span x-text="count" class="mx-1 fw-bold" style="min-width: 20px; text-align: center;"></span>
                 <span>Auvolovers</span>
-                <i class="bi bi-heart-fill ms-2" style="color: var(--auvo-lilas);"></i>
+                <i class="bi bi-heart-fill ms-2"></i>
             </div>
 
             <div class="d-flex align-items-center gap-3">
-                <a href="https://www.instagram.com/auvotalentos/" target="_blank" class="btn-instagram-nav d-none d-md-flex">
-                    <i class="bi bi-instagram"></i>
-                    <span>Auvo Talentos</span>
-                </a>
-                <div id="menuUsuarioTrigger" style="cursor: pointer;" class="d-flex align-items-center">
+                <div class="d-flex align-items-center">
                     <span class="d-none d-md-inline me-2">
                         Boas-vindas, <strong class="fw-bold">{% if current_user.is_admin %}{{ current_user.username }}{% else %}{{ current_user.nome }}{% endif %}</strong>
                     </span>
@@ -57,9 +56,38 @@
         </div>
     </nav>
 
-    <div class="offcanvas offcanvas-start offcanvas-auvo" tabindex="-1" id="menuPrincipal" aria-labelledby="menuPrincipalLabel">
+    <div class="sidebar-auvo d-none d-lg-flex flex-column">
+        <div class="sidebar-content">
+            <h6 class="sidebar-title">Navegação</h6>
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('main.index') }}" class="list-group-item"><i class="bi bi-house-door-fill"></i> Início</a>
+                <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
+                <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
+            </div>
+
+            {% if current_user.is_admin %}
+            <hr class="sidebar-divider">
+            <h6 class="sidebar-title">Administração</h6>
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('admin.listar_colaboradores') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Colaboradores</a>
+                <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Avisos</a>
+                <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Destaques</a>
+                <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ (Admin)</a>
+                <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria (Admin)</a>
+                <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Eventos</a>
+                <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Links</a>
+            </div>
+            {% endif %}
+        </div>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-logout"><i class="bi bi-box-arrow-right"></i> Sair do Sistema</a>
+        </div>
+    </div>
+    
+    <div class="offcanvas offcanvas-start offcanvas-auvo d-lg-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="menuPrincipalLabel">Navegação</h5>
+            <h5 class="offcanvas-title" id="mobileSidebarLabel">Navegação</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body p-0">
             <div class="list-group list-group-flush">
@@ -67,16 +95,9 @@
                 <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
                 <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
             </div>
-        </div>
-    </div>
-    
-    <div class="offcanvas offcanvas-end offcanvas-auvo" tabindex="-1" id="menuUsuario" aria-labelledby="menuUsuarioLabel">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="menuUsuarioLabel">Opções de Usuário</h5>
-        </div>
-        <div class="offcanvas-body p-0">
-             <div class="list-group list-group-flush">
-                {% if current_user.is_admin %}
+            {% if current_user.is_admin %}
+                <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
+                <div class="list-group list-group-flush">
                     <a href="{{ url_for('admin.listar_colaboradores') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
                     <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
                     <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
@@ -84,10 +105,10 @@
                     <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Gerir Ouvidoria</a>
                     <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Gerir Eventos</a>
                     <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Gerir Links</a>
-                    <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
-                {% endif %}
-                <a href="{{ url_for('auth.logout') }}" class="list-group-item"><i class="bi bi-box-arrow-right"></i> Sair do Sistema</a>
-            </div>
+                </div>
+            {% endif %}
+            <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
+            <a href="{{ url_for('auth.logout') }}" class="list-group-item"><i class="bi bi-box-arrow-right"></i> Sair do Sistema</a>
         </div>
     </div>
 
@@ -213,36 +234,6 @@
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl)
             });
-
-            function setupHoverMenu(triggerId, menuId) {
-                const triggerEl = document.getElementById(triggerId);
-                const menuEl = document.getElementById(menuId);
-                if (!triggerEl || !menuEl) return;
-
-                const menu = new bootstrap.Offcanvas(menuEl);
-                let timeoutId;
-
-                function showMenu() {
-                    clearTimeout(timeoutId);
-                    if (!menu._isShown) {
-                        menu.show();
-                    }
-                }
-
-                function hideMenu() {
-                    timeoutId = setTimeout(() => {
-                        menu.hide();
-                    }, 200);
-                }
-
-                [triggerEl, menuEl].forEach(el => {
-                    el.addEventListener('mouseenter', showMenu);
-                    el.addEventListener('mouseleave', hideMenu);
-                });
-            }
-
-            setupHoverMenu('menuPrincipalTrigger', 'menuPrincipal');
-            setupHoverMenu('menuUsuarioTrigger', 'menuUsuario');
         });
     </script>
 </body>
