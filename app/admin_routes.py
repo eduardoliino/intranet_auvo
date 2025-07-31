@@ -38,8 +38,11 @@ def salvar_foto(form_foto):
 @admin_required
 def listar_colaboradores():
     colaboradores_objetos = Colaborador.query.order_by(Colaborador.nome).all()
+    # --- ALTERAÇÃO AQUI ---
+    # Adicionamos 'foto_filename' ao dicionário para cada colaborador
     colaboradores_json = [{'id': c.id, 'nome': c.nome, 'sobrenome': c.sobrenome,
-                           'email_corporativo': c.email_corporativo} for c in colaboradores_objetos]
+                           'email_corporativo': c.email_corporativo, 'foto_filename': c.foto_filename} for c in colaboradores_objetos]
+    # ---------------------
     return render_template('admin/listar_colaboradores.html', colaboradores=colaboradores_json)
 
 
