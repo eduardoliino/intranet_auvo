@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from datetime import datetime
 
+
 # --- Etapa 1: Criar as extensões ---
 db = SQLAlchemy()
 migrate = Migrate()
@@ -64,4 +65,8 @@ def create_app():
     from .admin_routes import admin as admin_blueprint
     app.register_blueprint(admin_blueprint)
 
+    from .colaborador_routes import colaborador_bp
+    app.register_blueprint(colaborador_bp)
+
     return app
+

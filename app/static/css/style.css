@@ -401,3 +401,52 @@ body {
     border-radius: 50%;
     border: 2px solid #eee;
 }
+
+
+
+/* --- ESTILOS PARA O ORGANOGRAMA (d3-org-chart) --- */
+
+/* Container principal para habilitar o overflow e o arrasto */
+.chart-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Permite o scroll/arrasto */
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+/* Estilo do card de cada colaborador */
+.org-node-card {
+    border: 1px solid #e9ecef;
+    border-top: 5px solid; /* A cor será definida inline ou por outra classe */
+    min-width: 280px; /* Largura mínima para o card */
+}
+
+/* Foto do colaborador */
+.org-node-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
+}
+
+/* Nome do colaborador */
+.org-node-name {
+    font-weight: 600;
+    color: #212529;
+}
+
+/* Título/Cargo do colaborador */
+.org-node-title {
+    font-size: 0.9em;
+}
+
+/* Departamento */
+.org-node-dept {
+    background-color: #f1f5f9;
+    color: #64748b;
+    padding: 2px 8px;
+    border-radius: 50px;
+    display: inline-block;
+}

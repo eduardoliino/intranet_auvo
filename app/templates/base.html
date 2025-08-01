@@ -63,13 +63,15 @@
                 <a href="{{ url_for('main.index') }}" class="list-group-item"><i class="bi bi-house-door-fill"></i> Início</a>
                 <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
                 <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
+                <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
             </div>
 
             {% if current_user.is_admin %}
             <hr class="sidebar-divider">
             <h6 class="sidebar-title">Administração</h6>
             <div class="list-group list-group-flush">
-                <a href="{{ url_for('admin.listar_colaboradores') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Colaboradores</a>
+                <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Colaboradores</a>
+                <a href="{{ url_for('admin.gerenciar_cargos_departamentos') }}" class="list-group-item"><i class="bi bi-tags-fill"></i> Cargos e Deptos.</a>
                 <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Avisos</a>
                 <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Destaques</a>
                 <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ (Admin)</a>
@@ -94,11 +96,13 @@
                 <a href="{{ url_for('main.index') }}" class="list-group-item"><i class="bi bi-house-door-fill"></i> Início</a>
                 <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
                 <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
+                <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
             </div>
             {% if current_user.is_admin %}
                 <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
                 <div class="list-group list-group-flush">
-                    <a href="{{ url_for('admin.listar_colaboradores') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
+                    <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
+                    <a href="{{ url_for('admin.gerenciar_cargos_departamentos') }}" class="list-group-item"><i class="bi bi-tags-fill"></i> Cargos e Deptos.</a>
                     <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
                     <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
                     <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a>
@@ -114,6 +118,16 @@
 
 
     <main id="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </main>
 

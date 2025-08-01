@@ -1,15 +1,18 @@
-import pandas as pd
-import io
+# app/admin_routes.py
+
 import os
 import secrets
 from functools import wraps
-from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, current_app, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
-from app.models import Colaborador, Aviso, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink
+from app.models import (Aviso, Destaque, FaqCategoria, FaqPergunta, Ouvidoria,
+                        Evento, ConfigLink, Colaborador, Cargo, Departamento)
 from datetime import datetime
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
+
+# Esta função de decorator continua aqui, pois é usada em ambos os arquivos de rotas
 
 
 def admin_required(f):
@@ -20,6 +23,8 @@ def admin_required(f):
             return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
+
+# Esta função de salvar foto também pode ser compartilhada
 
 
 def salvar_foto(form_foto):
@@ -32,198 +37,60 @@ def salvar_foto(form_foto):
     form_foto.save(foto_path)
     return foto_filename
 
+# --- CRIE AQUI AS ROTAS PARA GERENCIAR CARGOS E DEPARTAMENTOS ---
 
-@admin.route('/colaboradores')
-@login_required
+
+@admin.route('/cargos-departamentos', methods=['GET', 'POST'])
 @admin_required
-def listar_colaboradores():
-    colaboradores_objetos = Colaborador.query.order_by(Colaborador.nome).all()
-    # --- ALTERAÇÃO AQUI ---
-    # Adicionamos 'foto_filename' ao dicionário para cada colaborador
-    colaboradores_json = [{'id': c.id, 'nome': c.nome, 'sobrenome': c.sobrenome,
-                           'email_corporativo': c.email_corporativo, 'foto_filename': c.foto_filename} for c in colaboradores_objetos]
-    # ---------------------
-    return render_template('admin/listar_colaboradores.html', colaboradores=colaboradores_json)
-
-
-@admin.route('/colaboradores/adicionar-manual', methods=['GET'])
-@login_required
-@admin_required
-def adicionar_colaborador_manual_form():
-    return render_template('admin/adicionar_colaborador_manual.html')
-
-
-@admin.route('/colaboradores/adicionar', methods=['POST'])
-@login_required
-@admin_required
-def adicionar_colaborador():
-    email = request.form.get('email_corporativo')
-    colaborador_existente = Colaborador.query.filter_by(
-        email_corporativo=email).first()
-    if colaborador_existente:
-        flash(
-            f'O e-mail "{email}" já está em uso por outro colaborador.', 'danger')
-        return redirect(url_for('admin.adicionar_colaborador_manual_form'))
-
-    nome = request.form.get('nome')
-    sobrenome = request.form.get('sobrenome')
-    data_nascimento = request.form.get('data_nascimento')
-    data_inicio = request.form.get('data_inicio')
-    cargo = request.form.get('cargo')
-    time = request.form.get('time')
-    senha = request.form.get('senha')
-    foto_filename = None
-    if 'foto' in request.files:
-        foto_enviada = request.files['foto']
-        if foto_enviada.filename != '':
-            foto_filename = salvar_foto(foto_enviada)
-
-    novo_colaborador = Colaborador(
-        nome=nome, sobrenome=sobrenome, email_corporativo=email,
-        data_nascimento=pd.to_datetime(data_nascimento).date(),
-        data_inicio=pd.to_datetime(data_inicio).date(),
-        cargo=cargo, time=time, foto_filename=foto_filename
-    )
-    novo_colaborador.set_password(senha)
-    db.session.add(novo_colaborador)
-    db.session.commit()
-    flash('Colaborador adicionado com sucesso!', 'success')
-    return redirect(url_for('admin.listar_colaboradores'))
-
-
-@admin.route('/colaboradores/importar-planilha', methods=['GET'])
-@login_required
-@admin_required
-def importar_colaboradores_form():
-    return render_template('admin/importar_colaboradores.html')
-
-
-@admin.route('/colaboradores/importar', methods=['POST'])
-@login_required
-@admin_required
-def importar_colaboradores():
-    if 'planilha_colaboradores' in request.files:
-        arquivo = request.files['planilha_colaboradores']
-        if arquivo.filename != '' and arquivo.filename.endswith('.xlsx'):
-            try:
-                df = pd.read_excel(arquivo)
-                colunas_necessarias = [
-                    'nome', 'sobrenome', 'email_corporativo', 'data_nascimento', 'data_inicio', 'cargo', 'time', 'senha']
-                if not all(coluna in df.columns for coluna in colunas_necessarias):
-                    flash(
-                        'A planilha não contém todas as colunas necessárias (nome, sobrenome, email_corporativo, data_nascimento, data_inicio, cargo, time, senha).', 'danger')
-                    return redirect(url_for('admin.importar_colaboradores_form'))
-
-                for index, row in df.iterrows():
-                    if not Colaborador.query.filter_by(email_corporativo=row['email_corporativo']).first():
-                        novo_colaborador = Colaborador(
-                            nome=row['nome'], sobrenome=row['sobrenome'],
-                            email_corporativo=row['email_corporativo'],
-                            data_nascimento=pd.to_datetime(
-                                row['data_nascimento']).date(),
-                            data_inicio=pd.to_datetime(
-                                row['data_inicio']).date(),
-                            cargo=row.get('cargo'), time=row.get('time')
-                        )
-                        novo_colaborador.set_password(str(row['senha']))
-                        db.session.add(novo_colaborador)
-                db.session.commit()
-                flash('Colaboradores importados com sucesso!', 'success')
-            except Exception as e:
-                flash(f'Ocorreu um erro ao importar: {e}', 'danger')
-    return redirect(url_for('admin.listar_colaboradores'))
-
-
-@admin.route('/colaboradores/baixar_modelo')
-@login_required
-@admin_required
-def baixar_modelo_planilha():
-    colunas = ['nome', 'sobrenome', 'email_corporativo',
-               'data_nascimento', 'data_inicio', 'cargo', 'time', 'senha']
-    df_modelo = pd.DataFrame(columns=colunas)
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-        df_modelo.to_excel(writer, index=False, sheet_name='colaboradores')
-    buffer.seek(0)
-    return send_file(
-        buffer,
-        as_attachment=True,
-        download_name='modelo_importacao_colaboradores.xlsx',
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-
-
-@admin.route('/colaboradores/editar/<int:id>', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def editar_colaborador(id):
-    colaborador = Colaborador.query.get_or_404(id)
+def gerenciar_cargos_departamentos():
     if request.method == 'POST':
-        if 'foto' in request.files:
-            foto_enviada = request.files['foto']
-            if foto_enviada.filename != '':
-                if colaborador.foto_filename:
-                    foto_antiga_path = os.path.join(
-                        current_app.root_path, 'static/fotos_colaboradores', colaborador.foto_filename)
-                    if os.path.exists(foto_antiga_path):
-                        os.remove(foto_antiga_path)
-                colaborador.foto_filename = salvar_foto(foto_enviada)
+        # --- LÓGICA PARA SALVAR O CEO ---
+        if 'form_ceo' in request.form:
+            ceo_id = request.form.get('ceo_id')
+            config_ceo = ConfigLink.query.filter_by(
+                chave='ceo_colaborador_id').first()
+            if not config_ceo:
+                config_ceo = ConfigLink(chave='ceo_colaborador_id')
+                db.session.add(config_ceo)
+            config_ceo.valor = ceo_id
+            flash('CEO do organograma definido com sucesso!', 'success')
 
-        colaborador.nome = request.form.get('nome')
-        colaborador.sobrenome = request.form.get('sobrenome')
-        colaborador.email_corporativo = request.form.get('email_corporativo')
-        colaborador.cargo = request.form.get('cargo')
-        colaborador.time = request.form.get('time')
-        colaborador.data_nascimento = pd.to_datetime(
-            request.form.get('data_nascimento')).date()
-        colaborador.data_inicio = pd.to_datetime(
-            request.form.get('data_inicio')).date()
-        nova_senha = request.form.get('senha')
-        if nova_senha:
-            colaborador.set_password(nova_senha)
-        try:
-            db.session.commit()
-            flash('Colaborador atualizado com sucesso!', 'success')
-            return redirect(url_for('admin.listar_colaboradores'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao atualizar o colaborador: {e}', 'danger')
-    return render_template('admin/edit_colaborador.html', colaborador=colaborador)
+        # Lógica para salvar Cargo
+        elif 'form_cargo' in request.form:
+            # ... (código existente) ...
+            titulo = request.form.get('titulo')
+            if titulo and not Cargo.query.filter_by(titulo=titulo).first():
+                novo_cargo = Cargo(
+                    titulo=titulo, descricao=request.form.get('descricao'))
+                db.session.add(novo_cargo)
+                flash('Cargo adicionado com sucesso!', 'success')
 
+        # Lógica para salvar Departamento
+        elif 'form_depto' in request.form:
+            # ... (código existente) ...
+            nome = request.form.get('nome')
+            if nome and not Departamento.query.filter_by(nome=nome).first():
+                novo_depto = Departamento(
+                    nome=nome, cor=request.form.get('cor'))
+                db.session.add(novo_depto)
+                flash('Departamento adicionado com sucesso!', 'success')
 
-@admin.route('/colaboradores/remover/<int:id>')
-@login_required
-@admin_required
-def remover_colaborador(id):
-    colaborador = Colaborador.query.get_or_404(id)
-    try:
-        db.session.delete(colaborador)
         db.session.commit()
-        flash('Colaborador removido com sucesso!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro ao remover colaborador: {e}', 'danger')
-    return redirect(url_for('admin.listar_colaboradores'))
+        return redirect(url_for('admin.gerenciar_cargos_departamentos'))
 
+    # --- LÓGICA PARA CARREGAR OS DADOS PARA O TEMPLATE ---
+    cargos = Cargo.query.order_by(Cargo.titulo).all()
+    departamentos = Departamento.query.order_by(Departamento.nome).all()
+    colaboradores = Colaborador.query.order_by(Colaborador.nome).all()
 
-@admin.route('/colaboradores/remover_todos', methods=['POST'])
-@login_required
-@admin_required
-def remover_todos_colaboradores():
-    confirmacao = request.form.get('confirmacao')
-    if confirmacao == 'confirmar exclusão':
-        try:
-            num_rows_deleted = db.session.query(Colaborador).delete()
-            db.session.commit()
-            flash(
-                f'{num_rows_deleted} colaboradores foram removidos com sucesso.', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(
-                f'Ocorreu um erro ao remover os colaboradores: {e}', 'danger')
-    else:
-        flash('A confirmação digitada está incorreta. Nenhuma ação foi tomada.', 'warning')
-    return redirect(url_for('admin.listar_colaboradores'))
+    config_ceo = ConfigLink.query.filter_by(chave='ceo_colaborador_id').first()
+    ceo_id = int(config_ceo.valor) if config_ceo and config_ceo.valor else None
+
+    return render_template('admin/gerenciar_cargos_departamentos.html',
+                           cargos=cargos,
+                           departamentos=departamentos,
+                           colaboradores=colaboradores,
+                           ceo_id=ceo_id)
 
 
 @admin.route('/avisos')

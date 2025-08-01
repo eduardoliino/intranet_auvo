@@ -45,7 +45,7 @@
                                     <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="aniversario-casa-avatar" alt="Avatar Padrão">
                                 {% endif %}
                                 <h5 class="fw-bold mb-1 mt-3">{{ aniv.nome }} {{ aniv.sobrenome }}</h5>
-                                <h6 class="mb-2 text-muted">{{ aniv.cargo or 'Colaborador(a)' }}</h6>
+                                <h6 class="mb-2 text-muted">{{ aniv.cargo.titulo or 'Colaborador(a)' }}</h6>
                                 <p class="aniversario-casa-texto">
                                     Parabéns pelos <strong style="color: var(--cor-primaria);">{{ aniv.anos_de_casa }}</strong> {{ 'ano' if aniv.anos_de_casa == 1 else 'anos' }} de dedicação!
                                 </p>
@@ -218,7 +218,7 @@
                 {% endif %}
                 <div class="ms-2 lh-1">
                     <div class="fw-bold">{{ aniversariante.nome }} {{ aniversariante.sobrenome }}</div>
-                    <small class="text-muted">{{ aniversariante.cargo or '' }}</small>
+                    <small class="text-muted">{{ aniversariante.cargo.titulo or '' }}</small>
                 </div>
               </div>
               <span class="badge bg-light text-dark">{{ aniversariante.data_nascimento.strftime('%d/%m') }}</span>

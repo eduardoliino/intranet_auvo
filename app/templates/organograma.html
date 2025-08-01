@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block page_scripts %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/d3-org-chart@3"></script>
+
+<script src="{{ url_for('static', filename='js/organograma.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Organograma Corporativo</h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="chart-container" id="tree" style="height: 75vh;"></div>
+    </div>
+</div>
+{% endblock %}

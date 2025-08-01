@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
 from sqlalchemy import extract, desc
 from . import db
-from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink
+from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink, Cargo
 import locale
 
 locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
@@ -140,3 +140,61 @@ def ouvidoria():
         title='Ouvidoria',
         total_colaboradores=total_colaboradores
     )
+
+
+@main.route('/organograma')
+@login_required
+def ver_organograma():
+    """ Rota que renderiza a página de visualização do organograma. """
+    return render_template('organograma.html', title="Organograma Corporativo")
+
+
+def get_equipe_recursive(colaborador_id, todos_colaboradores):
+    """ Função auxiliar para encontrar todos os subordinados de um colaborador """
+    equipe = []
+    subordinados_diretos = [c for c in todos_colaboradores if c.superior_id == colaborador_id]
+
+    for sub in subordinados_diretos:
+        equipe.append(sub)
+        equipe.extend(get_equipe_recursive(sub.id, todos_colaboradores))
+
+    return equipe
+
+
+@main.route('/api/organograma-data')
+@login_required
+def organograma_data():
+    """ 
+    Endpoint que retorna os dados dos colaboradores no formato JSON
+    a partir de um único CEO definido.
+    """
+    config_ceo = ConfigLink.query.filter_by(chave='ceo_colaborador_id').first()
+    if not config_ceo or not config_ceo.valor:
+        # Se nenhum CEO estiver definido, retorna uma lista vazia para não dar erro
+        return jsonify({'nodes': []})
+
+    ceo_id = int(config_ceo.valor)
+    ceo = Colaborador.query.get(ceo_id)
+    if not ceo:
+        return jsonify({'nodes': []})
+
+    # Pega todos os colaboradores de uma vez para evitar múltiplas queries
+    todos_colaboradores = Colaborador.query.all()
+
+    # Monta a árvore hierárquica a partir do CEO
+    arvore_colaboradores = [ceo] + get_equipe_recursive(ceo_id, todos_colaboradores)
+
+    nodes = []
+    for col in arvore_colaboradores:
+        # Garante que o CEO não tenha um pai, resolvendo o erro 'multiple roots'
+        parent_id = col.superior_id if col.id != ceo_id else None
+
+        nodes.append({
+            'id': col.id,
+            'parentId': parent_id,
+            'nome': f"{col.nome} {col.sobrenome}",
+            'cargo': col.cargo.titulo if col.cargo else 'Sem Cargo',
+            'departamento': col.departamento.nome if col.departamento else 'N/A',
+            'imageUrl': f"/static/fotos_colaboradores/{col.foto_filename}" if col.foto_filename else "/static/img/default_avatar.png",
+        })
+    return jsonify({'nodes': nodes})

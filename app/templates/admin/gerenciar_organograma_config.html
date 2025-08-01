@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div x-data="configOrganograma()">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Configurações do Organograma</h2>
+        <a href="{{ url_for('organograma.gerenciar_organograma') }}" class="btn btn-secondary">Voltar para a Hierarquia</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header fw-bold">Gerenciar Cargos</div>
+                <div class="card-body">
+                    <form @submit.prevent="adicionarCargo" class="mb-4 p-3 border rounded">
+                        <h6 class="mb-3">Adicionar Novo Cargo</h6>
+                        <div class="mb-2">
+                            <label class="form-label">Título do Cargo</label>
+                            <input type="text" x-model="novoCargo.titulo" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrição</label>
+                            <textarea x-model="novoCargo.descricao" class="form-control" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Adicionar Cargo</button>
+                    </form>
+                    
+                    <h6 class="mt-4">Cargos Existentes</h6>
+                    <ul class="list-group">
+                        <template x-for="cargo in cargos" :key="cargo.id">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span x-text="cargo.titulo"></span>
+                                </li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header fw-bold">Gerenciar Departamentos</div>
+                <div class="card-body">
+                     <form @submit.prevent="adicionarDepartamento" class="mb-4 p-3 border rounded">
+                        <h6 class="mb-3">Adicionar Novo Departamento</h6>
+                        <div class="mb-2">
+                            <label class="form-label">Nome do Departamento</label>
+                            <input type="text" x-model="novoDepartamento.nome" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cor</label>
+                            <input type="color" x-model="novoDepartamento.cor" class="form-control form-control-color">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Adicionar Departamento</button>
+                    </form>
+
+                    <h6 class="mt-4">Departamentos Existentes</h6>
+                    <ul class="list-group">
+                        <template x-for="depto in departamentos" :key="depto.id">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span x-text="depto.nome"></span>
+                                <span style="width: 20px; height: 20px; border-radius: 5px;" :style="`background-color: ${depto.cor}`"></span>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    function configOrganograma() {
+        return {
+            cargos: {{ cargos|tojson|safe }},
+            departamentos: {{ departamentos|tojson|safe }},
+            novoCargo: { titulo: '', descricao: '' },
+            novoDepartamento: { nome: '', cor: '#7A28B8' },
+
+            async adicionarCargo() {
+                const response = await fetch('{{ url_for("organograma.adicionar_cargo") }}', {
+                    method: 'POST', body: new URLSearchParams(this.novoCargo)
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.cargos.push(data.cargo);
+                    this.cargos.sort((a, b) => a.titulo.localeCompare(b.titulo));
+                    this.novoCargo = { titulo: '', descricao: '' };
+                }
+                this.showToast(data.message, data.success ? 'success' : 'danger');
+            },
+
+            async adicionarDepartamento() {
+                const response = await fetch('{{ url_for("organograma.adicionar_departamento") }}', {
+                    method: 'POST', body: new URLSearchParams(this.novoDepartamento)
+                });
+                const data = await response.json();
+                if(data.success) {
+                    this.departamentos.push(data.departamento);
+                    this.departamentos.sort((a, b) => a.nome.localeCompare(b.nome));
+                    this.novoDepartamento = { nome: '', cor: '#7A28B8' };
+                }
+                this.showToast(data.message, data.success ? 'success' : 'danger');
+            },
+
+            showToast(message, type = 'info') {
+                window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
+            }
+        }
+    }
+</script>
+{% endblock %}
