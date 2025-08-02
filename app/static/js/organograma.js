@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    // Usamos .then() para garantir que a lógica só rode após os dados chegarem
     fetch('/api/organograma-data')
         .then(response => {
             if (!response.ok) {
@@ -21,14 +20,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Inicializa o gráfico com a configuração corrigida
             new d3.OrgChart()
                 .container('.chart-container')
                 .data(data.nodes)
                 .nodeId(d => d.id)
                 .parentNodeId(d => d.parentId)
+                // --- LINHA ADICIONADA AQUI ---
+                .scaleExtent([0.5, 2]) // Define o limite mínimo (50%) e máximo (200%) de zoom
                 .nodeContent(function (d) {
-                    // Esta função é mais segura para renderizar o HTML de cada card
                     return `
                         <div class="card org-node-card shadow-sm" style="border-top-color: #7A28B8;">
                             <div class="card-body p-3">

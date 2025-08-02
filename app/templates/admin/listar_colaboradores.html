@@ -1,107 +1,182 @@
-{% extends "base.html" %} {% block content %}
-<div x-data="colaboradoresFiltro()">
-  
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Gestão de Colaboradores</h2>
-    <div>
-        <a href="{{ url_for('colaborador.importar') }}" class="btn btn-success me-2">
-            <i class="bi bi-file-earmark-spreadsheet-fill me-2"></i>Importar Planilha
-        </a>
-        <a href="{{ url_for('colaborador.adicionar') }}" class="btn btn-success">
-            <i class="bi bi-person-plus-fill me-2"></i>Adicionar Manualmente
-        </a>
-    </div>
-  </div>
+{% extends "base.html" %}
 
-  <div class="row mb-3">
-    <div class="col-md-6">
-      <h4>
-        Total de Colaboradores:
-        <span
-          class="badge bg-primary"
-          x-text="filteredColaboradores.length"
-        ></span>
-      </h4>
+{% block content %}
+<div x-data="gestaoColaboradores()">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Gestão de Colaboradores</h2>
+        <div>
+            <a href="{{ url_for('colaborador.importar') }}" class="btn btn-outline-success me-2"><i class="bi bi-file-earmark-spreadsheet-fill me-2"></i>Importar</a>
+            <a href="{{ url_for('colaborador.adicionar') }}" class="btn btn-success"><i class="bi bi-person-plus-fill me-2"></i>Adicionar</a>
+        </div>
     </div>
-    <div class="col-md-6">
-      <input
-        type="text"
-        x-model="search"
-        class="form-control"
-        placeholder="Buscar por nome ou e-mail..."
-      />
-    </div>
-  </div>
 
-  <div class="card">
-    <div class="card-body">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th style="width: 80px;">Foto</th>
-              <th>Nome Completo</th>
-              <th>E-mail</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="col in filteredColaboradores" :key="col.id">
-              <tr>
-                <td>
-                  <img :src="col.foto_filename ? `/static/fotos_colaboradores/${col.foto_filename}` : '/static/img/default_avatar.png'" 
-                       class="colaborador-foto-tabela" 
-                       alt="Foto do colaborador">
-                </td>
-                <td x-text="`${col.nome} ${col.sobrenome}`"></td>
-                <td x-text="col.email_corporativo"></td>
-                <td>
-                  <a
-                    :href="`/admin/colaboradores/editar/${col.id}`"
-                    class="btn btn-sm btn-secondary"
-                    >Editar</a
-                  >
-                  <a
-                    :href="`/admin/colaboradores/remover/${col.id}`"
-                    class="btn btn-sm btn-danger"
-                    >Remover</a
-                  >
-                </td>
-              </tr>
-            </template>
-            <template x-if="filteredColaboradores.length === 0">
-              <tr>
-                <td colspan="4" class="text-center">
-                  Nenhum colaborador encontrado.
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="search" x-model="filters.search" class="form-control" placeholder="Buscar por nome ou e-mail...">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select x-model="filters.cargo" class="form-select custom-select">
+                        <option value="">Todos os Cargos</option>
+                        {% for cargo in cargos %}<option value="{{ cargo.id }}">{{ cargo.titulo }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select x-model="filters.depto" class="form-select custom-select">
+                        <option value="">Todos os Deptos.</option>
+                        {% for depto in departamentos %}<option value="{{ depto.id }}">{{ depto.nome }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive" style="max-height: 65vh; overflow-y: auto;">
+                <table class="table table-hover table-sticky-header align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Foto</th>
+                            <th @click="sortBy('nome')" style="cursor: pointer;">Nome Completo <i :class="getSortIcon('nome')"></i></th>
+                            <th @click="sortBy('email')" style="cursor: pointer;">E-mail <i :class="getSortIcon('email')"></i></th>
+                            <th>Cargo</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="col in filteredColaboradores" :key="col.id">
+                            <tr>
+                                <td>
+                                    <template x-if="col.foto">
+                                        <img :src="`/static/fotos_colaboradores/${col.foto}`" class="colaborador-foto-tabela" loading="lazy" :alt="col.nome">
+                                    </template>
+                                    <template x-if="!col.foto">
+                                        <div class="colaborador-avatar-tabela" :style="`background-color: ${getAvatarColor(col.nome)}`">
+                                            <span x-text="getInitials(col.nome, col.sobrenome)"></span>
+                                        </div>
+                                    </template>
+                                </td>
+                                <td x-text="`${col.nome} ${col.sobrenome}`"></td>
+                                <td x-text="col.email"></td>
+                                <td x-text="col.cargo"></td>
+                                <td class="text-center">
+                                    <a :href="`/admin/colaboradores/editar/${col.id}`" class="btn btn-sm btn-auvo me-1" style="width: 40px;"><i class="bi bi-pencil-fill"></i></a>
+                                    <button @click="confirmarRemocao(col)" class="btn btn-sm btn-danger" style="width: 40px;"><i class="bi bi-trash-fill"></i></button>
+                                    </td>
+                            </tr>
+                        </template>
+                        <template x-if="filteredColaboradores.length === 0">
+                            <tr><td colspan="5" class="text-center text-muted">Nenhum colaborador encontrado.</td></tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <span class="text-muted small" x-text="`Exibindo ${filteredColaboradores.length} de ${allColaboradores.length} registros`"></span>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmacaoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Confirmar Remoção</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p>Tem a certeza de que deseja remover o colaborador <strong x-text="colaboradorParaRemover.nome"></strong>?</p>
+                    <p class="text-danger">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" @click="removerColaborador()" class="btn btn-danger">Remover</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
 
+{% block page_scripts %}
 <script>
-  function colaboradoresFiltro() {
-      return {
-          search: '',
-          colaboradores: {{ colaboradores|tojson|safe }},
-          get filteredColaboradores() {
-              if (this.search.trim() === '') {
-                  return this.colaboradores;
-              }
-              const searchTerm = this.search.toLowerCase();
-              return this.colaboradores.filter(
-                  col => {
-                      const nomeCompleto = `${col.nome} ${col.sobrenome}`.toLowerCase();
-                      const email = col.email_corporativo ? col.email_corporativo.toLowerCase() : '';
-                      return nomeCompleto.includes(searchTerm) || email.includes(searchTerm);
-                  }
-              );
-          }
-      }
-  }
+    function gestaoColaboradores() {
+        return {
+            allColaboradores: {{ colaboradores_json|tojson|safe }},
+            filters: { search: '', cargo: '', depto: '' },
+            sort: { by: 'nome', dir: 'asc' },
+            colaboradorParaRemover: {},
+            modal: null,
+
+            init() {
+                this.modal = new bootstrap.Modal(document.getElementById('confirmacaoModal'));
+            },
+            
+            get filteredColaboradores() {
+                let filtered = this.allColaboradores.filter(c => {
+                    const searchMatch = this.filters.search.trim() === '' || 
+                                      `${c.nome} ${c.sobrenome}`.toLowerCase().includes(this.filters.search.toLowerCase()) ||
+                                      (c.email && c.email.toLowerCase().includes(this.filters.search.toLowerCase()));
+                    const cargoMatch = !this.filters.cargo || c.cargo_id == this.filters.cargo;
+                    const deptoMatch = !this.filters.depto || c.depto_id == this.filters.depto;
+                    return searchMatch && cargoMatch && deptoMatch;
+                });
+
+                return filtered.sort((a, b) => {
+                    const fieldA = (a[this.sort.by] || '').toLowerCase();
+                    const fieldB = (b[this.sort.by] || '').toLowerCase();
+                    const modifier = this.sort.dir === 'asc' ? 1 : -1;
+                    if (fieldA < fieldB) return -1 * modifier;
+                    if (fieldA > fieldB) return 1 * modifier;
+                    return 0;
+                });
+            },
+
+            sortBy(field) {
+                this.sort.dir = (this.sort.by === field && this.sort.dir === 'asc') ? 'desc' : 'asc';
+                this.sort.by = field;
+            },
+
+            getSortIcon(field) {
+                if (this.sort.by !== field) return 'bi-arrow-down-up';
+                return this.sort.dir === 'asc' ? 'bi-sort-up-alt' : 'bi-sort-down';
+            },
+
+            confirmarRemocao(col) {
+                this.colaboradorParaRemover = { id: col.id, nome: `${col.nome} ${col.sobrenome}` };
+                this.modal.show();
+            },
+
+            async removerColaborador() {
+                const response = await fetch(`/admin/colaboradores/remover/${this.colaboradorParaRemover.id}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    this.showToast(data.message, 'success');
+                    this.allColaboradores = this.allColaboradores.filter(c => c.id !== this.colaboradorParaRemover.id);
+                } else {
+                    this.showToast('Erro ao remover colaborador.', 'danger');
+                }
+                this.modal.hide();
+            },
+            
+            getInitials(nome, sobrenome) {
+                return `${nome.charAt(0)}${sobrenome ? sobrenome.charAt(0) : ''}`.toUpperCase();
+            },
+            getAvatarColor(nome) {
+                const colors = ['#C051FF', '#7A28B8', '#3A1B4A', '#00D29D', '#345978'];
+                let hash = 0;
+                for (let i = 0; i < nome.length; i++) {
+                    hash = nome.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return colors[Math.abs(hash % colors.length)];
+            },
+            
+            showToast(message, type = 'info') {
+                window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
+            }
+        }
+    }
 </script>
 {% endblock %}

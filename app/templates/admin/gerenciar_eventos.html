@@ -11,8 +11,8 @@
     </div>
 
     <div class="card">
-        <div class="card-body">
-            <table class="table table-hover">
+        <div class="card-body event-list-container custom-scrollbar">
+            <table class="table table-hover table-sticky-header">
                 <thead>
                     <tr>
                         <th>Título</th>
@@ -30,8 +30,8 @@
                             <td x-text="evento.end ? formatarData(evento.end) : '—'"></td>
                             <td x-text="evento.location || '—'"></td>
                             <td>
-                                <button class="btn btn-sm btn-secondary" @click="abrirModal(evento)">Editar</button>
-                                <button class="btn btn-sm btn-danger" @click="removerEvento(evento.id)">Remover</button>
+                                <button class="btn btn-sm btn-secondary" @click="abrirModal(evento)"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-danger" @click="removerEvento(evento.id)"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>
                     </template>
@@ -62,11 +62,12 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Início</label>
-                                <input type="datetime-local" class="form-control" x-model="form.start" required>
+                                <input type="datetime-local" class="form-control" x-model="form.start" required min="2020-01-01T00:00" max="2100-12-31T23:59">
+                                <small class="form-text text-muted">Use o formato DD/MM/AAAA HH:MM.</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Fim (Opcional)</label>
-                                <input type="datetime-local" class="form-control" x-model="form.end">
+                                <input type="datetime-local" class="form-control" x-model="form.end" min="2020-01-01T00:00" max="2100-12-31T23:59">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -76,10 +77,6 @@
                         <div class="mb-3">
                             <label class="form-label">Local (Opcional)</label>
                             <input type="text" class="form-control" x-model="form.location">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Cor do Evento</label>
-                            <input type="color" class="form-control form-control-color" x-model="form.color">
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

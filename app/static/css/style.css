@@ -293,15 +293,16 @@ body {
 
 /* --- BOTÕES --- */
 .btn-auvo {
-    background: linear-gradient(90deg, var(--cor-primaria), var(--cor-primaria-escura));
+    background-color: var(--cor-sidebar);
     color: var(--cor-neutra);
     border: none;
     border-radius: 0.5rem;
     padding: 0.75rem;
     font-weight: 500;
-    transition: transform 0.2s;
+    transition: transform 0.2s, background-color 0.2s;
 }
 .btn-auvo:hover {
+    background-color: var(--cor-primaria-escura);
     transform: scale(1.02);
     color: var(--cor-neutra);
 }
@@ -393,7 +394,7 @@ body {
     }
 }
 
-/* --- NOVA CLASSE PARA FOTO NA TABELA DE COLABORADORES --- */
+/* --- ESTILOS PARA TABELA DE COLABORADORES --- */
 .colaborador-foto-tabela {
     width: 50px;
     height: 50px;
@@ -402,51 +403,62 @@ body {
     border: 2px solid #eee;
 }
 
-
-
-/* --- ESTILOS PARA O ORGANOGRAMA (d3-org-chart) --- */
-
-/* Container principal para habilitar o overflow e o arrasto */
-.chart-container {
-    width: 100%;
-    height: 100%;
-    overflow: auto; /* Permite o scroll/arrasto */
-    background-color: #f8f9fa;
-    border-radius: 8px;
-}
-
-/* Estilo do card de cada colaborador */
-.org-node-card {
-    border: 1px solid #e9ecef;
-    border-top: 5px solid; /* A cor será definida inline ou por outra classe */
-    min-width: 280px; /* Largura mínima para o card */
-}
-
-/* Foto do colaborador */
-.org-node-image {
-    width: 60px;
-    height: 60px;
+.colaborador-avatar-tabela {
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.2em;
     border: 2px solid #eee;
 }
 
-/* Nome do colaborador */
-.org-node-name {
-    font-weight: 600;
-    color: #212529;
+.table-sticky-header thead th {
+    position: sticky;
+    top: 0;
+    background-color: #ffffff;
+    z-index: 10;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Título/Cargo do colaborador */
-.org-node-title {
-    font-size: 0.9em;
+/* --- ESTILOS PARA O ORGANOGRAMA (d3-org-chart) --- */
+.chart-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: #f8f9fa;
+    border-radius: 8px;
 }
+.chart-container::-webkit-scrollbar { display: none; }
+.chart-container { -ms-overflow-style: none; scrollbar-width: none; }
+.org-node-card { border: 1px solid #e9ecef; border-top: 5px solid; min-width: 280px; }
+.org-node-image { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
+.org-node-name { font-weight: 600; color: #212529; }
+.org-node-title { font-size: 0.9em; }
+.org-node-dept { background-color: #f1f5f9; color: #64748b; padding: 2px 8px; border-radius: 50px; display: inline-block; }
 
-/* Departamento */
-.org-node-dept {
-    background-color: #f1f5f9;
-    color: #64748b;
-    padding: 2px 8px;
-    border-radius: 50px;
+
+/* --- ESTILOS PARA TELA DE GESTÃO DE CARGOS/DEPTOS --- */
+.list-container {
+    max-height: 270px; 
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+}
+.depto-color-preview {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
     display: inline-block;
+}
+
+/* --- ESTILOS PARA LISTA DE EVENTOS --- */
+.event-list-container {
+    max-height: 70vh;
+    overflow-y: auto;
 }

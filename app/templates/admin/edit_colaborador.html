@@ -8,13 +8,12 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="POST" action="{{ url_for('colaborador.editar', id=colaborador.id) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('colaborador.editar', id=colaborador.id) }}" enctype="multipart/form-data" autocomplete="off">
             <div class="row">
                 <div class="col-md-3 text-center">
                     <img src="{{ url_for('static', filename='fotos_colaboradores/' + colaborador.foto_filename) if colaborador.foto_filename else url_for('static', filename='img/default_avatar.png') }}" alt="Foto" class="img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
                     <div class="mb-3"><label class="form-label">Alterar Foto</label><input class="form-control form-control-sm" type="file" name="foto" accept="image/*"></div>
                 </div>
-
                 <div class="col-md-9">
                     <div class="row">
                         <div class="col-md-6 mb-3"><label class="form-label">Nome</label><input type="text" name="nome" class="form-control" value="{{ colaborador.nome }}" required></div>
@@ -22,10 +21,10 @@
                     </div>
                     <div class="mb-3"><label class="form-label">E-mail</label><input type="email" name="email_corporativo" class="form-control" value="{{ colaborador.email_corporativo }}" required></div>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="date" class="form-control" name="data_nascimento" value="{{ colaborador.data_nascimento.strftime('%Y-%m-%d') }}" required></div>
-                        <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="date" class="form-control" name="data_inicio" value="{{ colaborador.data_inicio.strftime('%Y-%m-%d') if colaborador.data_inicio else '' }}" required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="date" class="form-control" name="data_nascimento" value="{{ colaborador.data_nascimento.strftime('%Y-%m-%d') }}" required onkeydown="return false;" onclick="this.showPicker()"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="date" class="form-control" name="data_inicio" value="{{ colaborador.data_inicio.strftime('%Y-%m-%d') if colaborador.data_inicio else '' }}" required onkeydown="return false;" onclick="this.showPicker()"></div>
                     </div>
-                     <div class="mb-3"><label class="form-label">Nova Senha</label><input type="password" name="senha" class="form-control"><small class="form-text text-muted">Deixe em branco para não alterar.</small></div>
+                     <div class="mb-3"><label class="form-label">Nova Senha</label><input type="password" name="senha" class="form-control" autocomplete="new-password"><small class="form-text text-muted">Deixe em branco para não alterar.</small></div>
                 </div>
             </div>
             <hr>
@@ -33,21 +32,21 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Cargo</label>
-                    <select name="cargo_id" class="form-select">
+                    <select name="cargo_id" class="form-select custom-select">
                         <option value="">Selecione...</option>
                         {% for cargo in cargos %}<option value="{{ cargo.id }}" {% if colaborador.cargo_id == cargo.id %}selected{% endif %}>{{ cargo.titulo }}</option>{% endfor %}
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Departamento</label>
-                    <select name="departamento_id" class="form-select">
+                    <select name="departamento_id" class="form-select custom-select">
                         <option value="">Selecione...</option>
                         {% for depto in departamentos %}<option value="{{ depto.id }}" {% if colaborador.departamento_id == depto.id %}selected{% endif %}>{{ depto.nome }}</option>{% endfor %}
                     </select>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Superior Imediato</label>
-                    <select name="superior_id" class="form-select">
+                    <select name="superior_id" class="form-select custom-select">
                         <option value="None">Nenhum</option>
                         {% for sup in superiores %}<option value="{{ sup.id }}" {% if colaborador.superior_id == sup.id %}selected{% endif %}>{{ sup.nome }} {{ sup.sobrenome }}</option>{% endfor %}
                     </select>

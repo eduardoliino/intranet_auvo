@@ -1,79 +1,213 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Configurações do Organograma</h2>
-    <a href="{{ url_for('colaborador.listar') }}" class="btn btn-secondary">Voltar para Colaboradores</a>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header fw-bold">Definir Raiz do Organograma (CEO)</div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('admin.gerenciar_cargos_departamentos') }}">
-            <input type="hidden" name="form_ceo" value="1">
-            <div class="mb-3">
-                <label for="ceo_id" class="form-label">Selecione o colaborador que estará no topo do organograma:</label>
-                <select id="ceo_id" name="ceo_id" class="form-select custom-select">
-                    <option value="">Ninguém definido</option>
-                    {% for col in colaboradores %}
-                        <option value="{{ col.id }}" {% if col.id == ceo_id %}selected{% endif %}>
-                            {{ col.nome }} {{ col.sobrenome }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-auvo">Salvar CEO</button>
-        </form>
+<div x-data="gestaoConfig()">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Configurações do Organograma</h2>
+        <a href="{{ url_for('colaborador.listar') }}" class="btn btn-secondary">Voltar para Colaboradores</a>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header fw-bold">Gerenciar Cargos</div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('admin.gerenciar_cargos_departamentos') }}" class="mb-4 p-3 border rounded">
-                    <input type="hidden" name="form_cargo" value="1">
-                    <h6 class="mb-3">Adicionar Novo Cargo</h6>
-                    <div class="mb-2"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Descrição</label><textarea name="descricao" class="form-control" rows="2"></textarea></div>
-                    <button type="submit" class="btn btn-success w-100">Adicionar Cargo</button>
-                </form>
-                <h6 class="mt-4">Cargos Existentes</h6>
-                <ul class="list-group">
-                    {% for cargo in cargos %}
-                    <li class="list-group-item">{{ cargo.titulo }}</li>
-                    {% else %}
-                    <li class="list-group-item text-muted">Nenhum cargo cadastrado.</li>
-                    {% endfor %}
-                </ul>
+    <div class="card mb-4">
+        <div class="card-header fw-bold">Definir Raiz do Organograma (CEO)</div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.definir_ceo') }}">
+                <div class="mb-3">
+                    <label for="ceo_id" class="form-label">Selecione o colaborador que estará no topo do organograma:</label>
+                    <select id="ceo_id" name="ceo_id" class="form-select custom-select">
+                        <option value="">Ninguém definido</option>
+                        {% for col in colaboradores %}<option value="{{ col.id }}" {% if col.id == ceo_id %}selected{% endif %}>{{ col.nome }} {{ col.sobrenome }}</option>{% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-auvo">Salvar CEO</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header fw-bold">Gerenciar Cargos</div>
+                <div class="card-body">
+                    <form @submit.prevent="adicionarCargo" class="mb-4 p-3 border rounded">
+                        <h6 class="mb-3">Adicionar Novo Cargo</h6>
+                        <div class="mb-2"><label class="form-label">Título do Cargo</label><input type="text" x-model="novoCargo.titulo" class="form-control" required></div>
+                        <button type="submit" class="btn btn-success w-100">Adicionar Cargo</button>
+                    </form>
+                    
+                    <h6 class="mt-4">Cargos Existentes</h6>
+                    <div class="list-container custom-scrollbar">
+                        <ul class="list-group">
+                            <template x-for="cargo in cargos" :key="cargo.id">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span x-text="cargo.titulo"></span>
+                                    <div>
+                                        <button @click="abrirModalEdicao('cargo', cargo)" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></button>
+                                        <button @click="confirmarRemocao('cargo', cargo)" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header fw-bold">Gerenciar Departamentos</div>
+                <div class="card-body">
+                     <form @submit.prevent="adicionarDepartamento" class="mb-4 p-3 border rounded">
+                        <h6 class="mb-3">Adicionar Novo Departamento</h6>
+                        <div class="mb-2"><label class="form-label">Nome do Departamento</label><input type="text" x-model="novoDepto.nome" class="form-control" required></div>
+                        <button type="submit" class="btn btn-success w-100">Adicionar Departamento</button>
+                    </form>
+
+                    <h6 class="mt-4">Departamentos Existentes</h6>
+                    <div class="list-container custom-scrollbar">
+                        <ul class="list-group">
+                            <template x-for="depto in departamentos" :key="depto.id">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span x-text="depto.nome"></span>
+                                    <div>
+                                        <button @click="abrirModalEdicao('depto', depto)" class="btn btn-sm btn-outline-secondary ms-2"><i class="bi bi-pencil"></i></button>
+                                        <button @click="confirmarRemocao('depto', depto)" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header fw-bold">Gerenciar Departamentos</div>
-            <div class="card-body">
-                 <form method="POST" action="{{ url_for('admin.gerenciar_cargos_departamentos') }}" class="mb-4 p-3 border rounded">
-                    <input type="hidden" name="form_depto" value="1">
-                    <h6 class="mb-3">Adicionar Novo Departamento</h6>
-                    <div class="mb-2"><label class="form-label">Nome</label><input type="text" name="nome" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Cor</label><input type="color" name="cor" class="form-control form-control-color" value="#7A28B8"></div>
-                    <button type="submit" class="btn btn-success w-100">Adicionar Departamento</button>
-                </form>
-                <h6 class="mt-4">Departamentos Existentes</h6>
-                <ul class="list-group">
-                    {% for depto in departamentos %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ depto.nome }}
-                        <span style="width: 20px; height: 20px; border-radius: 5px; background-color: {{ depto.cor }};"></span>
-                    </li>
-                    {% else %}
-                    <li class="list-group-item text-muted">Nenhum departamento cadastrado.</li>
-                    {% endfor %}
-                </ul>
+
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" x-text="`Editar ${itemParaEditar.tipo}`"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label x-text="itemParaEditar.tipo === 'Cargo' ? 'Título do Cargo' : 'Nome do Departamento'"></label>
+                        <input type="text" class="form-control" x-model="itemParaEditar.nome">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" @click="salvarEdicao()" class="btn btn-auvo">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmacaoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Confirmar Remoção</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p>Tem a certeza de que deseja remover <strong x-text="itemParaRemover.nome"></strong>?</p>
+                    <p class="text-danger small">Todos os colaboradores que utilizam este registo perderão o vínculo.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" @click="removerItem()" class="btn btn-danger">Confirmar Remoção</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    function gestaoConfig() {
+        return {
+            cargos: {{ cargos|tojson|safe }},
+            departamentos: {{ departamentos|tojson|safe }},
+            novoCargo: { titulo: '' },
+            novoDepto: { nome: '' },
+            itemParaEditar: {},
+            itemParaRemover: {},
+            editModal: null,
+            confirmacaoModal: null,
+
+            init() {
+                this.editModal = new bootstrap.Modal(document.getElementById('editModal'));
+                this.confirmacaoModal = new bootstrap.Modal(document.getElementById('confirmacaoModal'));
+            },
+
+            async adicionarCargo() {
+                const res = await fetch('{{ url_for("admin.adicionar_cargo") }}', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.novoCargo) });
+                const data = await res.json();
+                if (data.success) {
+                    this.cargos.push(data.cargo);
+                    this.cargos.sort((a, b) => a.titulo.localeCompare(b.titulo));
+                    this.novoCargo.titulo = '';
+                }
+                this.showToast(data.message, data.success ? 'success' : 'danger');
+            },
+            async adicionarDepartamento() {
+                const res = await fetch('{{ url_for("admin.adicionar_departamento") }}', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.novoDepto) });
+                const data = await res.json();
+                if (data.success) {
+                    this.departamentos.push(data.departamento);
+                    this.departamentos.sort((a, b) => a.nome.localeCompare(b.nome));
+                    this.novoDepto.nome = '';
+                }
+                this.showToast(data.message, data.success ? 'success' : 'danger');
+            },
+
+            abrirModalEdicao(tipo, item) {
+                this.itemParaEditar = {
+                    id: item.id,
+                    tipo: tipo === 'cargo' ? 'Cargo' : 'Departamento',
+                    nome: tipo === 'cargo' ? item.titulo : item.nome,
+                };
+                this.editModal.show();
+            },
+            async salvarEdicao() {
+                const tipo = this.itemParaEditar.tipo.toLowerCase();
+                const url = `/admin/${tipo}s/editar/${this.itemParaEditar.id}`;
+                const payload = { titulo: this.itemParaEditar.nome }; // Simplificado
+                if(tipo === 'departamento') payload.nome = this.itemParaEditar.nome;
+
+                const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                const data = await res.json();
+
+                if (data.success) {
+                    if (tipo === 'cargo') {
+                        const index = this.cargos.findIndex(c => c.id === data.cargo.id);
+                        this.cargos[index] = data.cargo;
+                    } else {
+                        const index = this.departamentos.findIndex(d => d.id === data.departamento.id);
+                        this.departamentos[index] = data.departamento;
+                    }
+                }
+                this.showToast(data.message, data.success ? 'success' : 'danger');
+                this.editModal.hide();
+            },
+
+            confirmarRemocao(tipo, item) {
+                this.itemParaRemover = { id: item.id, tipo: tipo, nome: tipo === 'cargo' ? item.titulo : item.nome };
+                this.confirmacaoModal.show();
+            },
+            async removerItem() {
+                const { tipo, id } = this.itemParaRemover;
+                const url = `/admin/${tipo}s/remover/${id}`;
+                const res = await fetch(url, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    if (tipo === 'cargo') this.cargos = this.cargos.filter(c => c.id !== id);
+                    else this.departamentos = this.departamentos.filter(d => d.id !== id);
+                }
+                this.showToast(data.message, data.success ? 'success' : 'danger');
+                this.confirmacaoModal.hide();
+            },
+
+            showToast(message, type = 'info') {
+                window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
+            }
+        }
+    }
+</script>
 {% endblock %}

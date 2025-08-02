@@ -9,15 +9,15 @@
 <div class="card mb-4">
     <div class="card-header fw-bold">Dados do novo colaborador</div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('colaborador.adicionar') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('colaborador.adicionar') }}" enctype="multipart/form-data" autocomplete="off">
             <div class="row">
                 <div class="col-md-6 mb-3"><label class="form-label">Nome</label><input type="text" name="nome" class="form-control" required></div>
                 <div class="col-md-6 mb-3"><label class="form-label">Sobrenome</label><input type="text" name="sobrenome" class="form-control" required></div>
             </div>
             <div class="mb-3"><label class="form-label">E-mail Corporativo</label><input type="email" name="email_corporativo" class="form-control" required></div>
             <div class="row">
-                <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="date" name="data_nascimento" class="form-control" required></div>
-                <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="date" name="data_inicio" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="date" name="data_nascimento" class="form-control" required onkeydown="return false;" onclick="this.showPicker()"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="date" name="data_inicio" class="form-control" required onkeydown="return false;" onclick="this.showPicker()"></div>
             </div>
 
             <hr>
@@ -25,22 +25,22 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Cargo</label>
-                    <select name="cargo_id" class="form-select"><option value="">Selecione...</option>{% for cargo in cargos %}<option value="{{ cargo.id }}">{{ cargo.titulo }}</option>{% endfor %}</select>
+                    <select name="cargo_id" class="form-select custom-select"><option value="">Selecione...</option>{% for cargo in cargos %}<option value="{{ cargo.id }}">{{ cargo.titulo }}</option>{% endfor %}</select>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Departamento</label>
-                    <select name="departamento_id" class="form-select"><option value="">Selecione...</option>{% for depto in departamentos %}<option value="{{ depto.id }}">{{ depto.nome }}</option>{% endfor %}</select>
+                    <select name="departamento_id" class="form-select custom-select"><option value="">Selecione...</option>{% for depto in departamentos %}<option value="{{ depto.id }}">{{ depto.nome }}</option>{% endfor %}</select>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Superior Imediato</label>
-                    <select name="superior_id" class="form-select"><option value="None">Nenhum</option>{% for sup in superiores %}<option value="{{ sup.id }}">{{ sup.nome }} {{ sup.sobrenome }}</option>{% endfor %}</select>
+                    <select name="superior_id" class="form-select custom-select"><option value="None">Nenhum</option>{% for sup in superiores %}<option value="{{ sup.id }}">{{ sup.nome }} {{ sup.sobrenome }}</option>{% endfor %}</select>
                 </div>
             </div>
             
             <hr>
             <h5 class="mb-3">Acesso e Foto</h5>
             <div class="row">
-                <div class="col-md-6 mb-3"><label class="form-label">Senha Inicial</label><input type="password" name="senha" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Senha Inicial</label><input type="password" name="senha" class="form-control" required autocomplete="new-password"></div>
                 <div class="col-md-6 mb-3"><label class="form-label">Foto (Opcional)</label><input class="form-control" type="file" name="foto" accept="image/*"></div>
             </div>
             

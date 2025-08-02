@@ -1,3 +1,5 @@
+# app/routes.py
+
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
@@ -9,6 +11,8 @@ import locale
 locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
 
 main = Blueprint('main', __name__)
+
+# ... (O conteúdo das suas outras rotas, como 'index', 'faq_publico', etc. permanece o mesmo) ...
 
 
 @main.route('/')
@@ -142,35 +146,35 @@ def ouvidoria():
     )
 
 
+# --- ROTAS DO ORGANOGRAMA ---
+
 @main.route('/organograma')
 @login_required
 def ver_organograma():
-    """ Rota que renderiza a página de visualização do organograma. """
     return render_template('organograma.html', title="Organograma Corporativo")
 
 
-def get_equipe_recursive(colaborador_id, todos_colaboradores):
-    """ Função auxiliar para encontrar todos os subordinados de um colaborador """
+def get_equipe_recursive(colaborador_id, todos_colaboradores, visitados):
+    if colaborador_id in visitados:
+        return []
+    visitados.add(colaborador_id)
     equipe = []
-    subordinados_diretos = [c for c in todos_colaboradores if c.superior_id == colaborador_id]
-
+    subordinados_diretos = [
+        c for c in todos_colaboradores
+        if c.superior_id == colaborador_id and c.id != c.superior_id
+    ]
     for sub in subordinados_diretos:
         equipe.append(sub)
-        equipe.extend(get_equipe_recursive(sub.id, todos_colaboradores))
-
+        equipe.extend(get_equipe_recursive(
+            sub.id, todos_colaboradores, visitados))
     return equipe
 
 
 @main.route('/api/organograma-data')
 @login_required
 def organograma_data():
-    """ 
-    Endpoint que retorna os dados dos colaboradores no formato JSON
-    a partir de um único CEO definido.
-    """
     config_ceo = ConfigLink.query.filter_by(chave='ceo_colaborador_id').first()
     if not config_ceo or not config_ceo.valor:
-        # Se nenhum CEO estiver definido, retorna uma lista vazia para não dar erro
         return jsonify({'nodes': []})
 
     ceo_id = int(config_ceo.valor)
@@ -178,23 +182,44 @@ def organograma_data():
     if not ceo:
         return jsonify({'nodes': []})
 
-    # Pega todos os colaboradores de uma vez para evitar múltiplas queries
     todos_colaboradores = Colaborador.query.all()
+    arvore_colaboradores = [
+        ceo] + get_equipe_recursive(ceo_id, todos_colaboradores, set())
 
-    # Monta a árvore hierárquica a partir do CEO
-    arvore_colaboradores = [ceo] + get_equipe_recursive(ceo_id, todos_colaboradores)
-
-    nodes = []
+    # --- CORREÇÃO DEFINITIVA APLICADA AQUI ---
+    # Garante que a lista final de nós é única, evitando duplicados
+    nodes_dict = {}
     for col in arvore_colaboradores:
-        # Garante que o CEO não tenha um pai, resolvendo o erro 'multiple roots'
-        parent_id = col.superior_id if col.id != ceo_id else None
+        if col.id not in nodes_dict:  # Adiciona apenas se o ID não existir no dicionário
+            parent_id = col.superior_id if col.id != ceo_id else None
+            if col.id == col.superior_id:  # Quebra o loop de auto-referência
+                parent_id = None
 
-        nodes.append({
-            'id': col.id,
-            'parentId': parent_id,
-            'nome': f"{col.nome} {col.sobrenome}",
-            'cargo': col.cargo.titulo if col.cargo else 'Sem Cargo',
-            'departamento': col.departamento.nome if col.departamento else 'N/A',
-            'imageUrl': f"/static/fotos_colaboradores/{col.foto_filename}" if col.foto_filename else "/static/img/default_avatar.png",
-        })
+            nodes_dict[col.id] = {
+                'id': col.id,
+                'parentId': parent_id,
+                'nome': f"{col.nome} {col.sobrenome}",
+                'cargo': col.cargo.titulo if col.cargo else 'Sem Cargo',
+                'departamento': col.departamento.nome if col.departamento else 'N/A',
+                'imageUrl': f"/static/fotos_colaboradores/{col.foto_filename}" if col.foto_filename else "/static/img/default_avatar.png",
+            }
+
+    # Converte o dicionário de volta para uma lista
+    nodes = list(nodes_dict.values())
+    # --- FIM DA CORREÇÃO ---
+
     return jsonify({'nodes': nodes})
+
+
+@main.route('/api/colaborador/<int:id>')
+@login_required
+def get_colaborador_detalhes(id):
+    col = Colaborador.query.get_or_404(id)
+    return jsonify({
+        'id': col.id,
+        'nome_completo': f"{col.nome} {col.sobrenome}",
+        'email': col.email_corporativo,
+        'cargo': col.cargo.titulo if col.cargo else "N/A",
+        'departamento': col.departamento.nome if col.departamento else "N/A",
+        'foto_url': f"/static/fotos_colaboradores/{col.foto_filename}" if col.foto_filename else "/static/img/default_avatar.png"
+    })

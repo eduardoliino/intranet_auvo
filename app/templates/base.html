@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
     
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 
 <body>
@@ -116,18 +117,7 @@
         </div>
     </div>
 
-
     <main id="content">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
         {% block content %}{% endblock %}
     </main>
 
@@ -233,7 +223,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             var selects = document.querySelectorAll('select.custom-select');
             selects.forEach(function(select) {
-                new TomSelect(select, {});
+                // --- INÍCIO DA CORREÇÃO ---
+                new TomSelect(select, {
+                    plugins: ['clear_button']
+                });
+                // --- FIM DA CORREÇÃO ---
             });
 
             {% with messages = get_flashed_messages(with_categories=true) %}

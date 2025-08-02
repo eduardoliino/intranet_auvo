@@ -12,8 +12,6 @@ from datetime import datetime
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
-# Esta função de decorator continua aqui, pois é usada em ambos os arquivos de rotas
-
 
 def admin_required(f):
     @wraps(f)
@@ -23,8 +21,6 @@ def admin_required(f):
             return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
-
-# Esta função de salvar foto também pode ser compartilhada
 
 
 def salvar_foto(form_foto):
@@ -37,62 +33,126 @@ def salvar_foto(form_foto):
     form_foto.save(foto_path)
     return foto_filename
 
-# --- CRIE AQUI AS ROTAS PARA GERENCIAR CARGOS E DEPARTAMENTOS ---
+# --- ROTAS DE GESTÃO DE CARGOS E DEPARTAMENTOS ---
 
 
-@admin.route('/cargos-departamentos', methods=['GET', 'POST'])
+@admin.route('/cargos-departamentos', methods=['GET'])
 @admin_required
 def gerenciar_cargos_departamentos():
-    if request.method == 'POST':
-        # --- LÓGICA PARA SALVAR O CEO ---
-        if 'form_ceo' in request.form:
-            ceo_id = request.form.get('ceo_id')
-            config_ceo = ConfigLink.query.filter_by(
-                chave='ceo_colaborador_id').first()
-            if not config_ceo:
-                config_ceo = ConfigLink(chave='ceo_colaborador_id')
-                db.session.add(config_ceo)
-            config_ceo.valor = ceo_id
-            flash('CEO do organograma definido com sucesso!', 'success')
+    cargos_obj = Cargo.query.order_by(Cargo.titulo).all()
+    cargos_json = [{'id': c.id, 'titulo': c.titulo} for c in cargos_obj]
 
-        # Lógica para salvar Cargo
-        elif 'form_cargo' in request.form:
-            # ... (código existente) ...
-            titulo = request.form.get('titulo')
-            if titulo and not Cargo.query.filter_by(titulo=titulo).first():
-                novo_cargo = Cargo(
-                    titulo=titulo, descricao=request.form.get('descricao'))
-                db.session.add(novo_cargo)
-                flash('Cargo adicionado com sucesso!', 'success')
+    departamentos_obj = Departamento.query.order_by(Departamento.nome).all()
+    departamentos_json = [{'id': d.id, 'nome': d.nome}
+                          for d in departamentos_obj]
 
-        # Lógica para salvar Departamento
-        elif 'form_depto' in request.form:
-            # ... (código existente) ...
-            nome = request.form.get('nome')
-            if nome and not Departamento.query.filter_by(nome=nome).first():
-                novo_depto = Departamento(
-                    nome=nome, cor=request.form.get('cor'))
-                db.session.add(novo_depto)
-                flash('Departamento adicionado com sucesso!', 'success')
-
-        db.session.commit()
-        return redirect(url_for('admin.gerenciar_cargos_departamentos'))
-
-    # --- LÓGICA PARA CARREGAR OS DADOS PARA O TEMPLATE ---
-    cargos = Cargo.query.order_by(Cargo.titulo).all()
-    departamentos = Departamento.query.order_by(Departamento.nome).all()
     colaboradores = Colaborador.query.order_by(Colaborador.nome).all()
-
     config_ceo = ConfigLink.query.filter_by(chave='ceo_colaborador_id').first()
     ceo_id = int(config_ceo.valor) if config_ceo and config_ceo.valor else None
 
     return render_template('admin/gerenciar_cargos_departamentos.html',
-                           cargos=cargos,
-                           departamentos=departamentos,
+                           cargos=cargos_json,
+                           departamentos=departamentos_json,
                            colaboradores=colaboradores,
                            ceo_id=ceo_id)
 
 
+@admin.route('/cargos-departamentos/ceo', methods=['POST'])
+@admin_required
+def definir_ceo():
+    ceo_id = request.form.get('ceo_id')
+    config_ceo = ConfigLink.query.filter_by(chave='ceo_colaborador_id').first()
+    if not config_ceo:
+        config_ceo = ConfigLink(chave='ceo_colaborador_id')
+        db.session.add(config_ceo)
+    config_ceo.valor = ceo_id
+    db.session.commit()
+    flash('CEO do organograma definido com sucesso!', 'success')
+    return redirect(url_for('admin.gerenciar_cargos_departamentos'))
+
+
+@admin.route('/cargos/adicionar', methods=['POST'])
+@admin_required
+def adicionar_cargo():
+    data = request.json
+    titulo = data.get('titulo')
+    if not titulo:
+        return jsonify({'success': False, 'message': 'Título é obrigatório.'}), 400
+    if Cargo.query.filter_by(titulo=titulo).first():
+        return jsonify({'success': False, 'message': 'Este cargo já existe.'}), 400
+    novo_cargo = Cargo(titulo=titulo)
+    db.session.add(novo_cargo)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Cargo adicionado!', 'cargo': {'id': novo_cargo.id, 'titulo': novo_cargo.titulo}})
+
+
+@admin.route('/cargos/editar/<int:id>', methods=['POST'])
+@admin_required
+def editar_cargo(id):
+    cargo = Cargo.query.get_or_404(id)
+    data = request.json
+    novo_titulo = data.get('titulo')
+    if not novo_titulo:
+        return jsonify({'success': False, 'message': 'Título é obrigatório.'}), 400
+    if novo_titulo != cargo.titulo and Cargo.query.filter_by(titulo=novo_titulo).first():
+        return jsonify({'success': False, 'message': 'Este título de cargo já está em uso.'}), 400
+    cargo.titulo = novo_titulo
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Cargo atualizado!', 'cargo': {'id': cargo.id, 'titulo': cargo.titulo}})
+
+
+@admin.route('/cargos/remover/<int:id>', methods=['POST'])
+@admin_required
+def remover_cargo(id):
+    cargo = Cargo.query.get_or_404(id)
+    Colaborador.query.filter_by(cargo_id=id).update({'cargo_id': None})
+    db.session.delete(cargo)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Cargo removido com sucesso!'})
+
+
+@admin.route('/departamentos/adicionar', methods=['POST'])
+@admin_required
+def adicionar_departamento():
+    data = request.json
+    nome = data.get('nome')
+    if not nome:
+        return jsonify({'success': False, 'message': 'Nome é obrigatório.'}), 400
+    if Departamento.query.filter_by(nome=nome).first():
+        return jsonify({'success': False, 'message': 'Este departamento já existe.'}), 400
+    novo_depto = Departamento(nome=nome)
+    db.session.add(novo_depto)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Departamento adicionado!', 'departamento': {'id': novo_depto.id, 'nome': novo_depto.nome}})
+
+
+@admin.route('/departamentos/editar/<int:id>', methods=['POST'])
+@admin_required
+def editar_departamento(id):
+    depto = Departamento.query.get_or_404(id)
+    data = request.json
+    novo_nome = data.get('nome')
+    if not novo_nome:
+        return jsonify({'success': False, 'message': 'Nome é obrigatório.'}), 400
+    if novo_nome != depto.nome and Departamento.query.filter_by(nome=novo_nome).first():
+        return jsonify({'success': False, 'message': 'Este nome de departamento já está em uso.'}), 400
+    depto.nome = novo_nome
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Departamento atualizado!', 'departamento': {'id': depto.id, 'nome': depto.nome}})
+
+
+@admin.route('/departamentos/remover/<int:id>', methods=['POST'])
+@admin_required
+def remover_departamento(id):
+    depto = Departamento.query.get_or_404(id)
+    Colaborador.query.filter_by(departamento_id=id).update({
+        'departamento_id': None})
+    db.session.delete(depto)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Departamento removido com sucesso!'})
+
+
+# ... (O RESTANTE DAS SUAS ROTAS CONTINUA AQUI) ...
 @admin.route('/avisos')
 @login_required
 @admin_required
@@ -364,7 +424,7 @@ def novo_evento():
         end=datetime.fromisoformat(data['end']) if data.get('end') else None,
         description=data.get('description'),
         location=data.get('location'),
-        color=data.get('color'),
+        # A linha 'color' foi removida, o valor padrão do modelo será usado
         user_id=current_user.id
     )
     db.session.add(novo_evento)
@@ -386,7 +446,6 @@ def editar_evento(id):
         data['end']) if data.get('end') else None
     evento.description = data.get('description')
     evento.location = data.get('location')
-    evento.color = data.get('color')
     db.session.commit()
     return jsonify({'success': True, 'evento': evento.to_dict()})
 
