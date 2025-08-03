@@ -310,8 +310,12 @@ def gerenciar_faq():
 @login_required
 @admin_required
 def gerenciar_categorias_faq():
-    categorias = FaqCategoria.query.order_by(FaqCategoria.nome).all()
-    return render_template('admin/gerenciar_faq_categorias.html', categorias=categorias)
+    categorias_obj = FaqCategoria.query.order_by(FaqCategoria.nome).all()
+    # --- ALTERAÇÃO APLICADA AQUI ---
+    # Converte a lista de objetos para uma lista de dicionários (JSON serializável)
+    categorias_json = [{'id': cat.id, 'nome': cat.nome}
+                       for cat in categorias_obj]
+    return render_template('admin/gerenciar_faq_categorias.html', categorias=categorias_json)
 
 
 @admin.route('/faq/categorias/adicionar', methods=['POST'])

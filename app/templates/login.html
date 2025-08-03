@@ -100,8 +100,8 @@
 
         <form method="POST" action="{{ url_for('auth.login') }}">
             <div class="mb-3 text-start">
-                <label for="email" class="form-label">Utilizador (e-mail)</label>
-                <input type="email" class="form-control" id="email" name="email" required autocomplete="email">
+                <label for="email" class="form-label">Email corporativo</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ email or '' }}" required autocomplete="email">
             </div>
             <div class="mb-3 text-start">
                 <label for="password" class="form-label">Senha</label>

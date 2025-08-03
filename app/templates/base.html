@@ -78,8 +78,8 @@
                     <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Colaboradores</a>
                     <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Avisos</a>
                     <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Destaques</a>
-                    <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ (Admin)</a>
-                    <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria (Admin)<span x-show="hasNewOuvidoria" class="notification-dot" x-cloak></span></a>
+                    <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Perguntas</a>
+                    <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Mensagens<span x-show="hasNewOuvidoria" class="notification-dot" x-cloak></span></a>
                     <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Eventos</a>
                     <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Links</a>
                 </div>
@@ -108,8 +108,8 @@
                         <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
                         <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
                         <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
-                        <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a>
-                        <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Gerir Ouvidoria<span x-show="hasNewOuvidoria" class="notification-dot" x-cloak></span></a>
+                        <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Perguntas</a>
+                        <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Mensagens<span x-show="hasNewOuvidoria" class="notification-dot" x-cloak></span></a>
                         <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Gerir Eventos</a>
                         <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Gerir Links</a>
                     </div>
@@ -204,7 +204,7 @@
                 init() {
                     setInterval(() => {
                         this.checkStatus();
-                    }, 30000); // Verifica a cada 30 segundos
+                    }, 60000); // Verifica a cada 60 segundos
                 },
 
                 async checkStatus() {

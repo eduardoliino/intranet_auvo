@@ -32,7 +32,7 @@
                             <template x-for="categoria in categorias" :key="categoria.id">
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span x-text="categoria.nome"></span>
-                                    <button @click="removerCategoria(categoria.id)" class="btn btn-sm btn-outline-danger">
+                                    <button @click="abrirModalConfirmacao(categoria)" class="btn btn-sm btn-outline-danger">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </li>
@@ -46,6 +46,25 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="confirmacaoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Remoção</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem a certeza de que deseja remover a categoria <strong x-text="categoriaParaRemover.nome"></strong>?</p>
+                    <p class="text-danger small">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" @click="removerCategoria()" class="btn btn-danger">Confirmar Remoção</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -55,6 +74,13 @@
         return {
             categorias: {{ categorias|tojson|safe }},
             novaCategoriaNome: '',
+            categoriaParaRemover: {},
+            confirmacaoModal: null,
+
+            init() {
+                
+                this.confirmacaoModal = new bootstrap.Modal(document.getElementById('confirmacaoModal'));
+            },
 
             showToast(message, type = 'info') {
                 window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
@@ -80,18 +106,30 @@
                 }
             },
 
-            async removerCategoria(id) {
-                if (confirm('Tem a certeza? Remover uma categoria vazia não pode ser desfeito.')) {
-                    const response = await fetch(`/admin/faq/categorias/remover/${id}`, { method: 'DELETE' });
-                    const data = await response.json();
+            
+            abrirModalConfirmacao(categoria) {
+                this.categoriaParaRemover = categoria;
+                this.confirmacaoModal.show();
+            },
 
-                    if (data.success) {
-                        this.categorias = this.categorias.filter(c => c.id !== id);
-                        this.showToast(data.message, 'info');
-                    } else {
-                        this.showToast(data.message, 'danger');
-                    }
+            
+            async removerCategoria() {
+                const id = this.categoriaParaRemover.id;
+                if (!id) return;
+
+                const response = await fetch(`/admin/faq/categorias/remover/${id}`, { method: 'DELETE' });
+                const data = await response.json();
+
+                if (data.success) {
+                    this.categorias = this.categorias.filter(c => c.id !== id);
+                    this.showToast(data.message, 'info');
+                } else {
+                    this.showToast(data.message, 'danger');
                 }
+                
+                
+                this.confirmacaoModal.hide();
+                this.categoriaParaRemover = {};
             }
         }
     }

@@ -1,3 +1,6 @@
+/* --- REGRA ADICIONADA PARA EVITAR "PISCAR" DE ELEMENTOS --- */
+[x-cloak] { display: none !important; }
+
 :root {
   --cor-primaria-mais-escura: #1C0829;
   --cor-primaria-escura: #3A1B4A;
@@ -350,6 +353,14 @@ body {
 .form-control:focus, .form-select:focus {
     box-shadow: 0 0 0 2px var(--cor-primaria-clara) !important;
     border-color: var(--cor-primaria) !important;
+    background-color: var(--cor-neutra) !important;
+}
+
+/* --- REGRA CORRIGIDA E MAIS FORTE --- */
+/* Esta regra garante que o estilo do tema seja aplicado ao Tom Select */
+.ts-control.focus, .ts-wrapper.focus .ts-control {
+    border-color: var(--cor-primaria) !important;
+    box-shadow: 0 0 0 2px var(--cor-primaria-clara) !important;
 }
 
 .accordion-button:not(.collapsed) {

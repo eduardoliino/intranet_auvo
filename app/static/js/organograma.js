@@ -20,16 +20,45 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            // --- LÓGICA DE CORES ADICIONADA AQUI ---
+            // 1. Define uma paleta de cores para usar nas bordas dos cards
+            const colors = ['#7A28B8', '#00D29D', '#345978', '#C051FF', '#3A1B4A'];
+            let colorIndex = 0;
+
+            // 2. Agrupa os colaboradores por quem é o seu superior (parentId)
+            const nodesByParent = data.nodes.reduce((acc, node) => {
+                const parentId = node.parentId || 'root'; // Agrupa os que não têm pai (CEO)
+                if (!acc[parentId]) {
+                    acc[parentId] = [];
+                }
+                acc[parentId].push(node);
+                return acc;
+            }, {});
+
+            // 3. Atribui uma cor a cada grupo de "irmãos" (mesmo superior)
+            for (const parentId in nodesByParent) {
+                const siblings = nodesByParent[parentId];
+                const groupColor = colors[colorIndex % colors.length]; // Cicla através das cores
+                siblings.forEach(node => {
+                    node.color = groupColor; // Adiciona a propriedade 'color' a cada colaborador
+                });
+                colorIndex++;
+            }
+            // --- FIM DA LÓGICA DE CORES ---
+
+
             new d3.OrgChart()
                 .container('.chart-container')
                 .data(data.nodes)
                 .nodeId(d => d.id)
                 .parentNodeId(d => d.parentId)
-                // --- LINHA ADICIONADA AQUI ---
-                .scaleExtent([0.5, 2]) // Define o limite mínimo (50%) e máximo (200%) de zoom
+                .scaleExtent([0.5, 2])
+                .nodeWidth(d => 280 + 25) 
                 .nodeContent(function (d) {
+                    // 4. Usa a cor que definimos, ou uma cor padrão se não houver
+                    const borderColor = d.data.color || '#7A28B8';
                     return `
-                        <div class="card org-node-card shadow-sm" style="border-top-color: #7A28B8;">
+                        <div class="card org-node-card shadow-sm" style="border-top-color: ${borderColor};">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center">
                                     <img src="${d.data.imageUrl}" class="org-node-image">

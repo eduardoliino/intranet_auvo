@@ -20,7 +20,7 @@
                     <form @submit.prevent="submitForm">
                         <div class="mb-3">
                             <label for="tipo_denuncia" class="form-label">Assunto</label>
-                            <select class="form-select custom-select" id="tipo_denuncia" x-model="formData.tipo_denuncia" required>
+                            <select id="tipo_denuncia" x-ref="assuntoSelect" required>
                                 <option selected disabled value="">Selecione o tipo...</option>
                                 <option value="Sugestão">Sugestão</option>
                                 <option value="Reclamação">Reclamação</option>
@@ -43,11 +43,11 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="nome" class="form-label">Nome</label>
-                                    <input type="text" class="form-control" id="nome" x-model="formData.nome" placeholder="O seu nome">
+                                    <input type="text" class="form-control" id="nome" x-model="formData.nome" autocomplete="off">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="contato" class="form-label">Contacto (E-mail ou Telefone)</label>
-                                    <input type="text" class="form-control" id="contato" x-model="formData.contato" placeholder="O seu contacto">
+                                    <input type="text" class="form-control" id="contato" x-model="formData.contato" autocomplete="off">
                                 </div>
                             </div>
                         </div>
