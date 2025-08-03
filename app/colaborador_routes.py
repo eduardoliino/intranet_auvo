@@ -62,8 +62,9 @@ def adicionar():
             sobrenome=request.form.get('sobrenome'),
             email_corporativo=email,
             data_nascimento=pd.to_datetime(
-                request.form.get('data_nascimento')).date(),
-            data_inicio=pd.to_datetime(request.form.get('data_inicio')).date(),
+                request.form.get('data_nascimento'), dayfirst=True).date(),
+            data_inicio=pd.to_datetime(request.form.get(
+                'data_inicio'), dayfirst=True).date(),
             foto_filename=foto_filename,
             cargo_id=int(request.form.get('cargo_id')
                          ) if request.form.get('cargo_id') else None,
@@ -101,9 +102,9 @@ def editar(id):
         colaborador.sobrenome = request.form.get('sobrenome')
         colaborador.email_corporativo = request.form.get('email_corporativo')
         colaborador.data_nascimento = pd.to_datetime(
-            request.form.get('data_nascimento')).date()
+            request.form.get('data_nascimento'), dayfirst=True).date()
         colaborador.data_inicio = pd.to_datetime(
-            request.form.get('data_inicio')).date()
+            request.form.get('data_inicio'), dayfirst=True).date()
         colaborador.cargo_id = int(request.form.get(
             'cargo_id')) if request.form.get('cargo_id') else None
         colaborador.departamento_id = int(request.form.get(
@@ -142,8 +143,58 @@ def remover(id):
 @admin_required
 def importar():
     if request.method == 'POST':
-        # ... (código de importação)
-        return redirect(url_for('colaborador.listar'))
+        if 'planilha_colaboradores' not in request.files:
+            flash('Nenhum ficheiro selecionado.', 'warning')
+            return redirect(request.url)
+
+        file = request.files['planilha_colaboradores']
+        if file.filename == '':
+            flash('Nenhum ficheiro selecionado.', 'warning')
+            return redirect(request.url)
+
+        if file and file.filename.endswith('.xlsx'):
+            try:
+                df = pd.read_excel(file, engine='openpyxl')
+                novos_colaboradores = 0
+                erros = []
+
+                for index, row in df.iterrows():
+                    email = row.get('email_corporativo')
+                    if not email or Colaborador.query.filter_by(email_corporativo=email).first():
+                        erros.append(
+                            f"Linha {index+2}: E-mail '{email}' já existe ou está em branco.")
+                        continue
+
+                    novo_colaborador = Colaborador(
+                        nome=row.get('nome'),
+                        sobrenome=row.get('sobrenome'),
+                        email_corporativo=email,
+                        data_nascimento=pd.to_datetime(
+                            row.get('data_nascimento')).date(),
+                        data_inicio=pd.to_datetime(
+                            row.get('data_inicio')).date()
+                    )
+                    novo_colaborador.set_password(str(row.get('senha')))
+                    db.session.add(novo_colaborador)
+                    novos_colaboradores += 1
+
+                db.session.commit()
+
+                if novos_colaboradores > 0:
+                    flash(
+                        f'{novos_colaboradores} colaborador(es) importado(s) com sucesso!', 'success')
+                if erros:
+                    flash('Alguns registos não foram importados:', 'danger')
+                    for erro in erros:
+                        flash(erro, 'danger')
+
+            except Exception as e:
+                db.session.rollback()
+                flash(
+                    f'Ocorreu um erro ao processar o ficheiro: {e}', 'danger')
+
+            return redirect(url_for('colaborador.listar'))
+
     return render_template('admin/importar_colaboradores.html')
 
 

@@ -21,8 +21,8 @@
                     </div>
                     <div class="mb-3"><label class="form-label">E-mail</label><input type="email" name="email_corporativo" class="form-control" value="{{ colaborador.email_corporativo }}" required></div>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="date" class="form-control" name="data_nascimento" value="{{ colaborador.data_nascimento.strftime('%Y-%m-%d') }}" required onkeydown="return false;" onclick="this.showPicker()"></div>
-                        <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="date" class="form-control" name="data_inicio" value="{{ colaborador.data_inicio.strftime('%Y-%m-%d') if colaborador.data_inicio else '' }}" required onkeydown="return false;" onclick="this.showPicker()"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="text" class="form-control" name="data_nascimento" value="{{ colaborador.data_nascimento.strftime('%d/%m/%Y') }}" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="text" class="form-control" name="data_inicio" value="{{ colaborador.data_inicio.strftime('%d/%m/%Y') if colaborador.data_inicio else '' }}" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
                     </div>
                      <div class="mb-3"><label class="form-label">Nova Senha</label><input type="password" name="senha" class="form-control" autocomplete="new-password"><small class="form-text text-muted">Deixe em branco para não alterar.</small></div>
                 </div>
@@ -56,4 +56,19 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+function formatarData(input) {
+    let valor = input.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+    if (valor.length > 2) {
+        valor = valor.substring(0, 2) + '/' + valor.substring(2);
+    }
+    if (valor.length > 5) {
+        valor = valor.substring(0, 5) + '/' + valor.substring(5, 9);
+    }
+    input.value = valor;
+}
+</script>
 {% endblock %}

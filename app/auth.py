@@ -21,7 +21,7 @@ def login():
         if admin_user and admin_user.check_password(password):
             login_user(admin_user)
             # Se for admin, redireciona para uma página de gestão
-            return redirect(url_for('admin.listar_colaboradores'))
+            return redirect(url_for('colaborador.listar'))
 
         # 2. Se não for admin, verifica se as credenciais são de um colaborador
         colaborador_user = Colaborador.query.filter_by(
