@@ -11,37 +11,45 @@
     </div>
 
     <div class="card">
-        <div class="card-body event-list-container custom-scrollbar">
-            <table class="table table-hover table-sticky-header">
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Início</th>
-                        <th>Fim</th>
-                        <th>Local</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <template x-for="evento in eventos" :key="evento.id">
+        <div class="card-header fw-bold">
+            Eventos Agendados
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 65vh; overflow-y: auto;">
+                <table class="table table-hover table-sticky-header align-middle mb-0">
+                    <thead>
                         <tr>
-                            <td x-text="evento.title"></td>
-                            <td x-text="formatarData(evento.start)"></td>
-                            <td x-text="evento.end ? formatarData(evento.end) : '—'"></td>
-                            <td x-text="evento.location || '—'"></td>
-                            <td>
-                                <button class="btn btn-sm btn-secondary" @click="abrirModal(evento)"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-sm btn-danger" @click="removerEvento(evento.id)"><i class="bi bi-trash"></i></button>
-                            </td>
+                            <th>Título</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th>Local</th>
+                            <th class="text-center">Ações</th>
                         </tr>
-                    </template>
-                    <template x-if="eventos.length === 0">
-                        <tr>
-                            <td colspan="5" class="text-center text-muted">Nenhum evento encontrado.</td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <template x-for="evento in eventos" :key="evento.id">
+                            <tr>
+                                <td x-text="evento.title"></td>
+                                <td x-text="formatarData(evento.start)"></td>
+                                <td x-text="evento.end ? formatarData(evento.end) : '—'"></td>
+                                <td x-text="evento.location || '—'"></td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-secondary" @click="abrirModal(evento)"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" @click="removerEvento(evento.id)"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                        </template>
+                        <template x-if="eventos.length === 0">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted p-4">Nenhum evento encontrado.</td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <span class="text-muted small" x-text="`Exibindo ${eventos.length} registros`"></span>
         </div>
     </div>
 
@@ -63,7 +71,6 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Início</label>
                                 <input type="datetime-local" class="form-control" x-model="form.start" required min="2020-01-01T00:00" max="2100-12-31T23:59">
-                                <small class="form-text text-muted">Use o formato DD/MM/AAAA HH:MM.</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Fim (Opcional)</label>

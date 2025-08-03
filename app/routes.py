@@ -1,9 +1,7 @@
-# app/routes.py
-
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
-from sqlalchemy import extract, desc
+from sqlalchemy import extract, desc, or_
 from . import db
 from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink, Cargo
 import locale
@@ -11,8 +9,6 @@ import locale
 locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
 
 main = Blueprint('main', __name__)
-
-# ... (O conteúdo das suas outras rotas, como 'index', 'faq_publico', etc. permanece o mesmo) ...
 
 
 @main.route('/')
@@ -89,34 +85,61 @@ def aviso_detalhe(aviso_id):
 @main.route('/faq')
 @login_required
 def faq_publico():
-    total_colaboradores = Colaborador.query.count()
     categorias_obj = FaqCategoria.query.order_by(FaqCategoria.nome).all()
-    perguntas_obj = FaqPergunta.query.order_by(FaqPergunta.id.desc()).all()
     categorias_json = [{'id': cat.id, 'nome': cat.nome}
                        for cat in categorias_obj]
-    perguntas_json = [{
-        'id': p.id,
-        'pergunta': p.pergunta,
-        'resposta': p.resposta,
-        'palavras_chave': p.palavras_chave,
-        'link_url': p.link_url,
-        'link_texto': p.link_texto,
-        'categoria_id': p.categoria_id
-    } for p in perguntas_obj]
     return render_template(
         'faq.html',
         title='FAQ',
-        categorias=categorias_json,
-        perguntas=perguntas_json,
-        total_colaboradores=total_colaboradores
+        categorias=categorias_json
     )
+
+
+@main.route('/api/faq')
+@login_required
+def api_faq_data():
+    page = request.args.get('page', 1, type=int)
+    search_term = request.args.get('search', '', type=str)
+    category_id = request.args.get('category', None, type=int)
+
+    query = FaqPergunta.query.order_by(FaqPergunta.id.desc())
+
+    if category_id:
+        query = query.filter(FaqPergunta.categoria_id == category_id)
+
+    if search_term:
+        search_filter = f"%{search_term}%"
+        query = query.filter(
+            or_(
+                FaqPergunta.pergunta.ilike(search_filter),
+                FaqPergunta.resposta.ilike(search_filter),
+                FaqPergunta.palavras_chave.ilike(search_filter)
+            )
+        )
+
+    paginated_perguntas = query.paginate(
+        page=page, per_page=15, error_out=False)
+
+    return jsonify({
+        'perguntas': [p.to_dict() for p in paginated_perguntas.items],
+        'has_next': paginated_perguntas.has_next
+    })
+
+
+@main.route('/api/ouvidoria/status')
+@login_required
+def api_ouvidoria_status():
+    if not getattr(current_user, 'is_admin', False):
+        return jsonify({'has_new': False}), 403
+
+    tem_nova = db.session.query(
+        Ouvidoria.query.filter_by(status='Nova').exists()).scalar()
+    return jsonify({'has_new': tem_nova})
 
 
 @main.route('/ouvidoria', methods=['GET', 'POST'])
 @login_required
 def ouvidoria():
-    total_colaboradores = Colaborador.query.count()
-
     if request.method == 'POST':
         tipo_denuncia = request.form.get('tipo_denuncia')
         mensagem = request.form.get('mensagem')
@@ -139,14 +162,8 @@ def ouvidoria():
             'success': True,
             'message': 'A sua mensagem foi enviada com sucesso! Agradecemos a sua contribuição.'
         })
-    return render_template(
-        'ouvidoria.html',
-        title='Ouvidoria',
-        total_colaboradores=total_colaboradores
-    )
+    return render_template('ouvidoria.html', title='Ouvidoria')
 
-
-# --- ROTAS DO ORGANOGRAMA ---
 
 @main.route('/organograma')
 @login_required
@@ -186,13 +203,11 @@ def organograma_data():
     arvore_colaboradores = [
         ceo] + get_equipe_recursive(ceo_id, todos_colaboradores, set())
 
-    # --- CORREÇÃO DEFINITIVA APLICADA AQUI ---
-    # Garante que a lista final de nós é única, evitando duplicados
     nodes_dict = {}
     for col in arvore_colaboradores:
-        if col.id not in nodes_dict:  # Adiciona apenas se o ID não existir no dicionário
+        if col.id not in nodes_dict:
             parent_id = col.superior_id if col.id != ceo_id else None
-            if col.id == col.superior_id:  # Quebra o loop de auto-referência
+            if col.id == col.superior_id:
                 parent_id = None
 
             nodes_dict[col.id] = {
@@ -204,10 +219,7 @@ def organograma_data():
                 'imageUrl': f"/static/fotos_colaboradores/{col.foto_filename}" if col.foto_filename else "/static/img/default_avatar.png",
             }
 
-    # Converte o dicionário de volta para uma lista
     nodes = list(nodes_dict.values())
-    # --- FIM DA CORREÇÃO ---
-
     return jsonify({'nodes': nodes})
 
 

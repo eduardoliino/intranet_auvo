@@ -152,7 +152,6 @@ def remover_departamento(id):
     return jsonify({'success': True, 'message': 'Departamento removido com sucesso!'})
 
 
-# ... (O RESTANTE DAS SUAS ROTAS CONTINUA AQUI) ...
 @admin.route('/avisos')
 @login_required
 @admin_required
@@ -197,13 +196,24 @@ def gerenciar_destaques():
     destaques_obj = Destaque.query.order_by(
         Destaque.ano.desc(), Destaque.mes.desc()).all()
     colaboradores_obj = Colaborador.query.order_by(Colaborador.nome).all()
+
     destaques_json = [{'id': d.id, 'titulo': d.titulo, 'descricao': d.descricao, 'mes': d.mes, 'ano': d.ano, 'imagem_filename': d.imagem_filename, 'colaborador_id': d.colaborador_id,
                        'colaborador_nome': f"{d.colaborador.nome} {d.colaborador.sobrenome}", 'colaborador_foto': d.colaborador.foto_filename} for d in destaques_obj]
+
     colaboradores_json = [
         {'id': c.id, 'nome': f"{c.nome} {c.sobrenome}"} for c in colaboradores_obj]
+
     anos_disponiveis = sorted(
         list(set(d.ano for d in destaques_obj)), reverse=True)
-    return render_template('admin/gerenciar_destaques.html', destaques=destaques_json, colaboradores=colaboradores_json, anos=anos_disponiveis)
+
+    current_year = datetime.utcnow().year
+    form_anos = list(range(2024, current_year + 3))
+
+    return render_template('admin/gerenciar_destaques.html',
+                           destaques=destaques_json,
+                           colaboradores=colaboradores_json,
+                           anos=anos_disponiveis,
+                           form_anos=form_anos)
 
 
 @admin.route('/destaques/adicionar', methods=['POST'])
@@ -213,28 +223,36 @@ def adicionar_destaque():
     titulo = request.form.get('titulo')
     colaborador_id = request.form.get('colaborador_id')
     descricao = request.form.get('descricao')
-    mes_form = request.form.get('mes')
-    ano_form = request.form.get('ano')
-    if mes_form and ano_form:
-        mes = int(mes_form)
-        ano = int(ano_form)
-    else:
-        hoje = datetime.utcnow()
-        mes = hoje.month
-        ano = hoje.year
-    if not titulo or not colaborador_id:
-        return jsonify({'success': False, 'message': 'Título e Colaborador são obrigatórios.'}), 400
+    mes = request.form.get('mes')
+    ano = request.form.get('ano')
+
+    if not all([titulo, colaborador_id, mes, ano]):
+        return jsonify({'success': False, 'message': 'Todos os campos são obrigatórios.'}), 400
+
     imagem_filename = None
     if 'imagem_destaque' in request.files:
         imagem_enviada = request.files['imagem_destaque']
         if imagem_enviada.filename != '':
             imagem_filename = salvar_foto(imagem_enviada)
-    novo_destaque = Destaque(titulo=titulo, colaborador_id=int(
-        colaborador_id), descricao=descricao, mes=mes, ano=ano, imagem_filename=imagem_filename)
+
+    novo_destaque = Destaque(
+        titulo=titulo,
+        colaborador_id=int(colaborador_id),
+        descricao=descricao,
+        mes=int(mes),
+        ano=int(ano),
+        imagem_filename=imagem_filename
+    )
     db.session.add(novo_destaque)
     db.session.commit()
-    destaque_json = {'id': novo_destaque.id, 'titulo': novo_destaque.titulo, 'descricao': novo_destaque.descricao, 'mes': novo_destaque.mes, 'ano': novo_destaque.ano, 'imagem_filename': novo_destaque.imagem_filename,
-                     'colaborador_id': novo_destaque.colaborador_id, 'colaborador_nome': f"{novo_destaque.colaborador.nome} {novo_destaque.colaborador.sobrenome}", 'colaborador_foto': novo_destaque.colaborador.foto_filename}
+
+    destaque_json = {
+        'id': novo_destaque.id, 'titulo': novo_destaque.titulo, 'descricao': novo_destaque.descricao,
+        'mes': novo_destaque.mes, 'ano': novo_destaque.ano, 'imagem_filename': novo_destaque.imagem_filename,
+        'colaborador_id': novo_destaque.colaborador_id,
+        'colaborador_nome': f"{novo_destaque.colaborador.nome} {novo_destaque.colaborador.sobrenome}",
+        'colaborador_foto': novo_destaque.colaborador.foto_filename
+    }
     return jsonify({'success': True, 'destaque': destaque_json})
 
 
@@ -283,7 +301,7 @@ def editar_destaque(id):
 @admin_required
 def gerenciar_faq():
     perguntas_obj = FaqPergunta.query.order_by(FaqPergunta.id.desc()).all()
-    perguntas_json = [{'id': p.id, 'pergunta': p.pergunta, 'resposta': p.resposta,
+    perguntas_json = [{'id': p.id, 'pergunta': p.pergunta, 'resposta': p.resposta, 'palavras_chave': p.palavras_chave,
                        'categoria_nome': p.categoria.nome} for p in perguntas_obj]
     return render_template('admin/gerenciar_faq.html', perguntas=perguntas_json)
 
@@ -300,29 +318,35 @@ def gerenciar_categorias_faq():
 @login_required
 @admin_required
 def adicionar_categoria_faq():
-    nome = request.form.get('nome')
-    if nome and not FaqCategoria.query.filter_by(nome=nome).first():
-        nova_categoria = FaqCategoria(nome=nome)
-        db.session.add(nova_categoria)
-        db.session.commit()
-        flash('Categoria adicionada com sucesso!', 'success')
-    else:
-        flash('Nome de categoria inválido ou já existente.', 'danger')
-    return redirect(url_for('admin.gerenciar_categorias_faq'))
+    data = request.json
+    nome = data.get('nome')
+    if not nome:
+        return jsonify({'success': False, 'message': 'O nome da categoria é obrigatório.'}), 400
+    if FaqCategoria.query.filter_by(nome=nome).first():
+        return jsonify({'success': False, 'message': 'Esta categoria já existe.'}), 400
+
+    nova_categoria = FaqCategoria(nome=nome)
+    db.session.add(nova_categoria)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Categoria adicionada com sucesso!',
+        'categoria': {'id': nova_categoria.id, 'nome': nova_categoria.nome}
+    })
 
 
-@admin.route('/faq/categorias/remover/<int:id>')
+@admin.route('/faq/categorias/remover/<int:id>', methods=['DELETE'])
 @login_required
 @admin_required
 def remover_categoria_faq(id):
     categoria = FaqCategoria.query.get_or_404(id)
     if categoria.perguntas:
-        flash('Não é possível remover uma categoria que contém perguntas.', 'danger')
-    else:
-        db.session.delete(categoria)
-        db.session.commit()
-        flash('Categoria removida com sucesso.', 'success')
-    return redirect(url_for('admin.gerenciar_categorias_faq'))
+        return jsonify({'success': False, 'message': 'Não é possível remover uma categoria que contém perguntas.'}), 400
+
+    db.session.delete(categoria)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Categoria removida com sucesso.'})
 
 
 @admin.route('/faq/perguntas/adicionar', methods=['GET', 'POST'])
@@ -344,15 +368,14 @@ def adicionar_pergunta_faq():
     return render_template('admin/adicionar_faq_pergunta.html', categorias=categorias)
 
 
-@admin.route('/faq/perguntas/remover/<int:id>')
+@admin.route('/faq/perguntas/remover/<int:id>', methods=['DELETE'])
 @login_required
 @admin_required
 def remover_pergunta_faq(id):
     pergunta = FaqPergunta.query.get_or_404(id)
     db.session.delete(pergunta)
     db.session.commit()
-    flash('Pergunta removida com sucesso!', 'success')
-    return redirect(url_for('admin.gerenciar_faq'))
+    return jsonify({'success': True, 'message': 'Pergunta removida com sucesso!'})
 
 
 @admin.route('/faq/perguntas/editar/<int:id>', methods=['GET', 'POST'])
@@ -424,7 +447,6 @@ def novo_evento():
         end=datetime.fromisoformat(data['end']) if data.get('end') else None,
         description=data.get('description'),
         location=data.get('location'),
-        # A linha 'color' foi removida, o valor padrão do modelo será usado
         user_id=current_user.id
     )
     db.session.add(novo_evento)

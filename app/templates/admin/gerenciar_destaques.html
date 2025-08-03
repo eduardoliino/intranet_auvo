@@ -64,21 +64,30 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Mês</label>
-                <input
-                  type="number"
-                  x-model="form.mes"
-                  class="form-control"
-                  placeholder="Mês atual"
-                />
+                <select x-model="form.mes" class="form-select custom-select" required>
+                  <option value="" disabled>Selecione...</option>
+                  <option value="1">Janeiro</option>
+                  <option value="2">Fevereiro</option>
+                  <option value="3">Março</option>
+                  <option value="4">Abril</option>
+                  <option value="5">Maio</option>
+                  <option value="6">Junho</option>
+                  <option value="7">Julho</option>
+                  <option value="8">Agosto</option>
+                  <option value="9">Setembro</option>
+                  <option value="10">Outubro</option>
+                  <option value="11">Novembro</option>
+                  <option value="12">Dezembro</option>
+                </select>
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Ano</label>
-                <input
-                  type="number"
-                  x-model="form.ano"
-                  class="form-control"
-                  placeholder="Ano atual"
-                />
+                <select x-model="form.ano" class="form-select custom-select" required>
+                  <option value="" disabled>Selecione...</option>
+                  {% for ano in form_anos %}
+                  <option value="{{ ano }}">{{ ano }}</option>
+                  {% endfor %}
+                </select>
               </div>
             </div>
             <div class="mb-3">
@@ -146,60 +155,60 @@
           </div>
         </div>
         <div class="card-body">
-          <template x-if="filteredDestaques.length > 0">
+          <div class="table-responsive" style="max-height: 65vh; overflow-y: auto;">
             <ul class="list-group list-group-flush">
-              <template
-                x-for="destaque in filteredDestaques"
-                :key="destaque.id"
-              >
-                <li
-                  class="list-group-item d-flex justify-content-between align-items-center"
-                >
-                  <div class="d-flex align-items-center">
-                    <img
-                      :src="destaque.colaborador_foto ? `/static/fotos_colaboradores/${destaque.colaborador_foto}` : '/static/img/default_avatar.png'"
-                      class="me-3"
-                      style="
-                        width: 50px;
-                        height: 50px;
-                        object-fit: cover;
-                        border-radius: 50%;
-                      "
-                    />
-                    <div>
-                      <h6
-                        class="my-0"
-                        x-text="`${destaque.titulo} - (${String(destaque.mes).padStart(2, '0')}/${destaque.ano})`"
-                      ></h6>
-                      <small
-                        class="text-muted"
-                        x-text="destaque.colaborador_nome"
-                      ></small>
+              <template x-if="filteredDestaques.length > 0">
+                <template x-for="destaque in filteredDestaques" :key="destaque.id">
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                      <img
+                        :src="destaque.imagem_filename ? `/static/fotos_colaboradores/${destaque.imagem_filename}` : (destaque.colaborador_foto ? `/static/fotos_colaboradores/${destaque.colaborador_foto}` : '/static/img/default_avatar.png')"
+                        class="me-3"
+                        style="
+                          width: 50px;
+                          height: 50px;
+                          object-fit: cover;
+                          border-radius: 50%;
+                        "
+                      />
+                      <div>
+                        <h6
+                          class="my-0"
+                          x-text="`${destaque.titulo} - (${String(destaque.mes).padStart(2, '0')}/${destaque.ano})`"
+                        ></h6>
+                        <small
+                          class="text-muted"
+                          x-text="destaque.colaborador_nome"
+                        ></small>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <button
-                      @click="startEdit(destaque)"
-                      class="btn btn-sm btn-outline-secondary me-1"
-                    >
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button
-                      @click="removerDestaque(destaque.id)"
-                      class="btn btn-sm btn-outline-danger"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
+                    <div>
+                      <button
+                        @click="startEdit(destaque)"
+                        class="btn btn-sm btn-outline-secondary me-1"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button
+                        @click="removerDestaque(destaque.id)"
+                        class="btn btn-sm btn-outline-danger"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </li>
+                </template>
+              </template>
+              <template x-if="filteredDestaques.length === 0">
+                <li class="list-group-item text-center text-muted">
+                  Nenhum destaque encontrado para os filtros selecionados.
                 </li>
               </template>
             </ul>
-          </template>
-          <template x-if="filteredDestaques.length === 0">
-            <p class="text-center text-muted">
-              Nenhum destaque encontrado para os filtros selecionados.
-            </p>
-          </template>
+          </div>
+        </div>
+        <div class="card-footer">
+            <span class="text-muted small" x-text="`Exibindo ${filteredDestaques.length} de ${destaques.length} registros`"></span>
         </div>
       </div>
     </div>

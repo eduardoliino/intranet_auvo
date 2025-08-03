@@ -42,7 +42,9 @@
                                 {% if aniv.foto_filename %}
                                     <img src="{{ url_for('static', filename='fotos_colaboradores/' + aniv.foto_filename) }}" class="aniversario-casa-avatar" alt="Foto de {{ aniv.nome }}">
                                 {% else %}
-                                    <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="aniversario-casa-avatar" alt="Avatar Padrão">
+                                    <div class="aniversario-casa-avatar d-inline-flex justify-content-center align-items-center" :style="`background-color: ${getAvatarColor('{{ aniv.nome }}')}`">
+                                        <span class="fs-1 fw-bold text-white" x-text="getInitials('{{ aniv.nome }}', '{{ aniv.sobrenome }}')"></span>
+                                    </div>
                                 {% endif %}
                                 <h5 class="fw-bold mb-1 mt-3">{{ aniv.nome }} {{ aniv.sobrenome }}</h5>
                                 <h6 class="mb-2 text-muted">{{ aniv.cargo.titulo or 'Colaborador(a)' }}</h6>
@@ -86,14 +88,17 @@
                             <div class="carousel-card-item text-center">
                                 {% set imagem_destaque = destaque.imagem_filename %}
                                 {% set foto_colaborador = destaque.colaborador.foto_filename %}
+                                
                                 {% if imagem_destaque %}
-                                {% set imagem_final = 'fotos_colaboradores/' + imagem_destaque %}
+                                    <img src="{{ url_for('static', filename='fotos_colaboradores/' + imagem_destaque) }}" class="destaque-imagem" alt="Destaque do Mês">
                                 {% elif foto_colaborador %}
-                                {% set imagem_final = 'fotos_colaboradores/' + foto_colaborador %}
+                                     <img src="{{ url_for('static', filename='fotos_colaboradores/' + foto_colaborador) }}" class="destaque-imagem" alt="Destaque do Mês">
                                 {% else %}
-                                {% set imagem_final = 'img/default_avatar.png' %}
+                                    <div class="aniversario-casa-avatar d-inline-flex justify-content-center align-items-center mb-3" :style="`background-color: ${getAvatarColor('{{ destaque.colaborador.nome }}')}`">
+                                        <span class="fs-1 fw-bold text-white" x-text="getInitials('{{ destaque.colaborador.nome }}', '{{ destaque.colaborador.sobrenome }}')"></span>
+                                    </div>
                                 {% endif %}
-                                <img src="{{ url_for('static', filename=imagem_final) }}" class="destaque-imagem" alt="Destaque do Mês">
+
                                 <h5 class="fw-bold mb-1 mt-3">{{ destaque.titulo or 'Colaborador Destaque' }}</h5>
                                 <h6 class="mb-2">{{ destaque.colaborador.nome }} {{ destaque.colaborador.sobrenome }}</h6>
                                 <p class="text-muted fst-italic">“{{ destaque.descricao or 'Parabéns pelo destaque!' }}”</p>
@@ -214,7 +219,9 @@
                 {% if aniversariante.foto_filename %}
                     <img src="{{ url_for('static', filename='fotos_colaboradores/' + aniversariante.foto_filename) }}" class="aniversariante-avatar" alt="Foto">
                 {% else %}
-                    <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="aniversariante-avatar" alt="Avatar Padrão">
+                    <div class="aniversariante-avatar d-flex justify-content-center align-items-center" :style="`background-color: ${getAvatarColor('{{ aniversariante.nome }}')}`">
+                        <span class="fw-bold text-white small" x-text="getInitials('{{ aniversariante.nome }}', '{{ aniversariante.sobrenome }}')"></span>
+                    </div>
                 {% endif %}
                 <div class="ms-2 lh-1">
                     <div class="fw-bold">{{ aniversariante.nome }} {{ aniversariante.sobrenome }}</div>

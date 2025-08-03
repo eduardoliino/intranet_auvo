@@ -23,7 +23,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 
-<body>
+<body x-data="globalUtils()">
     <nav class="navbar navbar-auvo fixed-top">
         <div class="container-fluid">
             <div class="d-flex align-items-center">
@@ -47,73 +47,76 @@
                     <span class="d-none d-md-inline me-2">
                         Boas-vindas, <strong class="fw-bold">{% if current_user.is_admin %}{{ current_user.username }}{% else %}{{ current_user.nome }}{% endif %}</strong>
                     </span>
-                    {% set foto_perfil = 'img/default_avatar.png' %}
+                    
                     {% if not current_user.is_admin and current_user.foto_filename %}
-                        {% set foto_perfil = 'fotos_colaboradores/' + current_user.foto_filename %}
+                        <img src="{{ url_for('static', filename='fotos_colaboradores/' + current_user.foto_filename) }}" class="perfil-avatar" alt="Foto de Perfil">
+                    {% else %}
+                        <div class="colaborador-avatar-tabela perfil-avatar" :style="`background-color: ${getAvatarColor('{{ current_user.nome or 'Admin' }}')}`">
+                           <span x-text="getInitials('{{ current_user.nome or 'Admin' }}', '{{ current_user.sobrenome or '' }}')"></span>
+                        </div>
                     {% endif %}
-                    <img src="{{ url_for('static', filename=foto_perfil) }}" class="perfil-avatar" alt="Foto de Perfil">
                 </div>
             </div>
         </div>
     </nav>
-
-    <div class="sidebar-auvo d-none d-lg-flex flex-column">
-        <div class="sidebar-content">
-            <h6 class="sidebar-title">Navegação</h6>
-            <div class="list-group list-group-flush">
-                <a href="{{ url_for('main.index') }}" class="list-group-item"><i class="bi bi-house-door-fill"></i> Início</a>
-                <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
-                <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
-                <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
-            </div>
-
-            {% if current_user.is_admin %}
-            <hr class="sidebar-divider">
-            <h6 class="sidebar-title">Administração</h6>
-            <div class="list-group list-group-flush">
-                <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Colaboradores</a>
-                <a href="{{ url_for('admin.gerenciar_cargos_departamentos') }}" class="list-group-item"><i class="bi bi-tags-fill"></i> Cargos e Deptos.</a>
-                <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Avisos</a>
-                <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Destaques</a>
-                <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ (Admin)</a>
-                <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria (Admin)</a>
-                <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Eventos</a>
-                <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Links</a>
-            </div>
-            {% endif %}
-        </div>
-        <div class="sidebar-footer">
-            <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-logout"><i class="bi bi-box-arrow-right"></i> Sair do Sistema</a>
-        </div>
-    </div>
     
-    <div class="offcanvas offcanvas-start offcanvas-auvo d-lg-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="mobileSidebarLabel">Navegação</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body p-0">
-            <div class="list-group list-group-flush">
-                <a href="{{ url_for('main.index') }}" class="list-group-item"><i class="bi bi-house-door-fill"></i> Início</a>
-                <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
-                <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
-                <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
-            </div>
-            {% if current_user.is_admin %}
-                <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
+    <div x-data="notificationHandler" @ouvidoria-updated.window="checkStatus()">
+        <div class="sidebar-auvo d-none d-lg-flex flex-column">
+            <div class="sidebar-content">
+                <h6 class="sidebar-title">Navegação</h6>
                 <div class="list-group list-group-flush">
-                    <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
-                    <a href="{{ url_for('admin.gerenciar_cargos_departamentos') }}" class="list-group-item"><i class="bi bi-tags-fill"></i> Cargos e Deptos.</a>
-                    <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
-                    <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
-                    <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a>
-                    <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Gerir Ouvidoria</a>
-                    <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Gerir Eventos</a>
-                    <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Gerir Links</a>
+                    <a href="{{ url_for('main.index') }}" class="list-group-item"><i class="bi bi-house-door-fill"></i> Início</a>
+                    <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
+                    <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
+                    <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
                 </div>
-            {% endif %}
-            <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
-            <a href="{{ url_for('auth.logout') }}" class="list-group-item"><i class="bi bi-box-arrow-right"></i> Sair do Sistema</a>
+
+                {% if current_user.is_admin %}
+                <hr class="sidebar-divider">
+                <h6 class="sidebar-title">Administração</h6>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Colaboradores</a>
+                    <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Avisos</a>
+                    <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Destaques</a>
+                    <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ (Admin)</a>
+                    <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria (Admin)<span x-show="hasNewOuvidoria" class="notification-dot" x-cloak></span></a>
+                    <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Eventos</a>
+                    <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Links</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-logout"><i class="bi bi-box-arrow-right"></i> Sair do Sistema</a>
+            </div>
+        </div>
+        
+        <div class="offcanvas offcanvas-start offcanvas-auvo d-lg-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="mobileSidebarLabel">Navegação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.index') }}" class="list-group-item"><i class="bi bi-house-door-fill"></i> Início</a>
+                    <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
+                    <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
+                    <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
+                </div>
+                {% if current_user.is_admin %}
+                    <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
+                        <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
+                        <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
+                        <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Gerir FAQ</a>
+                        <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Gerir Ouvidoria<span x-show="hasNewOuvidoria" class="notification-dot" x-cloak></span></a>
+                        <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Gerir Eventos</a>
+                        <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Gerir Links</a>
+                    </div>
+                {% endif %}
+                <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
+                <a href="{{ url_for('auth.logout') }}" class="list-group-item"><i class="bi bi-box-arrow-right"></i> Sair do Sistema</a>
+            </div>
         </div>
     </div>
 
@@ -179,6 +182,43 @@
                     }, 15);
                 }
             }));
+            
+            Alpine.data('globalUtils', () => ({
+                getInitials(nome, sobrenome) {
+                    return `${nome ? nome.charAt(0) : ''}${sobrenome ? sobrenome.charAt(0) : ''}`.toUpperCase();
+                },
+                getAvatarColor(nome) {
+                    const colors = ['#C051FF', '#7A28B8', '#3A1B4A', '#00D29D', '#345978'];
+                    let hash = 0;
+                    if (!nome || nome.length === 0) return colors[0];
+                    for (let i = 0; i < nome.length; i++) {
+                        hash = nome.charCodeAt(i) + ((hash << 5) - hash);
+                    }
+                    return colors[Math.abs(hash % colors.length)];
+                }
+            }));
+
+            Alpine.data('notificationHandler', () => ({
+                hasNewOuvidoria: {{ tem_nova_ouvidoria|tojson|safe }},
+                
+                init() {
+                    setInterval(() => {
+                        this.checkStatus();
+                    }, 30000); // Verifica a cada 30 segundos
+                },
+
+                async checkStatus() {
+                    try {
+                        const response = await fetch("{{ url_for('main.api_ouvidoria_status') }}");
+                        if (!response.ok) return;
+                        
+                        const data = await response.json();
+                        this.hasNewOuvidoria = data.has_new;
+                    } catch (error) {
+                        console.error('Error checking notification status:', error);
+                    }
+                }
+            }));
         });
     </script>
     
@@ -223,11 +263,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             var selects = document.querySelectorAll('select.custom-select');
             selects.forEach(function(select) {
-                // --- INÍCIO DA CORREÇÃO ---
                 new TomSelect(select, {
                     plugins: ['clear_button']
                 });
-                // --- FIM DA CORREÇÃO ---
             });
 
             {% with messages = get_flashed_messages(with_categories=true) %}

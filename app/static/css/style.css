@@ -1,11 +1,10 @@
-/* --- NOVA PALETA DE CORES GLOBAIS --- */
 :root {
   --cor-primaria-mais-escura: #1C0829;
   --cor-primaria-escura: #3A1B4A;
   --cor-primaria: #7A28B8;
   --cor-primaria-clara: #C051FF;
   --cor-primaria-muito-clara: #E8CCF6;
-  --cor-sidebar: #6D26C2; /* COR PERSONALIZADA PARA A SIDEBAR */
+  --cor-sidebar: #6D26C2; 
 
   --cor-neutra: #FFFFFF;
   --cor-neutra-clara: #A0ADBA;
@@ -17,16 +16,17 @@
   --sidebar-width: 260px;
 }
 
-/* --- ESTILOS GERAIS DO CORPO DA PÁGINA --- */
 body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--cor-fundo-conteudo);
     color: #495057;
     padding-top: 80px; 
     padding-left: var(--sidebar-width);
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
-/* --- NAVBAR SUPERIOR --- */
 .navbar-auvo {
     background-color: var(--cor-neutra);
     border-bottom: 1px solid #dee2e6;
@@ -55,7 +55,6 @@ body {
     cursor: pointer;
 }
 
-/* --- CONTADOR DE COLABORADORES NA NAVBAR --- */
 .totalizador-pill-nav {
     background-color: #f1f5f9;
     border-radius: 50px;
@@ -64,16 +63,15 @@ body {
     align-items: center;
     font-size: 0.9em;
     font-weight: 500;
-    color: #4B5563; /* Cinza escuro para o texto */
+    color: #4B5563;
 }
 
 .totalizador-pill-nav i {
-    color: #A374D4; /* Lilás para o ícone do coração */
+    color: #A374D4;
 }
 
-/* --- MENU OFFCANVAS PARA MOBILE --- */
 .offcanvas-auvo {
-    background-color: var(--cor-sidebar); /* Cor da sidebar aplicada */
+    background-color: var(--cor-sidebar);
     color: var(--cor-neutra);
 }
 
@@ -105,14 +103,13 @@ body {
     font-size: 1.2em;
 }
 
-/* --- NOVA SIDEBAR FIXA PARA DESKTOP --- */
 .sidebar-auvo {
     width: var(--sidebar-width);
     height: calc(100vh - 80px);
     position: fixed;
     top: 80px;
     left: 0;
-    background-color: var(--cor-sidebar); /* Cor da sidebar aplicada */
+    background-color: var(--cor-sidebar);
     padding: 1rem;
     overflow-y: auto;
     transition: all 0.3s ease-in-out;
@@ -159,7 +156,6 @@ body {
     background-color: #dc3545;
 }
 
-/* --- CONTEÚDO PRINCIPAL (MAIN CONTENT) --- */
 #content {
     width: 100%;
     animation: fadeIn 0.5s ease-in-out;
@@ -182,7 +178,6 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-/* --- ESTILO GERAL DOS CARDS --- */
 .card {
     border-radius: 12px;
     border: none;
@@ -208,7 +203,6 @@ body {
     font-weight: 600;
 }
 
-/* BORDAS E ESTILOS ESPECÍFICOS PARA CADA CARD */
 .card-comunicados,
 .card-ouvidoria {
     border-left-color: var(--cor-destaque);
@@ -231,7 +225,6 @@ body {
     margin-right: 0.5rem;
 }
 
-/* --- ESTILOS DOS CARROSSEIS --- */
 .carousel-card-item {
     padding: 1rem;
 }
@@ -270,7 +263,6 @@ body {
     width: 5%;
 }
 
-/* --- COMPONENTES INTERNOS DOS CARDS --- */
 .aniversariante-avatar {
     width: 40px;
     height: 40px;
@@ -291,7 +283,6 @@ body {
     text-align: center;
 }
 
-/* --- BOTÕES --- */
 .btn-auvo {
     background-color: var(--cor-sidebar);
     color: var(--cor-neutra);
@@ -349,7 +340,6 @@ body {
     padding-bottom: 0.5rem;
 }
 
-/* ESTILOS MODERNOS PARA FORMULÁRIOS */
 .form-control, .form-select {
     border-radius: 0.5rem !important;
     background-color: #f1f5f9 !important;
@@ -367,7 +357,6 @@ body {
     color: var(--cor-primaria-escura);
 }
 
-/* Barra de rolagem customizada */
 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
 .custom-scrollbar::-webkit-scrollbar-button { display: none; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -375,7 +364,6 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: var(--cor-neutra-clara); }
 .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #d1d1d1 transparent; }
 
-/* --- REGRAS DE RESPONSIVIDADE --- */
 @media (max-width: 991.98px) {
     .sidebar-auvo {
         display: none !important;
@@ -394,7 +382,6 @@ body {
     }
 }
 
-/* --- ESTILOS PARA TABELA DE COLABORADORES --- */
 .colaborador-foto-tabela {
     width: 50px;
     height: 50px;
@@ -424,7 +411,6 @@ body {
     box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* --- ESTILOS PARA O ORGANOGRAMA (d3-org-chart) --- */
 .chart-container {
     width: 100%;
     height: 100%;
@@ -441,7 +427,6 @@ body {
 .org-node-dept { background-color: #f1f5f9; color: #64748b; padding: 2px 8px; border-radius: 50px; display: inline-block; }
 
 
-/* --- ESTILOS PARA TELA DE GESTÃO DE CARGOS/DEPTOS --- */
 .list-container {
     max-height: 270px; 
     overflow-y: auto;
@@ -457,8 +442,26 @@ body {
     display: inline-block;
 }
 
-/* --- ESTILOS PARA LISTA DE EVENTOS --- */
 .event-list-container {
     max-height: 70vh;
     overflow-y: auto;
+}
+
+.notification-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #dc3545;
+    border-radius: 50%;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.modal-body {
+    max-height: 65vh;
+    overflow-y: auto;
+}
+
+.modal-footer .ts-control .item {
+    padding-right: 40px !important;
 }

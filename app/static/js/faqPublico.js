@@ -3,23 +3,60 @@ document.addEventListener('alpine:init', () => {
         search: '',
         filtroCategoria: '',
         categorias: window._categoriasFaqData || [],
-        perguntas: window._perguntasFaqData || [],
+        perguntas: [],
+        
+        page: 1,
+        isLoading: false,
+        hasMore: true,
 
-        get filteredPerguntas() {
-            return this.perguntas.filter(p => {
-                const categoriaMatch = this.filtroCategoria ? p.categoria_id == this.filtroCategoria : true;
-                
-                if (this.search.trim() === '') {
-                    return categoriaMatch;
+        init() {
+            this.fetchPerguntas();
+        },
+
+        async fetchPerguntas() {
+            if (this.isLoading || !this.hasMore) return;
+            this.isLoading = true;
+
+            const params = {
+                page: this.page,
+                search: this.search
+            };
+            if (this.filtroCategoria) {
+                params.category = this.filtroCategoria;
+            }
+            const queryString = new URLSearchParams(params).toString();
+
+            try {
+                const response = await fetch(`/api/faq?${queryString}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
-                const searchTerm = this.search.toLowerCase();
-                const searchMatch = p.pergunta.toLowerCase().includes(searchTerm) ||
-                                  p.resposta.toLowerCase().includes(searchTerm) ||
-                                  (p.palavras_chave && p.palavras_chave.toLowerCase().includes(searchTerm));
+                const data = await response.json();
                 
-                return categoriaMatch && searchMatch;
-            });
+                if (data.perguntas && data.perguntas.length > 0) {
+                    this.perguntas.push(...data.perguntas);
+                }
+                
+                this.hasMore = data.has_next;
+                this.page += 1;
+            } catch (error) {
+                console.error('Erro ao buscar perguntas do FAQ:', error);
+                this.showToast('Não foi possível carregar as perguntas. Verifique o console para mais detalhes.', 'danger');
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        resetAndFetch() {
+            this.page = 1;
+            this.perguntas = [];
+            this.hasMore = true;
+            // Usamos um pequeno timeout para garantir que os modelos do Alpine sejam atualizados antes da busca
+            setTimeout(() => this.fetchPerguntas(), 50);
+        },
+
+        showToast(message, type = 'info') {
+            window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
         }
     }));
 });

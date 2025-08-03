@@ -1,17 +1,7 @@
-# app/models.py
 from app import db, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import datetime
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    if user_id.startswith('admin-'):
-        return User.query.get(int(user_id.split('-')[1]))
-    elif user_id.startswith('colaborador-'):
-        return Colaborador.query.get(int(user_id.split('-')[1]))
-    return None
 
 
 class User(UserMixin, db.Model):
@@ -59,12 +49,10 @@ class Colaborador(UserMixin, db.Model):
     password_hash = db.Column(db.String(256))
     foto_filename = db.Column(db.String(120), nullable=True)
 
-    # --- CORREÇÃO DA HIERARQUIA ---
     superior_id = db.Column(db.Integer, db.ForeignKey('colaborador.id'))
     superior = db.relationship('Colaborador', remote_side=[
                                id], backref='subordinados')
 
-    # Relacionamentos
     cargo_id = db.Column(db.Integer, db.ForeignKey('cargo.id'), nullable=True)
     departamento_id = db.Column(
         db.Integer, db.ForeignKey('departamento.id'), nullable=True)
@@ -81,9 +69,6 @@ class Colaborador(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-# --- O restante dos seus modelos (Aviso, Destaque, etc.) continua aqui ---
-# (Certifique-se de que os outros modelos estejam presentes no arquivo)
 
 
 class Aviso(db.Model):
@@ -130,6 +115,17 @@ class FaqPergunta(db.Model):
     categoria_id = db.Column(db.Integer, db.ForeignKey(
         'faq_categoria.id'), nullable=False)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'pergunta': self.pergunta,
+            'resposta': self.resposta,
+            'link_url': self.link_url,
+            'link_texto': self.link_texto,
+            'palavras_chave': self.palavras_chave,
+            'categoria_id': self.categoria_id
+        }
+
 
 class Ouvidoria(db.Model):
     __tablename__ = 'tbOuvidoria'
@@ -156,7 +152,15 @@ class Evento(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def to_dict(self):
-        return {'id': self.id, 'title': self.title, 'description': self.description, 'start': self.start.isoformat(), 'end': self.end.isoformat() if self.end else None, 'location': self.location, 'color': self.color, 'creator': User.query.get(self.user_id).username}
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'start': self.start.isoformat(),
+            'end': self.end.isoformat() if self.end else None,
+            'location': self.location,
+            'color': self.color
+        }
 
 
 class ConfigLink(db.Model):
@@ -165,3 +169,11 @@ class ConfigLink(db.Model):
     chave = db.Column(db.String(50), unique=True, nullable=False)
     valor = db.Column(db.String(300), nullable=True)
 
+
+@login_manager.user_loader
+def load_user(user_id):
+    if user_id.startswith('admin-'):
+        return User.query.get(int(user_id.split('-')[1]))
+    elif user_id.startswith('colaborador-'):
+        return Colaborador.query.get(int(user_id.split('-')[1]))
+    return None

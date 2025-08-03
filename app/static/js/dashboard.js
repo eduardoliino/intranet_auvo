@@ -1,12 +1,7 @@
-// Adiciona um "ouvinte" que espera pelo evento 'alpine:init'.
-// Isto garante que o Alpine.js está pronto antes de o nosso código ser executado.
 document.addEventListener('alpine:init', () => {
-    // Define o nosso componente 'dashboard'
     Alpine.data('dashboard', () => ({
-        // --- Dados Iniciais ---
         totalColaboradores: window._totalColaboradores || 0,
         
-        // --- Estado da Página ---
         count: 0,
         modalData: {
             title: '',
@@ -15,12 +10,9 @@ document.addEventListener('alpine:init', () => {
             link_url: '',
             link_texto: ''
         },
-        bsModal: null, // Guardará a instância do Modal do Bootstrap
+        bsModal: null,
 
-        // --- Método de Inicialização do Componente ---
         init() {
-            // Inicializa a instância do Modal do Bootstrap
-            // O '$nextTick' do Alpine garante que o HTML do modal já existe na página
             this.$nextTick(() => {
                 const modalElement = document.getElementById('detailModal');
                 if (modalElement) {
@@ -30,7 +22,6 @@ document.addEventListener('alpine:init', () => {
                 }
             });
             
-            // Animação do contador de colaboradores
             this.animateCounter();
         },
 
@@ -48,7 +39,6 @@ document.addEventListener('alpine:init', () => {
             }, 15);
         },
 
-        // Abre o modal com os dados do AVISO
         openAvisoModal(aviso) {
             if (!this.bsModal) {
                 console.error("Modal não está inicializado.");
@@ -56,7 +46,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.modalData.title = aviso.titulo;
-            this.modalData.content = `<p style="white-space: pre-wrap;">${aviso.conteudo}</p>`;
+            this.modalData.content = `<p style="white-space: pre-wrap; word-break: break-word;">${aviso.conteudo}</p>`;
             this.modalData.link_url = aviso.link_url;
             this.modalData.link_texto = aviso.link_texto || 'Saber mais';
             
@@ -66,7 +56,6 @@ document.addEventListener('alpine:init', () => {
             this.bsModal.show();
         },
 
-        // Abre o modal com os dados do EVENTO
         openEventoModal(evento) {
             if (!this.bsModal) {
                 console.error("Modal não está inicializado.");
@@ -89,7 +78,7 @@ document.addEventListener('alpine:init', () => {
             
             this.modalData.title = evento.title;
             
-            let conteudoHtml = `<p style="white-space: pre-wrap;">${evento.description || 'Nenhuma descrição fornecida.'}</p><hr class="my-2">`;
+            let conteudoHtml = `<div style="white-space: pre-wrap; word-break: break-word;">${evento.description || 'Nenhuma descrição fornecida.'}</div><hr class="my-2">`;
             if (evento.location) {
                 conteudoHtml += `<p class="mb-1"><strong><i class="bi bi-geo-alt-fill"></i> Local:</strong> ${evento.location}</p>`;
             }
@@ -98,7 +87,7 @@ document.addEventListener('alpine:init', () => {
 
             this.modalData.content = conteudoHtml;
             this.modalData.link_url = ''; 
-            this.modalData.footer = `Criado por: ${evento.creator}`;
+            this.modalData.footer = ''; // Linha alterada para remover o nome do criador
 
             this.bsModal.show();
         }
