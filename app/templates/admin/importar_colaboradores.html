@@ -8,17 +8,31 @@
 
 <div class="card">
     <div class="card-body">
+        <div class="alert alert-info">
+            <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i>Instruções Importantes</h5>
+            <ol class="mb-0">
+                <li>A <strong>primeira linha</strong> contém os nomes das colunas. <strong>Não altere esta linha.</strong></li>
+                <li>A <strong>segunda linha</strong> contém um exemplo de preenchimento. <strong>Não altere esta linha.</strong></li>
+                <li>Comece a inserir os dados dos novos colaboradores a partir da <strong>terceira linha</strong>.</li>
+                <li>Certifique-se de que as datas estão no formato <strong>DD/MM/AAAA</strong>.</li>
+            </ol>
+        </div>
         <p>Para adicionar múltiplos colaboradores de uma vez, baixe o nosso modelo, preencha os dados e faça o upload do ficheiro preenchido.</p>
+
         <a href="{{ url_for('colaborador.baixar_modelo') }}" class="btn btn-outline-primary w-100 mb-3">
-            <i class="bi bi-download me-2"></i>Baixar Planilha Modelo
+            <i class="bi bi-download me-2"></i>Baixar Planilha Modelo com Exemplo
         </a>
+
         <hr>
+
         <form method="POST" action="{{ url_for('colaborador.importar') }}" enctype="multipart/form-data">
             <div class="mb-3">
-                <label for="planilha_colaboradores" class="form-label">Selecione a planilha (.xlsx):</label>
-                <input class="form-control" type="file" name="planilha_colaboradores" id="planilha_colaboradores" required>
+                <label for="planilha_colaboradores" class="form-label">Selecione a planilha (.xlsx) preenchida:</label>
+                <input class="form-control" type="file" name="planilha_colaboradores" id="planilha_colaboradores" accept=".xlsx" required>
             </div>
-            <button type="submit" class="btn btn-success w-100">Importar Planilha</button>
+            <button type="submit" class="btn btn-success w-100">
+                <i class="bi bi-upload me-2"></i>Importar Planilha Agora
+            </button>
         </form>
     </div>
 </div>

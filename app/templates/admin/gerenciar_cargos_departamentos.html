@@ -33,7 +33,7 @@
                         <div class="mb-2"><label class="form-label">Título do Cargo</label><input type="text" x-model="novoCargo.titulo" class="form-control" required></div>
                         <button type="submit" class="btn btn-success w-100">Adicionar Cargo</button>
                     </form>
-                    
+
                     <h6 class="mt-4">Cargos Existentes</h6>
                     <div class="list-container custom-scrollbar">
                         <ul class="list-group">
@@ -69,8 +69,8 @@
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span x-text="depto.nome"></span>
                                     <div>
-                                        <button @click="abrirModalEdicao('depto', depto)" class="btn btn-sm btn-outline-secondary ms-2"><i class="bi bi-pencil"></i></button>
-                                        <button @click="confirmarRemocao('depto', depto)" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                        <button @click="abrirModalEdicao('departamento', depto)" class="btn btn-sm btn-outline-secondary ms-2"><i class="bi bi-pencil"></i></button>
+                                        <button @click="confirmarRemocao('departamento', depto)" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                                     </div>
                                 </li>
                             </template>
@@ -133,10 +133,16 @@
             init() {
                 this.editModal = new bootstrap.Modal(document.getElementById('editModal'));
                 this.confirmacaoModal = new bootstrap.Modal(document.getElementById('confirmacaoModal'));
+
+                // --- ALTERAÇÃO APLICADA AQUI ---
+                // Garante que as listas sejam ordenadas assim que a página carrega.
+                this.cargos.sort((a, b) => a.titulo.localeCompare(b.titulo));
+                this.departamentos.sort((a, b) => a.nome.localeCompare(b.nome));
+                // --- FIM DA ALTERAÇÃO ---
             },
 
             async adicionarCargo() {
-                const res = await fetch('{{ url_for("admin.adicionar_cargo") }}', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.novoCargo) });
+                const res = await fetch('{{ url_for("admin.adicionar_cargo") }}', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ titulo: this.novoCargo.titulo }) });
                 const data = await res.json();
                 if (data.success) {
                     this.cargos.push(data.cargo);
@@ -146,7 +152,7 @@
                 this.showToast(data.message, data.success ? 'success' : 'danger');
             },
             async adicionarDepartamento() {
-                const res = await fetch('{{ url_for("admin.adicionar_departamento") }}', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.novoDepto) });
+                const res = await fetch('{{ url_for("admin.adicionar_departamento") }}', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ nome: this.novoDepto.nome }) });
                 const data = await res.json();
                 if (data.success) {
                     this.departamentos.push(data.departamento);
@@ -167,8 +173,10 @@
             async salvarEdicao() {
                 const tipo = this.itemParaEditar.tipo.toLowerCase();
                 const url = `/admin/${tipo}s/editar/${this.itemParaEditar.id}`;
-                const payload = { titulo: this.itemParaEditar.nome }; // Simplificado
-                if(tipo === 'departamento') payload.nome = this.itemParaEditar.nome;
+
+                const payload = tipo === 'cargo' 
+                    ? { titulo: this.itemParaEditar.nome } 
+                    : { nome: this.itemParaEditar.nome };
 
                 const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
                 const data = await res.json();
@@ -176,10 +184,12 @@
                 if (data.success) {
                     if (tipo === 'cargo') {
                         const index = this.cargos.findIndex(c => c.id === data.cargo.id);
-                        this.cargos[index] = data.cargo;
+                        if (index > -1) this.cargos[index].titulo = data.cargo.titulo;
+                        this.cargos.sort((a, b) => a.titulo.localeCompare(b.titulo)); // Reordena após edição
                     } else {
                         const index = this.departamentos.findIndex(d => d.id === data.departamento.id);
-                        this.departamentos[index] = data.departamento;
+                        if (index > -1) this.departamentos[index].nome = data.departamento.nome;
+                        this.departamentos.sort((a, b) => a.nome.localeCompare(b.nome)); // Reordena após edição
                     }
                 }
                 this.showToast(data.message, data.success ? 'success' : 'danger');
@@ -187,7 +197,11 @@
             },
 
             confirmarRemocao(tipo, item) {
-                this.itemParaRemover = { id: item.id, tipo: tipo, nome: tipo === 'cargo' ? item.titulo : item.nome };
+                this.itemParaRemover = { 
+                    id: item.id, 
+                    tipo: tipo,
+                    nome: tipo === 'cargo' ? item.titulo : item.nome 
+                };
                 this.confirmacaoModal.show();
             },
             async removerItem() {

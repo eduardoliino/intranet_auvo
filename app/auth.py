@@ -1,3 +1,5 @@
+# app/auth.py
+
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
 from .models import User, Colaborador
@@ -21,6 +23,7 @@ def login():
         if admin_user and admin_user.check_password(password):
             # Garante que a sessão não é permanente
             login_user(admin_user, remember=False)
+            # Redireciona o admin para a lista de colaboradores após o login
             return redirect(url_for('colaborador.listar'))
 
         # 2. Se não for admin, verifica se as credenciais são de um colaborador
@@ -32,10 +35,10 @@ def login():
             return redirect(url_for('main.index'))
 
         # 3. Se não for nenhum dos dois, mostra uma mensagem de erro e renderiza o template novamente
-        flash('Email corporativo ou senha inválidos. Por favor, tente novamente.', 'danger')
+        flash('Email ou senha inválidos. Por favor, tente novamente.', 'danger')
         return render_template('login.html', email=identifier)
 
-    # Usa a nova e bonita tela de login para todos (requisições GET)
+    # Usa a nova tela de login para todos (requisições GET)
     return render_template('login.html')
 
 
@@ -43,9 +46,12 @@ def login():
 @login_required
 def logout():
     logout_user()
-    # --- SUA SUGESTÃO APLICADA AQUI ---
-    # Limpa completamente a sessão para garantir que todos os dados sejam removidos
+    # --- ALTERAÇÃO APLICADA AQUI ---
+    # Limpa completamente a sessão para garantir que todos os dados sejam removidos.
+    # Esta é uma prática de segurança importante.
     session.clear()
-    # --- FIM DA SUGESTÃO ---
+    # --- FIM DA ALTERAÇÃO ---
+
     # Após o logout, redireciona sempre para a nova tela de login unificada
+    flash('Você saiu do sistema.', 'info')
     return redirect(url_for('auth.login'))

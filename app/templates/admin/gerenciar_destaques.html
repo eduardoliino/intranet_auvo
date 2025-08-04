@@ -1,4 +1,6 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+
+{% block content %}
 <div x-data="gerenciarDestaques">
 
   <div class="d-flex justify-content-between align-items-center mb-3">
@@ -8,46 +10,21 @@
   <div class="row">
     <div class="col-md-4">
       <div class="card">
-        <div
-          class="card-header fw-bold"
-          x-text="isEditing ? 'Editar Destaque' : 'Adicionar Novo Destaque'"
-        ></div>
+        <div class="card-header fw-bold" x-text="isEditing ? 'Editar Destaque' : 'Adicionar Novo Destaque'"></div>
         <div class="card-body">
           <form @submit.prevent="submitForm" enctype="multipart/form-data">
             <div class="mb-3">
               <label class="form-label">Título</label>
-              <input
-                type="text"
-                x-model="form.titulo"
-                class="form-control"
-                required
-              />
+              <input type="text" x-model="form.titulo" class="form-control" required />
             </div>
 
             <div class="mb-3 position-relative">
               <label class="form-label">Colaborador</label>
-              <input
-                type="text"
-                x-model="filtroColaborador"
-                @focus="showCollaboratorList = true"
-                @blur.debounce.300ms="showCollaboratorList = false"
-                class="form-control"
-                placeholder="Comece a digitar um nome..."
-                autocomplete="off"
-              />
+              <input type="text" x-model="filtroColaborador" @focus="showCollaboratorList = true" @input.debounce.300ms="showCollaboratorList = true" @blur.debounce.300ms="showCollaboratorList = false" class="form-control" placeholder="Comece a digitar um nome..." autocomplete="off" />
 
-              <div
-                x-show="showCollaboratorList && filteredColaboradores.length > 0"
-                class="list-group position-absolute w-100"
-                style="z-index: 10"
-              >
+              <div x-show="showCollaboratorList && filteredColaboradores.length > 0" class="list-group position-absolute w-100" style="z-index: 10">
                 <template x-for="col in filteredColaboradores" :key="col.id">
-                  <a
-                    href="#"
-                    @click.prevent="selectCollaborator(col)"
-                    class="list-group-item list-group-item-action"
-                    x-text="col.nome"
-                  ></a>
+                  <a href="#" @click.prevent="selectCollaborator(col)" class="list-group-item list-group-item-action" x-text="col.nome"></a>
                 </template>
               </div>
               <input type="hidden" x-model="form.colaborador_id" />
@@ -55,16 +32,12 @@
 
             <div class="mb-3">
               <label class="form-label">Descrição</label>
-              <textarea
-                x-model="form.descricao"
-                class="form-control"
-                rows="3"
-              ></textarea>
+              <textarea x-model="form.descricao" class="form-control" rows="3"></textarea>
             </div>
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Mês</label>
-                <select x-model="form.mes" class="form-select custom-select" required>
+                <select x-model="form.mes" x-ref="formMesSelect" class="form-select custom-select" required>
                   <option value="" disabled>Selecione...</option>
                   <option value="1">Janeiro</option>
                   <option value="2">Fevereiro</option>
@@ -82,7 +55,7 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Ano</label>
-                <select x-model="form.ano" class="form-select custom-select" required>
+                <select x-model="form.ano" x-ref="formAnoSelect" class="form-select custom-select" required>
                   <option value="" disabled>Selecione...</option>
                   {% for ano in form_anos %}
                   <option value="{{ ano }}">{{ ano }}</option>
@@ -91,28 +64,11 @@
               </div>
             </div>
             <div class="mb-3">
-              <label
-                class="form-label"
-                x-text="isEditing ? 'Substituir Imagem (Opcional)' : 'Imagem de Destaque (Opcional)'"
-              ></label>
-              <input
-                class="form-control"
-                type="file"
-                x-ref="imagemInput"
-                accept="image/*"
-              />
+              <label class="form-label" x-text="isEditing ? 'Substituir Imagem (Opcional)' : 'Imagem de Destaque (Opcional)'"></label>
+              <input class="form-control" type="file" x-ref="imagemInput" accept="image/*" />
             </div>
-            <button
-              type="submit"
-              class="btn btn-success w-100"
-              x-text="isEditing ? 'Salvar Alterações' : 'Adicionar Destaque'"
-            ></button>
-            <button
-              type="button"
-              x-show="isEditing"
-              @click="resetForm"
-              class="btn btn-secondary w-100 mt-2"
-            >
+            <button type="submit" class="btn btn-success w-100" x-text="isEditing ? 'Salvar Alterações' : 'Adicionar Destaque'"></button>
+            <button type="button" x-show="isEditing" @click="resetForm" class="btn btn-secondary w-100 mt-2">
               Cancelar Edição
             </button>
           </form>
@@ -128,7 +84,7 @@
               <span class="form-label">Filtrar por:</span>
             </div>
             <div class="col">
-              <select x-model="filtroMes" class="form-select form-select-sm custom-select">
+              <select x-ref="filtroMesSelect" class="form-select form-select-sm custom-select">
                 <option value="">Todos os Meses</option>
                 <option value="1">Janeiro</option>
                 <option value="2">Fevereiro</option>
@@ -145,12 +101,31 @@
               </select>
             </div>
             <div class="col">
-              <select x-model="filtroAno" class="form-select form-select-sm custom-select">
+              <select x-ref="filtroAnoSelect" class="form-select form-select-sm custom-select">
                 <option value="">Todos os Anos</option>
                 {% for ano in anos %}
                 <option value="{{ ano }}">{{ ano }}</option>
                 {% endfor %}
               </select>
+            </div>
+            <div class="col">
+              <select x-ref="filtroDeptoSelect" class="form-select form-select-sm custom-select">
+                <option value="">Todos os Deptos.</option>
+                {% for depto in departamentos %}
+                <option value="{{ depto.id }}">{{ depto.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-auto text-center">
+              <span data-bs-toggle="tooltip" data-bs-placement="top" 
+                    :title="!filtroMes || !filtroAno ? 'Selecione um mês e um ano para ativar' : ''">
+                <button class="btn btn-sm btn-danger" 
+                        @click="confirmarRemocaoEmMassa()" 
+                        :disabled="!filtroMes || !filtroAno"
+                        :style="!filtroMes || !filtroAno ? 'pointer-events: none;' : ''">
+                  <i class="bi bi-trash-fill"></i> Remover em Massa
+                </button>
+              </span>
             </div>
           </div>
         </div>
@@ -161,38 +136,24 @@
                 <template x-for="destaque in filteredDestaques" :key="destaque.id">
                   <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                      <img
-                        :src="destaque.imagem_filename ? `/static/fotos_colaboradores/${destaque.imagem_filename}` : (destaque.colaborador_foto ? `/static/fotos_colaboradores/${destaque.colaborador_foto}` : '/static/img/default_avatar.png')"
-                        class="me-3"
-                        style="
-                          width: 50px;
-                          height: 50px;
-                          object-fit: cover;
-                          border-radius: 50%;
-                        "
-                      />
-                      <div>
-                        <h6
-                          class="my-0"
-                          x-text="`${destaque.titulo} - (${String(destaque.mes).padStart(2, '0')}/${destaque.ano})`"
-                        ></h6>
-                        <small
-                          class="text-muted"
-                          x-text="destaque.colaborador_nome"
-                        ></small>
+                      <template x-if="destaque.colaborador_foto">
+                        <img :src="`/static/fotos_colaboradores/${destaque.colaborador_foto}`" class="colaborador-foto-tabela" loading="lazy">
+                      </template>
+                      <template x-if="!destaque.colaborador_foto">
+                          <div class="colaborador-avatar-tabela" :style="`background-color: ${getAvatarColor(destaque.colaborador_nome)}`">
+                              <span x-text="getInitials(destaque.colaborador_nome, '')"></span>
+                          </div>
+                      </template>
+                      <div class="ms-3">
+                        <h6 class="my-0" x-text="`${destaque.titulo} - (${String(destaque.mes).padStart(2, '0')}/${destaque.ano})`"></h6>
+                        <small class="text-muted" x-text="destaque.colaborador_nome"></small>
                       </div>
                     </div>
                     <div>
-                      <button
-                        @click="startEdit(destaque)"
-                        class="btn btn-sm btn-outline-secondary me-1"
-                      >
+                      <button @click="startEdit(destaque)" class="btn btn-sm btn-outline-secondary me-1">
                         <i class="bi bi-pencil"></i>
                       </button>
-                      <button
-                        @click="removerDestaque(destaque.id)"
-                        class="btn btn-sm btn-outline-danger"
-                      >
+                      <button @click="removerDestaque(destaque.id)" class="btn btn-sm btn-outline-danger">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
@@ -213,6 +174,24 @@
       </div>
     </div>
   </div>
+
+  <div class="modal fade" id="confirmacaoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Remoção em Massa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem a certeza de que deseja remover TODOS os destaques de <strong x-text="`${String(filtroMes).padStart(2, '0')}/${filtroAno}`"></strong>?</p>
+                <p class="text-danger small">Esta ação não pode ser desfeita e irá apagar todos os registos e imagens associadas a este período.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" @click="removerDestaquesEmMassa()" class="btn btn-danger">Confirmar Remoção</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>

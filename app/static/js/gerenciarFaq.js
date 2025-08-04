@@ -1,7 +1,19 @@
+// app/static/js/gerenciarFaq.js
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('gerenciarFaq', () => ({
         perguntas: window._perguntasData || [],
         search: '',
+        perguntaParaRemover: {},
+        confirmacaoModal: null,
+
+        init() {
+            
+            const modalEl = document.getElementById('confirmacaoModal');
+            if (modalEl) {
+                this.confirmacaoModal = new bootstrap.Modal(modalEl);
+            }
+        },
 
         get filteredPerguntas() {
             if (this.search.trim() === '') {
@@ -20,18 +32,30 @@ document.addEventListener('alpine:init', () => {
             window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
         },
 
-        async removerPergunta(id) {
-            if (confirm('Tem a certeza de que deseja remover esta pergunta?')) {
-                const response = await fetch(`/admin/faq/perguntas/remover/${id}`, { method: 'DELETE' });
-                const data = await response.json();
+        
+        abrirModalConfirmacao(pergunta) {
+            this.perguntaParaRemover = pergunta;
+            this.confirmacaoModal.show();
+        },
 
-                if (data.success) {
-                    this.perguntas = this.perguntas.filter(p => p.id !== id);
-                    this.showToast(data.message, 'info');
-                } else {
-                    this.showToast('Erro ao remover pergunta.', 'danger');
-                }
+        
+        async removerPergunta() {
+            const id = this.perguntaParaRemover.id;
+            if (!id) return;
+
+            const response = await fetch(`/admin/faq/perguntas/remover/${id}`, { method: 'DELETE' });
+            const data = await response.json();
+
+            if (data.success) {
+                this.perguntas = this.perguntas.filter(p => p.id !== id);
+                this.showToast(data.message, 'info');
+            } else {
+                this.showToast('Erro ao remover pergunta.', 'danger');
             }
+            
+            
+            this.confirmacaoModal.hide();
+            this.perguntaParaRemover = {};
         }
     }));
 });

@@ -11,13 +11,13 @@
     <div class="card-body">
         <form method="POST" action="{{ url_for('colaborador.adicionar') }}" enctype="multipart/form-data" autocomplete="off">
             <div class="row">
-                <div class="col-md-6 mb-3"><label class="form-label">Nome</label><input type="text" name="nome" class="form-control" required></div>
-                <div class="col-md-6 mb-3"><label class="form-label">Sobrenome</label><input type="text" name="sobrenome" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Nome</label><input type="text" name="nome" class="form-control" value="{{ form_data.nome if form_data else '' }}" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Sobrenome</label><input type="text" name="sobrenome" class="form-control" value="{{ form_data.sobrenome if form_data else '' }}" required></div>
             </div>
-            <div class="mb-3"><label class="form-label">E-mail Corporativo</label><input type="email" name="email_corporativo" class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">E-mail Corporativo</label><input type="email" name="email_corporativo" class="form-control" value="{{ form_data.email_corporativo if form_data else '' }}" required></div>
             <div class="row">
-                <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="text" name="data_nascimento" class="form-control" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
-                <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="text" name="data_inicio" class="form-control" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="text" name="data_nascimento" class="form-control" value="{{ form_data.data_nascimento if form_data else '' }}" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="text" name="data_inicio" class="form-control" value="{{ form_data.data_inicio if form_data else '' }}" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
             </div>
 
             <hr>
@@ -25,15 +25,15 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Cargo</label>
-                    <select name="cargo_id" class="form-select custom-select"><option value="">Selecione...</option>{% for cargo in cargos %}<option value="{{ cargo.id }}">{{ cargo.titulo }}</option>{% endfor %}</select>
+                    <select name="cargo_id" class="form-select custom-select"><option value="">Selecione...</option>{% for cargo in cargos %}<option value="{{ cargo.id }}" {% if form_data and form_data.cargo_id|int == cargo.id %}selected{% endif %}>{{ cargo.titulo }}</option>{% endfor %}</select>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Departamento</label>
-                    <select name="departamento_id" class="form-select custom-select"><option value="">Selecione...</option>{% for depto in departamentos %}<option value="{{ depto.id }}">{{ depto.nome }}</option>{% endfor %}</select>
+                    <select name="departamento_id" class="form-select custom-select"><option value="">Selecione...</option>{% for depto in departamentos %}<option value="{{ depto.id }}" {% if form_data and form_data.departamento_id|int == depto.id %}selected{% endif %}>{{ depto.nome }}</option>{% endfor %}</select>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Superior Imediato</label>
-                    <select name="superior_id" class="form-select custom-select"><option value="None">Nenhum</option>{% for sup in superiores %}<option value="{{ sup.id }}">{{ sup.nome }} {{ sup.sobrenome }}</option>{% endfor %}</select>
+                    <select name="superior_id" class="form-select custom-select"><option value="None">Nenhum</option>{% for sup in superiores %}<option value="{{ sup.id }}" {% if form_data and form_data.superior_id|string == sup.id|string %}selected{% endif %}>{{ sup.nome }} {{ sup.sobrenome }}</option>{% endfor %}</select>
                 </div>
             </div>
 
@@ -53,7 +53,7 @@
 {% block page_scripts %}
 <script>
 function formatarData(input) {
-    let valor = input.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+    let valor = input.value.replace(/\D/g, '');
     if (valor.length > 2) {
         valor = valor.substring(0, 2) + '/' + valor.substring(2);
     }

@@ -9,6 +9,7 @@ from app import db
 from app.models import (Aviso, Destaque, FaqCategoria, FaqPergunta, Ouvidoria,
                         Evento, ConfigLink, Colaborador, Cargo, Departamento)
 from datetime import datetime
+from sqlalchemy.orm import joinedload
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -193,12 +194,27 @@ def remover_aviso(id):
 @login_required
 @admin_required
 def gerenciar_destaques():
-    destaques_obj = Destaque.query.order_by(
-        Destaque.ano.desc(), Destaque.mes.desc()).all()
-    colaboradores_obj = Colaborador.query.order_by(Colaborador.nome).all()
+    destaques_obj = Destaque.query.options(
+        joinedload(Destaque.colaborador).joinedload(Colaborador.departamento)
+    ).order_by(Destaque.ano.desc(), Destaque.mes.desc()).all()
 
-    destaques_json = [{'id': d.id, 'titulo': d.titulo, 'descricao': d.descricao, 'mes': d.mes, 'ano': d.ano, 'imagem_filename': d.imagem_filename, 'colaborador_id': d.colaborador_id,
-                       'colaborador_nome': f"{d.colaborador.nome} {d.colaborador.sobrenome}", 'colaborador_foto': d.colaborador.foto_filename} for d in destaques_obj]
+    colaboradores_obj = Colaborador.query.order_by(Colaborador.nome).all()
+    departamentos_obj = Departamento.query.order_by(Departamento.nome).all()
+
+    destaques_json = []
+    for d in destaques_obj:
+        destaques_json.append({
+            'id': d.id,
+            'titulo': d.titulo,
+            'descricao': d.descricao,
+            'mes': d.mes,
+            'ano': d.ano,
+            'imagem_filename': d.imagem_filename,
+            'colaborador_id': d.colaborador_id,
+            'colaborador_nome': f"{d.colaborador.nome} {d.colaborador.sobrenome}",
+            'colaborador_foto': d.colaborador.foto_filename,
+            'departamento_id': d.colaborador.departamento_id
+        })
 
     colaboradores_json = [
         {'id': c.id, 'nome': f"{c.nome} {c.sobrenome}"} for c in colaboradores_obj]
@@ -212,6 +228,7 @@ def gerenciar_destaques():
     return render_template('admin/gerenciar_destaques.html',
                            destaques=destaques_json,
                            colaboradores=colaboradores_json,
+                           departamentos=departamentos_obj,
                            anos=anos_disponiveis,
                            form_anos=form_anos)
 
@@ -251,7 +268,8 @@ def adicionar_destaque():
         'mes': novo_destaque.mes, 'ano': novo_destaque.ano, 'imagem_filename': novo_destaque.imagem_filename,
         'colaborador_id': novo_destaque.colaborador_id,
         'colaborador_nome': f"{novo_destaque.colaborador.nome} {novo_destaque.colaborador.sobrenome}",
-        'colaborador_foto': novo_destaque.colaborador.foto_filename
+        'colaborador_foto': novo_destaque.colaborador.foto_filename,
+        'departamento_id': novo_destaque.colaborador.departamento_id
     }
     return jsonify({'success': True, 'destaque': destaque_json})
 
@@ -269,6 +287,39 @@ def remover_destaque(id):
     db.session.delete(destaque)
     db.session.commit()
     return jsonify({'success': True, 'message': 'Destaque removido com sucesso.'})
+
+
+@admin.route('/destaques/remover-em-massa', methods=['POST'])
+@admin_required
+def remover_destaques_em_massa():
+    data = request.get_json()
+    mes = data.get('mes')
+    ano = data.get('ano')
+
+    if not mes or not ano:
+        return jsonify({'success': False, 'message': 'Mês e ano são obrigatórios.'}), 400
+
+    destaques_para_remover = Destaque.query.filter_by(mes=mes, ano=ano).all()
+
+    if not destaques_para_remover:
+        return jsonify({'success': False, 'message': 'Nenhum destaque encontrado para este período.'}), 404
+
+    count = 0
+    for destaque in destaques_para_remover:
+        if destaque.imagem_filename:
+            try:
+                caminho_imagem = os.path.join(
+                    current_app.root_path, 'static/fotos_colaboradores', destaque.imagem_filename)
+                if os.path.exists(caminho_imagem):
+                    os.remove(caminho_imagem)
+            except Exception as e:
+                print(
+                    f"Erro ao remover imagem {destaque.imagem_filename}: {e}")
+        db.session.delete(destaque)
+        count += 1
+
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'{count} destaque(s) removido(s) com sucesso.'})
 
 
 @admin.route('/destaques/editar/<int:id>', methods=['POST'])
@@ -291,8 +342,14 @@ def editar_destaque(id):
     destaque.mes = int(request.form.get('mes'))
     destaque.ano = int(request.form.get('ano'))
     db.session.commit()
-    destaque_json = {'id': destaque.id, 'titulo': destaque.titulo, 'descricao': destaque.descricao, 'mes': destaque.mes, 'ano': destaque.ano, 'imagem_filename': destaque.imagem_filename,
-                     'colaborador_id': destaque.colaborador_id, 'colaborador_nome': f"{destaque.colaborador.nome} {destaque.colaborador.sobrenome}", 'colaborador_foto': destaque.colaborador.foto_filename}
+    destaque_json = {
+        'id': destaque.id, 'titulo': destaque.titulo, 'descricao': destaque.descricao,
+        'mes': destaque.mes, 'ano': destaque.ano, 'imagem_filename': destaque.imagem_filename,
+        'colaborador_id': destaque.colaborador_id,
+        'colaborador_nome': f"{destaque.colaborador.nome} {destaque.colaborador.sobrenome}",
+        'colaborador_foto': destaque.colaborador.foto_filename,
+        'departamento_id': destaque.colaborador.departamento_id
+    }
     return jsonify({'success': True, 'destaque': destaque_json})
 
 
@@ -311,8 +368,6 @@ def gerenciar_faq():
 @admin_required
 def gerenciar_categorias_faq():
     categorias_obj = FaqCategoria.query.order_by(FaqCategoria.nome).all()
-    # --- ALTERAÇÃO APLICADA AQUI ---
-    # Converte a lista de objetos para uma lista de dicionários (JSON serializável)
     categorias_json = [{'id': cat.id, 'nome': cat.nome}
                        for cat in categorias_obj]
     return render_template('admin/gerenciar_faq_categorias.html', categorias=categorias_json)

@@ -13,11 +13,11 @@
         <form method="POST" action="{{ url_for('admin.gerenciar_links') }}">
             <div class="mb-3">
                 <label for="link_vagas" class="form-label">URL da Página de Vagas</label>
-                <input type="url" class="form-control" id="link_vagas" name="link_vagas" value="{{ links.vagas }}" placeholder="https://exemplo.com/carreiras">
+                <input type="url" class="form-control" id="link_vagas" name="link_vagas" value="{{ links.vagas }}" placeholder="https://exemplo.com/carreiras" autocomplete="off">
             </div>
             <div class="mb-3">
                 <label for="link_indicacao" class="form-label">URL do Formulário de Indicação</label>
-                <input type="url" class="form-control" id="link_indicacao" name="link_indicacao" value="{{ links.indicacao }}" placeholder="https://exemplo.com/indique-um-amigo">
+                <input type="url" class="form-control" id="link_indicacao" name="link_indicacao" value="{{ links.indicacao }}" placeholder="https://exemplo.com/indique-um-amigo" autocomplete="off">
             </div>
             <button type="submit" class="btn btn-auvo w-100">Salvar Alterações</button>
         </form>

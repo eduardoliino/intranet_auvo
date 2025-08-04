@@ -32,9 +32,9 @@
                         <a :href="`/admin/faq/perguntas/editar/${pergunta.id}`" class="btn btn-sm btn-outline-secondary me-1">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <a :href="`/admin/faq/perguntas/remover/${pergunta.id}`" class="btn btn-sm btn-outline-danger">
+                        <button type="button" @click="abrirModalConfirmacao(pergunta)" class="btn btn-sm btn-outline-danger">
                             <i class="bi bi-trash"></i>
-                        </a>
+                        </button>
                     </div>
                 </li>
             </template>
@@ -48,6 +48,26 @@
         <span class="text-muted small" x-text="`Exibindo ${filteredPerguntas.length} de ${perguntas.length} registros`"></span>
     </div>
   </div>
+
+  <div class="modal fade" id="confirmacaoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Remoção</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem a certeza de que deseja remover a pergunta: "<strong x-text="perguntaParaRemover.pergunta"></strong>"?</p>
+                <p class="text-danger small">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" @click="removerPergunta()" class="btn btn-danger">Confirmar Remoção</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}
 

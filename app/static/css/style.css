@@ -476,3 +476,11 @@ body {
 .modal-footer .ts-control .item {
     padding-right: 40px !important;
 }
+
+/* --- NOVO ESTILO ADICIONADO PARA EVENTOS PASSADOS --- */
+.evento-passado td {
+    background-color: #f1f5f9 !important; 
+    font-style: italic;
+    color: #6c757d; 
+    opacity: 0.8; 
+}

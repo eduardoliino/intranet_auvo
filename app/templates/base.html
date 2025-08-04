@@ -37,7 +37,7 @@
 
             <div x-data="counterAnimation()" class="totalizador-pill-nav d-none d-lg-flex">
                 <span>Já somos </span>
-                <span x-text="count" class="mx-1 fw-bold" style="min-width: 20px; text-align: center;"></span>
+                <span x-text="count" class="mx-1 fw-bold" style="display: inline-block; min-width: 35px; text-align: center;"></span>
                 <span>Auvolovers</span>
                 <i class="bi bi-heart-fill ms-2"></i>
             </div>
@@ -204,7 +204,7 @@
                 init() {
                     setInterval(() => {
                         this.checkStatus();
-                    }, 60000); // Verifica a cada 60 segundos
+                    }, 60000);
                 },
 
                 async checkStatus() {

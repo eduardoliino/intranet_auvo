@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Intranet Auvo</title>
-    
+
     <link rel="icon" href="{{ url_for('static', filename='img/logo_icon.svg') }}" type="image/svg+xml">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,6 +25,9 @@
             align-items: center;
             min-height: 100vh;
             padding: 1rem 0;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
         .login-container {
             max-width: 400px;
@@ -49,6 +52,9 @@
             border: none;
             border-radius: 0.5rem;
             padding: 0.75rem 1rem;
+            -webkit-user-select: auto;
+            -ms-user-select: auto;
+            user-select: auto;
         }
         .btn-login {
             background: linear-gradient(90deg, var(--cor-primaria), var(--cor-primaria-escura));
@@ -93,18 +99,18 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} text-start small">{{ message }}</div>
+                    <div class="alert alert-{{ category }} text-start small p-2" role="alert">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
         <form method="POST" action="{{ url_for('auth.login') }}">
             <div class="mb-3 text-start">
-                <label for="email" class="form-label">Email corporativo</label>
-                <input type="email" class="form-control" id="email" name="email" value="{{ email or '' }}" required autocomplete="email">
+                <label for="email" class="form-label small">Email corporativo</label>
+                <input type="email" class="form-control" id="email" name="email" required autocomplete="off">
             </div>
             <div class="mb-3 text-start">
-                <label for="password" class="form-label">Senha</label>
+                <label for="password" class="form-label small">Senha</label>
                 <div class="password-wrapper">
                     <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password">
                     <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
@@ -122,7 +128,7 @@
             togglePassword.addEventListener('click', function () {
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-                
+
                 this.classList.toggle('bi-eye-slash');
                 this.classList.toggle('bi-eye');
             });

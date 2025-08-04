@@ -1,3 +1,5 @@
+// app/static/js/gerenciarEventos.js
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('gestaoEventos', () => ({
         eventos: [],
@@ -9,28 +11,36 @@ document.addEventListener('alpine:init', () => {
             end: '',
             description: '',
             location: '',
-            color: '#3788d8',
         },
         modalInstance: null,
+        // --- NOVAS PROPRIEDADES ADICIONADAS ---
+        eventoParaRemover: {},
+        confirmacaoModal: null,
 
         init() {
             this.eventos = window._eventosData || [];
-            const modalEl = document.getElementById('eventoModal');
-            if (modalEl) {
-                this.modalInstance = new bootstrap.Modal(modalEl);
+            
+            const eventoModalEl = document.getElementById('eventoModal');
+            if (eventoModalEl) {
+                this.modalInstance = new bootstrap.Modal(eventoModalEl);
+            }
+            
+            // --- INICIALIZAÇÃO DO NOVO MODAL ---
+            const confirmacaoModalEl = document.getElementById('confirmacaoModal');
+            if (confirmacaoModalEl) {
+                this.confirmacaoModal = new bootstrap.Modal(confirmacaoModalEl);
             }
         },
 
         resetarForm() {
             this.editando = false;
-            this.form = { id: null, title: '', start: '', end: '', description: '', location: '', color: '#3788d8' };
+            this.form = { id: null, title: '', start: '', end: '', description: '', location: '' };
         },
 
         abrirModal(evento = null) {
             this.resetarForm();
             if (evento) {
                 this.editando = true;
-                // Formata as datas para o input datetime-local (YYYY-MM-DDTHH:mm)
                 this.form = {
                     ...evento,
                     start: evento.start ? evento.start.slice(0, 16) : '',
@@ -42,10 +52,9 @@ document.addEventListener('alpine:init', () => {
 
         salvarEvento() {
             const url = this.editando ? `/admin/eventos/editar/${this.form.id}` : '/admin/eventos/novo';
-            const method = 'POST';
-
+            
             fetch(url, {
-                method: method,
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(this.form)
             })
@@ -58,6 +67,7 @@ document.addEventListener('alpine:init', () => {
                     } else {
                         this.eventos.unshift(data.evento);
                     }
+                    this.eventos.sort((a, b) => new Date(b.start) - new Date(a.start));
                     this.modalInstance.hide();
                     window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'success', message: `Evento ${this.editando ? 'atualizado' : 'criado'} com sucesso!` }}));
                 } else {
@@ -66,17 +76,36 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        removerEvento(id) {
-            if (confirm('Tem a certeza de que deseja apagar este evento?')) {
-                fetch(`/admin/eventos/remover/${id}`, { method: 'DELETE' })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        this.eventos = this.eventos.filter(e => e.id !== id);
-                        window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'info', message: 'Evento removido com sucesso.' }}));
-                    }
-                });
-            }
+        // --- NOVA FUNÇÃO PARA ABRIR O MODAL DE CONFIRMAÇÃO ---
+        abrirModalConfirmacao(evento) {
+            this.eventoParaRemover = evento;
+            this.confirmacaoModal.show();
+        },
+
+        // --- FUNÇÃO DE REMOVER ATUALIZADA ---
+        removerEvento() {
+            const id = this.eventoParaRemover.id;
+            if (!id) return;
+
+            fetch(`/admin/eventos/remover/${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    this.eventos = this.eventos.filter(e => e.id !== id);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'info', message: 'Evento removido com sucesso.' }}));
+                } else {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'danger', message: 'Erro ao remover evento.' }}));
+                }
+                this.confirmacaoModal.hide();
+                this.eventoParaRemover = {};
+            });
+        },
+
+        
+        isEventoPassado(evento) {
+            const dataEvento = new Date(evento.start);
+            const agora = new Date();
+            return dataEvento < agora;
         },
 
         formatarData(isoString) {

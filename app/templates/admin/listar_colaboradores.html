@@ -44,9 +44,9 @@
                         <tr>
                             <th style="width: 80px;">Foto</th>
                             <th @click="sortBy('nome')" style="cursor: pointer;">Nome Completo <i :class="getSortIcon('nome')"></i></th>
-                            <th @click="sortBy('email')" style="cursor: pointer;">E-mail <i :class="getSortIcon('email')"></i></th>
+                            <th>E-mail</th>
                             <th>Cargo</th>
-                            <th class="text-center">Ações</th>
+                            <th class="text-center" style="width: 120px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -62,13 +62,16 @@
                                         </div>
                                     </template>
                                 </td>
-                                <td x-text="`${col.nome} ${col.sobrenome}`"></td>
+                                <td>
+                                    <a :href="`/admin/colaboradores/editar/${col.id}`" class="text-decoration-none text-dark fw-bold" x-text="`${col.nome} ${col.sobrenome}`"></a>
+                                </td>
                                 <td x-text="col.email"></td>
                                 <td x-text="col.cargo"></td>
                                 <td class="text-center">
-                                    <a :href="`/admin/colaboradores/editar/${col.id}`" class="btn btn-sm btn-auvo me-1" style="width: 40px;"><i class="bi bi-pencil-fill"></i></a>
-                                    <button @click="confirmarRemocao(col)" class="btn btn-sm btn-danger" style="width: 40px;"><i class="bi bi-trash-fill"></i></button>
-                                    </td>
+                                    <button @click="confirmarRemocao(col)" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </td>
                             </tr>
                         </template>
                         <template x-if="filteredColaboradores.length === 0">
@@ -114,7 +117,7 @@
             init() {
                 this.modal = new bootstrap.Modal(document.getElementById('confirmacaoModal'));
             },
-            
+
             get filteredColaboradores() {
                 let filtered = this.allColaboradores.filter(c => {
                     const searchMatch = this.filters.search.trim() === '' || 
@@ -161,7 +164,7 @@
                 }
                 this.modal.hide();
             },
-            
+
             getInitials(nome, sobrenome) {
                 return `${nome.charAt(0)}${sobrenome ? sobrenome.charAt(0) : ''}`.toUpperCase();
             },
@@ -173,7 +176,7 @@
                 }
                 return colors[Math.abs(hash % colors.length)];
             },
-            
+
             showToast(message, type = 'info') {
                 window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
             }
