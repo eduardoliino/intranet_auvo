@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required
 from app import db
 from app.models import Colaborador, Cargo, Departamento
-from app.admin_routes import admin_required, salvar_foto
+from app.admin_routes.utils import admin_required, salvar_foto
 from sqlalchemy.orm import joinedload
 import pandas as pd
 import io

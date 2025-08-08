@@ -164,7 +164,16 @@ intranet_auvo/
 │   │   ├── admin/          # Templates da área administrativa
 │   │   └── ...
 │   ├── __init__.py         # Inicialização do Flask
-│   ├── admin_routes.py     # Rotas admin
+│   ├── admin_routes/       # Rotas admin
+│   │   ├── __init__.py
+│   │   ├── utils.py
+│   │   ├── cargos_departamentos.py
+│   │   ├── avisos.py
+│   │   ├── destaques.py
+│   │   ├── faq.py
+│   │   ├── ouvidoria.py
+│   │   ├── eventos.py
+│   │   └── links.py
 │   ├── auth.py             # Autenticação
 │   ├── colaborador_routes.py # Rotas colaborador
 │   ├── models.py           # Modelos SQLAlchemy
