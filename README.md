@@ -2,38 +2,45 @@
 
 ![Logo](app/static/img/logo_nova.png)
 
-## 📖 Descrição
+## 📖 Sobre o Projeto
 
-A Intranet Auvo é um portal web interno desenvolvido com a framework Flask em Python. O objetivo do projeto é centralizar a comunicação interna, fornecer ferramentas úteis para os colaboradores e otimizar processos do departamento de RH, criando um ambiente digital coeso e informativo para todos na empresa.
+A Intranet Auvo é uma aplicação web desenvolvida em Python com o framework Flask, projetada para ser o portal interno de comunicação e gestão de recursos humanos da empresa Auvo. A plataforma centraliza informações importantes, promove a interação entre os colaboradores e otimiza processos internos.
+
+O sistema conta com dois níveis de acesso:
+
+* **Colaborador:** Acesso às funcionalidades gerais da intranet, como visualização de avisos, calendário de eventos, organograma, FAQ e envio de mensagens para a ouvidoria.
+* **Administrador:** Acesso total a todas as funcionalidades, incluindo o gerenciamento de colaboradores, avisos, eventos, destaques, links úteis, FAQ, e a configuração geral do sistema.
 
 ---
 
-## ✨ Funcionalidades
-
-A plataforma está dividida em duas áreas principais: a visão do colaborador e o painel de administração.
+## ✨ Funcionalidades Principais
 
 ### Para Colaboradores
-- **Dashboard Principal:** Uma página inicial com acesso rápido a:
-  - Comunicados importantes do RH.
-  - Aniversariantes do mês.
-  - Colaboradores destaque do mês.
-  - Próximos eventos da empresa.
-- **Canal de Ouvidoria:** Um formulário seguro para enviar sugestões, críticas ou denúncias, com a opção de se identificar ou permanecer anónimo.
-- **FAQ (Perguntas Frequentes):** Uma base de conhecimento com busca e filtros para tirar dúvidas comuns sobre a empresa.
-- **Sistema de Login:** Autenticação segura para acesso à plataforma.
 
-### Para Administradores (RH)
-- **Gestão de Colaboradores:**
-  - Adicionar novos colaboradores manualmente através de um formulário.
-  - Adicionar múltiplos colaboradores de uma vez via importação de planilha Excel (.xlsx).
-  - Listar, editar e remover colaboradores existentes.
-- **Gestão de Comunicados:** Interface para criar, visualizar e apagar os avisos que aparecem na dashboard.
-- **Gestão de Destaques:** Ferramenta para eleger e exibir os colaboradores destaque de cada mês.
-- **Gestão de FAQ:**
-  - CRUD completo para criar, editar e apagar perguntas e respostas.
-  - Gestão de categorias para organizar o conteúdo do FAQ.
-- **Gestão de Ouvidoria:** Painel para visualizar as manifestações recebidas e alterar o seu status (Nova, Em análise, Resolvida).
-- **Gestão de Eventos:** Um CRUD interativo para adicionar, editar e remover eventos internos que são exibidos na dashboard.
+* **Dashboard Inicial:** Visualização rápida de aniversariantes do dia, próximos eventos e os últimos avisos.
+* **Avisos:** Acesso a todos os comunicados importantes da empresa.
+* **Organograma:** Visualização da estrutura hierárquica da empresa de forma interativa.
+* **Lista de Colaboradores:** Encontre informações de contato de outros funcionários.
+* **Calendário de Eventos:** Fique por dentro de todos os eventos da empresa.
+* **FAQ:** Consulte respostas para as perguntas mais frequentes.
+* **Ouvidoria:** Envie sugestões, elogios ou reclamações de forma anônima ou identificada.
+
+### Para Administradores
+
+* **Gerenciamento Completo de Colaboradores:** Adicione (manualmente ou via importação de arquivo .xlsx), edite e remova colaboradores.
+
+* **Gestão de Conteúdo:**
+
+  * Crie e gerencie avisos, destaques da home e eventos do calendário.
+  * Administre o FAQ, incluindo categorias e perguntas/respostas.
+  * Gerencie os links úteis disponíveis na plataforma.
+
+* **Ouvidoria:** Visualize e gerencie as mensagens recebidas.
+
+* **Configuração do Sistema:**
+
+  * Gerencie cargos e departamentos.
+  * Configure a exibição do organograma.
 
 ---
 
@@ -41,24 +48,28 @@ A plataforma está dividida em duas áreas principais: a visão do colaborador e
 
 O projeto foi construído com as seguintes tecnologias:
 
-- **Backend:**
-  - **Python 3**
-  - **Flask:** Framework principal da aplicação.
-  - **Flask-SQLAlchemy:** ORM para interação com a base de dados.
-  - **Flask-Migrate:** Controlo de versões do esquema da base de dados.
-  - **Flask-Login:** Gestão de autenticação e sessões de utilizadores.
-  - **Pandas / OpenPyXL:** Para a funcionalidade de importação de dados a partir de planilhas.
+### Backend
 
-- **Frontend:**
-  - **HTML5** (com templates Jinja2)
-  - **CSS3**
-  - **JavaScript**
-  - **Bootstrap 5:** Framework CSS para a estrutura e responsividade.
-  - **Alpine.js:** Biblioteca JavaScript para adicionar interatividade à interface.
-  - **Tom Select:** Para a criação de listas suspensas (selects) modernas e com busca.
+* Python 3.8+
+* Flask
+* Flask-SQLAlchemy
+* Flask-Migrate
+* Flask-Login
+* Pandas
+* OpenPyXL
 
-- **Base de Dados:**
-  - **SQLite:** Base de dados leve e baseada em ficheiro, ideal para desenvolvimento e pequenas aplicações.
+### Frontend
+
+* HTML5 + Jinja2
+* CSS3
+* JavaScript
+* Bootstrap 5
+* Alpine.js
+* Tom Select
+
+### Banco de Dados
+
+* SQLite
 
 ---
 
@@ -67,54 +78,61 @@ O projeto foi construído com as seguintes tecnologias:
 Siga os passos abaixo para configurar e executar o projeto numa nova máquina.
 
 ### Pré-requisitos
-- Python 3 instalado.
+
+* Python 3 instalado.
 
 ### Passo a Passo
 
-1.  **Copie a Pasta do Projeto**
-    Transfira a pasta `intranet_auvo` para a nova máquina.
+1. **Copie a Pasta do Projeto**
+   Transfira a pasta `intranet_auvo` para a nova máquina.
 
-2.  **Abra o Terminal**
-    Navegue até à raiz da pasta do projeto (`intranet_auvo`).
+2. **Abra o Terminal**
+   Navegue até à raiz da pasta do projeto (`intranet_auvo`).
 
-3.  **Crie e Ative um Ambiente Virtual**
-    ```bash
-    # Criar o ambiente
-    python -m venv venv
+3. **Crie e Ative um Ambiente Virtual**
 
-    # Ativar no Windows
-    venv\Scripts\activate
+   ```bash
+   # Criar o ambiente
+   python -m venv venv
 
-    # Ativar no macOS/Linux
-    source venv/bin/activate
-    ```
+   # Ativar no Windows
+   venv\Scripts\activate
 
-4.  **Instale as Dependências**
-    ```bash
-    pip install -r requirements.txt
-    ```
+   # Ativar no macOS/Linux
+   source venv/bin/activate
+   ```
 
-5.  **Configure a Base de Dados**
-    Este comando cria o ficheiro `intranet.db` e todas as tabelas necessárias.
-    ```bash
-    flask db upgrade
-    ```
+4. **Instale as Dependências**
 
-6.  **Crie o Utilizador Administrador**
-    Abra o shell interativo do Flask para criar o primeiro administrador.
-    ```bash
-    flask shell
-    ```
-    Dentro do shell, execute os seguintes comandos Python:
-    ```python
-    from app.models import User
-    from app import db
-    admin = User(username='admin')
-    admin.set_password('sua_senha_segura_aqui')
-    db.session.add(admin)
-    db.session.commit()
-    exit()
-    ```
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **Configure a Base de Dados**
+   Este comando cria o ficheiro `intranet.db` e todas as tabelas necessárias.
+
+   ```bash
+   flask db upgrade
+   ```
+
+6. **Crie o Utilizador Administrador**
+   Abra o shell interativo do Flask para criar o primeiro administrador.
+
+   ```bash
+   flask shell
+   ```
+
+   Dentro do shell, execute os seguintes comandos Python:
+
+   ```python
+   from app.models import User
+   from app import db
+   admin = User(username='admin')
+   admin.set_password('sua_senha_segura_aqui')
+   db.session.add(admin)
+   db.session.commit()
+   exit()
+   ```
 
 ---
 
@@ -122,13 +140,46 @@ Siga os passos abaixo para configurar e executar o projeto numa nova máquina.
 
 Com tudo configurado, inicie o servidor Flask.
 
-1.  **Execute o Ficheiro `run.py`**
-    Este comando irá iniciar o servidor de forma que ele seja acessível na sua rede local.
-    ```bash
-    python run.py
-    ```
+1. **Execute o Ficheiro `run.py`**
+   Este comando irá iniciar o servidor de forma que ele seja acessível na sua rede local.
 
-2.  **Aceda à Aplicação**
-    O terminal irá mostrar um endereço de IP local (ex: `http://192.168.1.10:5000`). Use este endereço em qualquer navegador na mesma rede para aceder à intranet. Para aceder no próprio computador, pode usar `http://127.0.0.1:5000`.
+   ```bash
+   python run.py
+   ```
+
+2. **Aceda à Aplicação**
+   O terminal irá mostrar um endereço de IP local (ex: `http://192.168.1.10:5000`). Use este endereço em qualquer navegador na mesma rede para aceder à intranet. Para aceder no próprio computador, pode usar `http://127.0.0.1:5000`.
 
 **Nota:** Lembre-se de verificar as regras do **firewall** da máquina para garantir que as ligações na porta `5000` são permitidas.
+
+---
+
+## 🗂️ Estrutura do Projeto
+
+```
+intranet_auvo/
+├── app/
+│   ├── static/             # Arquivos estáticos (CSS, JS, Imagens)
+│   ├── templates/          # Templates HTML (Jinja2)
+│   │   ├── admin/          # Templates da área administrativa
+│   │   └── ...
+│   ├── __init__.py         # Inicialização do Flask
+│   ├── admin_routes.py     # Rotas admin
+│   ├── auth.py             # Autenticação
+│   ├── colaborador_routes.py # Rotas colaborador
+│   ├── models.py           # Modelos SQLAlchemy
+│   └── routes.py           # Rotas públicas
+├── migrations/             # Migrações do banco
+├── venv/                   # Ambiente virtual
+├── .gitignore              # Ignorados pelo Git
+├── app.db                  # Banco SQLite
+├── README.md               # Este arquivo
+├── requirements.txt        # Dependências
+└── run.py                  # Ponto de entrada
+```
+
+---
+
+## 👨‍💻 Autor
+
+**Eduardo Lino** - [eduardoliino](mailto:eduardoliino)
