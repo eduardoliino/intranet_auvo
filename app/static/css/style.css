@@ -1,4 +1,4 @@
-/* --- REGRA ADICIONADA PARA EVITAR "PISCAR" DE ELEMENTOS --- */
+
 [x-cloak] { display: none !important; }
 
 :root {
