@@ -15,6 +15,7 @@ main = Blueprint('main', __name__)
 @main.route('/index')
 @login_required
 def index():
+    """Renderiza a página inicial com avisos e destaques."""
     total_colaboradores = Colaborador.query.count()
     avisos_obj = Aviso.query.order_by(
         Aviso.data_criacao.desc()).limit(10).all()
@@ -172,6 +173,7 @@ def ver_organograma():
 
 
 def get_equipe_recursive(colaborador_id, todos_colaboradores, visitados):
+    """Retorna recursivamente a equipa subordinada a um colaborador."""
     if colaborador_id in visitados:
         return []
     visitados.add(colaborador_id)
@@ -190,6 +192,7 @@ def get_equipe_recursive(colaborador_id, todos_colaboradores, visitados):
 @main.route('/api/organograma-data')
 @login_required
 def organograma_data():
+    """Monta os dados do organograma corporativo em formato JSON."""
     config_ceo = ConfigLink.query.filter_by(chave='ceo_colaborador_id').first()
     if not config_ceo or not config_ceo.valor:
         return jsonify({'nodes': []})

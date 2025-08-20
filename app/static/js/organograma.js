@@ -1,5 +1,3 @@
-// app/static/js/organograma.js
-
 document.addEventListener('DOMContentLoaded', function () {
     const chartContainer = document.querySelector('.chart-container');
     if (!chartContainer) {
@@ -20,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // --- LÓGICA DE CORES ADICIONADA AQUI ---
+            // Lógica de cores para diferenciar equipas
             // 1. Define uma paleta de cores para usar nas bordas dos cards
             const colors = ['#7A28B8', '#00D29D', '#345978', '#C051FF', '#3A1B4A'];
             let colorIndex = 0;
@@ -44,9 +42,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 colorIndex++;
             }
-            // --- FIM DA LÓGICA DE CORES ---
-
-
             new d3.OrgChart()
                 .container('.chart-container')
                 .data(data.nodes)

@@ -1,5 +1,3 @@
-# app/auth.py
-
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
 from .models import User, Colaborador
@@ -9,6 +7,7 @@ auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    """Processa o login de administradores e colaboradores."""
     # Se o utilizador já estiver logado, vai direto para a dashboard
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
@@ -45,12 +44,10 @@ def login():
 @auth.route('/logout')
 @login_required
 def logout():
+    """Encerra a sessão do utilizador e limpa os dados temporários."""
     logout_user()
-    # --- ALTERAÇÃO APLICADA AQUI ---
-    # Limpa completamente a sessão para garantir que todos os dados sejam removidos.
-    # Esta é uma prática de segurança importante.
+    # Limpa a sessão para garantir que todos os dados sejam removidos.
     session.clear()
-    # --- FIM DA ALTERAÇÃO ---
 
     # Após o logout, redireciona sempre para a nova tela de login unificada
     flash('Você saiu do sistema.', 'info')

@@ -8,6 +8,7 @@ from .utils import admin_required
 @admin.route('/cargos-departamentos', methods=['GET'])
 @admin_required
 def gerenciar_cargos_departamentos():
+    """Painel de gestão de cargos, departamentos e configuração do CEO."""
     cargos_obj = Cargo.query.order_by(Cargo.titulo).all()
     cargos_json = [{'id': c.id, 'titulo': c.titulo} for c in cargos_obj]
 
@@ -30,6 +31,7 @@ def gerenciar_cargos_departamentos():
 @admin.route('/cargos-departamentos/ceo', methods=['POST'])
 @admin_required
 def definir_ceo():
+    """Define qual colaborador será exibido como CEO no organograma."""
     ceo_id = request.form.get('ceo_id')
     config_ceo = ConfigLink.query.filter_by(chave='ceo_colaborador_id').first()
     if not config_ceo:

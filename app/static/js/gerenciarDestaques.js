@@ -1,5 +1,3 @@
-// app/static/js/gerenciarDestaques.js
-
 document.addEventListener('alpine:init', () => {
     Alpine.data('gerenciarDestaques', () => ({
         destaques: window._destaquesData || [],
@@ -19,7 +17,6 @@ document.addEventListener('alpine:init', () => {
         init() {
             this.modal = new bootstrap.Modal(document.getElementById('confirmacaoModal'));
 
-            // --- ALTERAÇÃO APLICADA AQUI ---
             // Adiciona o plugin 'clear_button' para permitir que o utilizador limpe a seleção.
             new TomSelect(this.$refs.filtroMesSelect, {
                 plugins: ['clear_button'],

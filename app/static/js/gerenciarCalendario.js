@@ -1,5 +1,3 @@
-// app/static/js/gerenciarCalendario.js
-
 document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('calendar');
     const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));

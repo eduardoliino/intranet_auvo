@@ -16,33 +16,25 @@ sess = Session()
 
 
 def create_app():
+    """Cria e configura a aplicação Flask."""
     app = Flask(__name__)
 
     app.config['SECRET_KEY'] = 'uma-chave-secreta-muito-forte-e-diferente'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///intranet.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # --- CONFIGURAÇÃO DE SESSÃO DEFINITIVA ---
+    # Configuração de sessão
     app.config['SESSION_TYPE'] = 'filesystem'
     app.config['SESSION_FILE_THRESHOLD'] = 100
-
-    # 1. Dizemos que a sessão É permanente
     app.config['SESSION_PERMANENT'] = True
-
-    # 2. Definimos um tempo de vida para ela (ex: 8 horas, um dia de trabalho)
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
-
-    # 3. Garantimos que o cookie no navegador respeite essa configuração
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SESSION_COOKIE_HTTPONLY'] = True
-    # --- FIM DA CONFIGURAÇÃO ---
 
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     sess.init_app(app)
-
-    # O @app.before_request foi removido pois conflitava com a nova abordagem
 
     @app.template_filter('datetimeformat')
     def datetimeformat(value, format='%d/%m/%Y %H:%M'):

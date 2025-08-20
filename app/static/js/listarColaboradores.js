@@ -1,5 +1,3 @@
-// app/static/js/listarColaboradores.js
-
 document.addEventListener('alpine:init', () => {
     Alpine.data('colaboradoresFiltro', () => ({
         search: '',
