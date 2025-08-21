@@ -1,10 +1,12 @@
+/**
+ * @file listarColaboradores.js
+ * Componente para filtrar colaboradores pelo nome ou email.
+ */
 document.addEventListener('alpine:init', () => {
     Alpine.data('colaboradoresFiltro', () => ({
-        search: '',
-        // A lista de colaboradores será lida da variável _colaboradoresData
-        // que o nosso template HTML irá criar.
-        colaboradores: window._colaboradoresData || [],
-        
+        search: '', // Texto de pesquisa introduzido pelo utilizador
+        colaboradores: window._colaboradoresData || [], // Lista total de colaboradores
+
         get filteredColaboradores() {
             if (this.search.trim() === '') {
                 return this.colaboradores;

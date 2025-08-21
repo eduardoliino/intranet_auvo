@@ -1,18 +1,23 @@
+/**
+ * @file faqPublico.js
+ * Componente responsável por listar e filtrar perguntas frequentes públicas.
+ */
 document.addEventListener('alpine:init', () => {
     Alpine.data('faqSistema', () => ({
-        search: '',
-        filtroCategoria: '',
-        categorias: window._categoriasFaqData || [],
-        perguntas: [],
-        
-        page: 1,
-        isLoading: false,
-        hasMore: true,
+        search: '', // Texto pesquisado pelo utilizador
+        filtroCategoria: '', // Filtro da categoria selecionada
+        categorias: window._categoriasFaqData || [], // Categorias disponíveis
+        perguntas: [], // Lista de perguntas carregadas
+
+        page: 1, // Página atual para paginação
+        isLoading: false, // Estado de carregamento das perguntas
+        hasMore: true, // Indica se existem mais perguntas a carregar
 
         init() {
             this.fetchPerguntas();
         },
 
+        // Obtém perguntas do backend com base nos filtros aplicados
         async fetchPerguntas() {
             if (this.isLoading || !this.hasMore) return;
             this.isLoading = true;
@@ -32,11 +37,11 @@ document.addEventListener('alpine:init', () => {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                
+
                 if (data.perguntas && data.perguntas.length > 0) {
                     this.perguntas.push(...data.perguntas);
                 }
-                
+
                 this.hasMore = data.has_next;
                 this.page += 1;
             } catch (error) {

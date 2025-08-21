@@ -1,7 +1,11 @@
+/**
+ * @file gerenciarEventos.js
+ * Componente para gestão de eventos administrativos.
+ */
 document.addEventListener('alpine:init', () => {
     Alpine.data('gestaoEventos', () => ({
-        eventos: [],
-        editando: false,
+        eventos: [], // Lista de eventos registados
+        editando: false, // Controla se o formulário está em modo de edição
         form: {
             id: null,
             title: '',
@@ -9,20 +13,19 @@ document.addEventListener('alpine:init', () => {
             end: '',
             description: '',
             location: '',
-        },
-        modalInstance: null,
-        // Referências ao modal de confirmação
-        eventoParaRemover: {},
-        confirmacaoModal: null,
+        }, // Dados do evento em edição/criação
+        modalInstance: null, // Instância do modal principal
+        eventoParaRemover: {}, // Evento selecionado para remoção
+        confirmacaoModal: null, // Modal de confirmação de remoção
 
         init() {
             this.eventos = window._eventosData || [];
-            
+
             const eventoModalEl = document.getElementById('eventoModal');
             if (eventoModalEl) {
                 this.modalInstance = new bootstrap.Modal(eventoModalEl);
             }
-            
+
             // Inicializa o modal de confirmação
             const confirmacaoModalEl = document.getElementById('confirmacaoModal');
             if (confirmacaoModalEl) {
@@ -35,6 +38,7 @@ document.addEventListener('alpine:init', () => {
             this.form = { id: null, title: '', start: '', end: '', description: '', location: '' };
         },
 
+        // Abre o modal para criar ou editar um evento
         abrirModal(evento = null) {
             this.resetarForm();
             if (evento) {
@@ -48,9 +52,10 @@ document.addEventListener('alpine:init', () => {
             this.modalInstance.show();
         },
 
+        // Envia os dados do formulário para criar ou atualizar um evento
         salvarEvento() {
             const url = this.editando ? `/admin/eventos/editar/${this.form.id}` : '/admin/eventos/novo';
-            
+
             fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -99,7 +104,6 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        
         isEventoPassado(evento) {
             const dataEvento = new Date(evento.start);
             const agora = new Date();

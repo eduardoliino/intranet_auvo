@@ -1,18 +1,22 @@
+/**
+ * @file gerenciarDestaques.js
+ * Gestão dos destaques de colaboradores, incluindo filtros e operações CRUD.
+ */
 document.addEventListener('alpine:init', () => {
     Alpine.data('gerenciarDestaques', () => ({
-        destaques: window._destaquesData || [],
-        colaboradores: window._colaboradoresData || [],
+        destaques: window._destaquesData || [], // Lista de destaques carregados
+        colaboradores: window._colaboradoresData || [], // Todos os colaboradores disponíveis
 
-        filtroMes: '',
-        filtroAno: '',
-        filtroDepto: '',
+        filtroMes: '', // Filtro por mês selecionado
+        filtroAno: '', // Filtro por ano selecionado
+        filtroDepto: '', // Filtro por departamento
 
-        form: { id: null, titulo: '', colaborador_id: '', descricao: '', mes: '', ano: '' },
-        filtroColaborador: '',
-        isEditing: false,
-        showCollaboratorList: false,
+        form: { id: null, titulo: '', colaborador_id: '', descricao: '', mes: '', ano: '' }, // Dados do formulário de destaque
+        filtroColaborador: '', // Texto de pesquisa de colaborador
+        isEditing: false, // Controla se o formulário está no modo de edição
+        showCollaboratorList: false, // Exibe ou oculta a lista de colaboradores
 
-        modal: null,
+        modal: null, // Instância do modal de confirmação
 
         init() {
             this.modal = new bootstrap.Modal(document.getElementById('confirmacaoModal'));
@@ -52,10 +56,12 @@ document.addEventListener('alpine:init', () => {
             window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
         },
 
+        // Decide se o formulário adiciona ou edita um destaque
         submitForm() {
             this.isEditing ? this.editarDestaque() : this.adicionarDestaque();
         },
 
+        // Envia os dados do formulário para criar um novo destaque
         adicionarDestaque() {
             const formData = new FormData();
             Object.keys(this.form).forEach(key => formData.append(key, this.form[key]));
@@ -74,6 +80,7 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
+        // Atualiza um destaque existente no backend
         editarDestaque() {
             const formData = new FormData();
             Object.keys(this.form).forEach(key => formData.append(key, this.form[key]));
@@ -94,6 +101,7 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
+        // Remove um destaque específico
         removerDestaque(id) {
             if (confirm('Tem a certeza de que deseja remover este destaque?')) {
                 fetch(`/admin/destaques/remover/${id}`, { method: 'DELETE' })
@@ -109,6 +117,7 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        // Mostra modal de confirmação para remoção em massa
         confirmarRemocaoEmMassa() {
             if (this.filtroMes && this.filtroAno) {
                 this.modal.show();
@@ -117,6 +126,7 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        // Remove todos os destaques do mês e ano selecionados
         async removerDestaquesEmMassa() {
             const response = await fetch('/admin/destaques/remover-em-massa', {
                 method: 'POST',
@@ -134,12 +144,14 @@ document.addEventListener('alpine:init', () => {
             this.modal.hide();
         },
 
+        // Seleciona um colaborador na lista de sugestões
         selectCollaborator(colaborador) {
             this.form.colaborador_id = colaborador.id;
             this.filtroColaborador = colaborador.nome;
             this.showCollaboratorList = false;
         },
 
+        // Prepara o formulário para editar um destaque existente
         startEdit(destaque) {
             this.isEditing = true;
             this.form = { ...destaque };
@@ -148,6 +160,7 @@ document.addEventListener('alpine:init', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
 
+        // Limpa o formulário para o estado inicial
         resetForm() {
             this.isEditing = false;
             this.form = { id: null, titulo: '', colaborador_id: '', descricao: '', mes: '', ano: '' };
