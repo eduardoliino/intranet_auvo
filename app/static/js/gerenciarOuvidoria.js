@@ -1,11 +1,15 @@
+/**
+ * @file gerenciarOuvidoria.js
+ * Componente para visualização e atualização de entradas da ouvidoria.
+ */
 document.addEventListener('alpine:init', () => {
     Alpine.data('gerenciarOuvidoria', () => ({
-        entradas: window._ouvidoriaData || [],
-        filtroStatus: '',
-        search: '',
-        modal: null,
-        tsInstance: null,
-        modalData: { id: null, title: '', content: '', status: '' },
+        entradas: window._ouvidoriaData || [], // Lista de denúncias recebidas
+        filtroStatus: '', // Filtro aplicado pelo estado da denúncia
+        search: '', // Texto de pesquisa
+        modal: null, // Instância do modal de detalhes
+        tsInstance: null, // Instância do Tom Select
+        modalData: { id: null, title: '', content: '', status: '' }, // Dados exibidos no modal
 
         init() {
             const modalEl = document.getElementById('ouvidoriaModal');
@@ -23,7 +27,7 @@ document.addEventListener('alpine:init', () => {
             const searchLower = this.search.toLowerCase();
             return this.entradas.filter(e => {
                 const statusMatch = this.filtroStatus === '' || e.status === this.filtroStatus;
-                
+
                 const searchMatch = this.search.trim() === '' ||
                     e.tipo_denuncia.toLowerCase().includes(searchLower) ||
                     e.mensagem.toLowerCase().includes(searchLower) ||
@@ -33,11 +37,12 @@ document.addEventListener('alpine:init', () => {
                 return statusMatch && searchMatch;
             });
         },
-        
+
         showToast(message, type = 'info') {
             window.dispatchEvent(new CustomEvent('toast', { detail: { type, message } }));
         },
-        
+
+        // Abre o modal com os detalhes completos da entrada
         verDetalhes(entrada) {
             this.modalData.id = entrada.id;
             this.modalData.title = `Ocorrência #${entrada.id} - ${entrada.tipo_denuncia}`;
@@ -57,7 +62,7 @@ document.addEventListener('alpine:init', () => {
                 <h6>Remetente:</h6>
                 ${remetenteHtml}
             `;
-            
+
             this.$nextTick(() => {
                 const selectEl = document.getElementById('status-select');
                 this.tsInstance = new TomSelect(selectEl, {
@@ -75,6 +80,7 @@ document.addEventListener('alpine:init', () => {
             this.modal.show();
         },
 
+        // Atualiza o status de uma entrada através da API
         async atualizarStatus(id, novoStatus) {
             const response = await fetch(`/admin/ouvidoria/atualizar_status/${id}`, {
                 method: 'POST',
@@ -82,7 +88,7 @@ document.addEventListener('alpine:init', () => {
                 body: JSON.stringify({ status: novoStatus })
             });
             const data = await response.json();
-            
+
             if (data.success) {
                 const index = this.entradas.findIndex(e => e.id === id);
                 if (index !== -1) {
@@ -90,8 +96,8 @@ document.addEventListener('alpine:init', () => {
                     items[index].status = novoStatus;
                     this.entradas = items;
                 }
-                
-                this.modalData.status = novoStatus; 
+
+                this.modalData.status = novoStatus;
                 this.showToast('Status atualizado com sucesso!', 'success');
                 window.dispatchEvent(new CustomEvent('ouvidoria-updated'));
             } else {
