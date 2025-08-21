@@ -87,7 +87,7 @@ document.addEventListener('alpine:init', () => {
 
             this.modalData.content = conteudoHtml;
             this.modalData.link_url = ''; 
-            this.modalData.footer = ''; // Linha alterada para remover o nome do criador
+            this.modalData.footer = ''; // Rodapé sem referência ao criador
 
             this.bsModal.show();
         }

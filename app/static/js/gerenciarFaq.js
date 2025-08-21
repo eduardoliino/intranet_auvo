@@ -1,5 +1,3 @@
-// app/static/js/gerenciarFaq.js
-
 document.addEventListener('alpine:init', () => {
     Alpine.data('gerenciarFaq', () => ({
         perguntas: window._perguntasData || [],

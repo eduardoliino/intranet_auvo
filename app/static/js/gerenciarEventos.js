@@ -1,5 +1,3 @@
-// app/static/js/gerenciarEventos.js
-
 document.addEventListener('alpine:init', () => {
     Alpine.data('gestaoEventos', () => ({
         eventos: [],
@@ -13,7 +11,7 @@ document.addEventListener('alpine:init', () => {
             location: '',
         },
         modalInstance: null,
-        // --- NOVAS PROPRIEDADES ADICIONADAS ---
+        // Referências ao modal de confirmação
         eventoParaRemover: {},
         confirmacaoModal: null,
 
@@ -25,7 +23,7 @@ document.addEventListener('alpine:init', () => {
                 this.modalInstance = new bootstrap.Modal(eventoModalEl);
             }
             
-            // --- INICIALIZAÇÃO DO NOVO MODAL ---
+            // Inicializa o modal de confirmação
             const confirmacaoModalEl = document.getElementById('confirmacaoModal');
             if (confirmacaoModalEl) {
                 this.confirmacaoModal = new bootstrap.Modal(confirmacaoModalEl);
@@ -76,13 +74,13 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        // --- NOVA FUNÇÃO PARA ABRIR O MODAL DE CONFIRMAÇÃO ---
+        // Abre o modal de confirmação antes de remover
         abrirModalConfirmacao(evento) {
             this.eventoParaRemover = evento;
             this.confirmacaoModal.show();
         },
 
-        // --- FUNÇÃO DE REMOVER ATUALIZADA ---
+        // Remove o evento após confirmação
         removerEvento() {
             const id = this.eventoParaRemover.id;
             if (!id) return;

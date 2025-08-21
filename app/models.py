@@ -172,6 +172,7 @@ class ConfigLink(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
+    """Carrega o utilizador correto com base no prefixo do ID."""
     if user_id.startswith('admin-'):
         return User.query.get(int(user_id.split('-')[1]))
     elif user_id.startswith('colaborador-'):

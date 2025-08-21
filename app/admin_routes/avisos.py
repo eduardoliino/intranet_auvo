@@ -10,6 +10,7 @@ from .utils import admin_required
 @login_required
 @admin_required
 def gerenciar_avisos():
+    """Exibe e permite a gestão dos avisos publicados."""
     avisos_objetos = Aviso.query.order_by(Aviso.id.desc()).all()
     avisos_json = [
         {
@@ -28,6 +29,7 @@ def gerenciar_avisos():
 @login_required
 @admin_required
 def adicionar_aviso():
+    """Regista um novo aviso no sistema."""
     titulo = request.form.get('titulo')
     conteudo = request.form.get('conteudo')
     link_url = request.form.get('link_url')
@@ -55,6 +57,7 @@ def adicionar_aviso():
 @login_required
 @admin_required
 def remover_aviso(id):
+    """Exclui um aviso existente."""
     aviso = Aviso.query.get_or_404(id)
     db.session.delete(aviso)
     db.session.commit()

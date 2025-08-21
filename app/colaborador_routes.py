@@ -1,5 +1,3 @@
-# app/colaborador_routes.py
-
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, jsonify, current_app
 from flask_login import login_required
 from app import db
@@ -20,6 +18,7 @@ colaborador_bp = Blueprint('colaborador', __name__,
 @colaborador_bp.route('/')
 @admin_required
 def listar():
+    """Exibe a lista de colaboradores cadastrados."""
     colaboradores = Colaborador.query.options(
         joinedload(Colaborador.cargo),
         joinedload(Colaborador.departamento)
@@ -47,6 +46,7 @@ def listar():
 @colaborador_bp.route('/adicionar', methods=['GET', 'POST'])
 @admin_required
 def adicionar():
+    """Adiciona um novo colaborador manualmente."""
     cargos = Cargo.query.order_by(Cargo.titulo).all()
     departamentos = Departamento.query.order_by(Departamento.nome).all()
     superiores = Colaborador.query.order_by(Colaborador.nome).all()
@@ -97,6 +97,7 @@ def adicionar():
 @colaborador_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def editar(id):
+    """Atualiza os dados de um colaborador existente."""
     colaborador = Colaborador.query.get_or_404(id)
     cargos = Cargo.query.order_by(Cargo.titulo).all()
     departamentos = Departamento.query.order_by(Departamento.nome).all()
@@ -147,12 +148,10 @@ def editar(id):
 
     return render_template('admin/edit_colaborador.html', colaborador=colaborador, cargos=cargos, departamentos=departamentos, superiores=superiores)
 
-# As outras funções permanecem iguais
-
-
 @colaborador_bp.route('/remover/<int:id>', methods=['POST'])
 @admin_required
 def remover(id):
+    """Remove um colaborador e a sua foto associada."""
     colaborador = Colaborador.query.get_or_404(id)
     if colaborador.foto_filename:
         try:
@@ -172,6 +171,7 @@ def remover(id):
 @colaborador_bp.route('/importar', methods=['GET', 'POST'])
 @admin_required
 def importar():
+    """Importa colaboradores a partir de uma planilha Excel."""
     if request.method == 'POST':
         if 'planilha_colaboradores' not in request.files:
             flash('Nenhum ficheiro selecionado.', 'warning')
