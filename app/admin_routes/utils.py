@@ -15,6 +15,18 @@ def admin_required(f):
     return decorated_function
 
 
+def permission_required(permissao_nome):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated or not current_user.tem_permissao(permissao_nome):
+                flash('Você não tem permissão para acessar esta página.', 'danger')
+                return redirect(url_for('main.index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 def salvar_foto(form_foto):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_foto.filename)

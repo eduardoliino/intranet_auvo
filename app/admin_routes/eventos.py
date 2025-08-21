@@ -4,12 +4,12 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Evento
 from . import admin
-from .utils import admin_required
+from .utils import permission_required
 
 
 @admin.route('/eventos')
 @login_required
-@admin_required
+@permission_required('gerenciar_eventos')
 def gerenciar_eventos():
     eventos = Evento.query.order_by(Evento.start.desc()).all()
     eventos_json = [evento.to_dict() for evento in eventos]
@@ -18,7 +18,7 @@ def gerenciar_eventos():
 
 @admin.route('/eventos/novo', methods=['POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_eventos')
 def novo_evento():
     data = request.get_json()
     if not data or not data.get('title') or not data.get('start'):
@@ -29,7 +29,7 @@ def novo_evento():
         end=datetime.fromisoformat(data['end']) if data.get('end') else None,
         description=data.get('description'),
         location=data.get('location'),
-        user_id=current_user.id,
+        colaborador_id=current_user.id,
     )
     db.session.add(novo_evento)
     db.session.commit()
@@ -38,7 +38,7 @@ def novo_evento():
 
 @admin.route('/eventos/editar/<int:id>', methods=['POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_eventos')
 def editar_evento(id):
     evento = Evento.query.get_or_404(id)
     data = request.get_json()
@@ -55,7 +55,7 @@ def editar_evento(id):
 
 @admin.route('/eventos/remover/<int:id>', methods=['DELETE'])
 @login_required
-@admin_required
+@permission_required('gerenciar_eventos')
 def remover_evento(id):
     evento = Evento.query.get_or_404(id)
     db.session.delete(evento)

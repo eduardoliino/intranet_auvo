@@ -3,12 +3,12 @@ from flask_login import login_required
 from app import db
 from app.models import ConfigLink
 from . import admin
-from .utils import admin_required
+from .utils import permission_required
 
 
 @admin.route('/links', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_links')
 def gerenciar_links():
     if request.method == 'POST':
         link_vagas_url = request.form.get('link_vagas')

@@ -45,14 +45,14 @@
             <div class="d-flex align-items-center gap-3">
                 <div class="d-flex align-items-center">
                     <span class="d-none d-md-inline me-2">
-                        Boas-vindas, <strong class="fw-bold">{% if current_user.is_admin %}{{ current_user.username }}{% else %}{{ current_user.nome }}{% endif %}</strong>
+                        Boas-vindas, <strong class="fw-bold">{{ current_user.nome }}</strong>
                     </span>
-                    
-                    {% if not current_user.is_admin and current_user.foto_filename %}
+
+                    {% if current_user.foto_filename %}
                         <img src="{{ url_for('static', filename='fotos_colaboradores/' + current_user.foto_filename) }}" class="perfil-avatar" alt="Foto de Perfil">
                     {% else %}
-                        <div class="colaborador-avatar-tabela perfil-avatar" :style="`background-color: ${getAvatarColor('{{ current_user.nome or 'Admin' }}')}`">
-                           <span x-text="getInitials('{{ current_user.nome or 'Admin' }}', '{{ current_user.sobrenome or '' }}')"></span>
+                        <div class="colaborador-avatar-tabela perfil-avatar" :style="`background-color: ${getAvatarColor('{{ current_user.nome }}')}`">
+                           <span x-text="getInitials('{{ current_user.nome }}', '{{ current_user.sobrenome }}')"></span>
                         </div>
                     {% endif %}
                 </div>
@@ -71,17 +71,31 @@
                     <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
                 </div>
 
-                {% if current_user.is_admin %}
+                {% if current_user.is_admin or current_user.permissoes %}
                 <hr class="sidebar-divider">
                 <h6 class="sidebar-title">Administração</h6>
                 <div class="list-group list-group-flush">
+                    {% if current_user.is_admin or current_user.tem_permissao('gerenciar_colaboradores') %}
                     <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Colaboradores</a>
+                    {% endif %}
+                    {% if current_user.is_admin or current_user.tem_permissao('gerenciar_avisos') %}
                     <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Avisos</a>
+                    {% endif %}
+                    {% if current_user.is_admin or current_user.tem_permissao('gerenciar_destaques') %}
                     <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Destaques</a>
+                    {% endif %}
+                    {% if current_user.is_admin or current_user.tem_permissao('gerenciar_faq') %}
                     <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Perguntas</a>
+                    {% endif %}
+                    {% if current_user.is_admin or current_user.tem_permissao('gerenciar_ouvidoria') %}
                     <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Mensagens<span x-show="hasNewOuvidoria" class="notification-dot" x-cloak></span></a>
+                    {% endif %}
+                    {% if current_user.is_admin or current_user.tem_permissao('gerenciar_eventos') %}
                     <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Eventos</a>
+                    {% endif %}
+                    {% if current_user.is_admin or current_user.tem_permissao('gerenciar_links') %}
                     <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Links</a>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
@@ -102,16 +116,30 @@
                     <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
                     <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
                 </div>
-                {% if current_user.is_admin %}
+                {% if current_user.is_admin or current_user.permissoes %}
                     <hr class="mx-3" style="color: rgba(255,255,255,0.3);">
                     <div class="list-group list-group-flush">
+                        {% if current_user.is_admin or current_user.tem_permissao('gerenciar_colaboradores') %}
                         <a href="{{ url_for('colaborador.listar') }}" class="list-group-item"><i class="bi bi-people-fill"></i> Gerir Colaboradores</a>
+                        {% endif %}
+                        {% if current_user.is_admin or current_user.tem_permissao('gerenciar_avisos') %}
                         <a href="{{ url_for('admin.gerenciar_avisos') }}" class="list-group-item"><i class="bi bi-megaphone-fill"></i> Gerir Avisos</a>
+                        {% endif %}
+                        {% if current_user.is_admin or current_user.tem_permissao('gerenciar_destaques') %}
                         <a href="{{ url_for('admin.gerenciar_destaques') }}" class="list-group-item"><i class="bi bi-star-fill"></i> Gerir Destaques</a>
+                        {% endif %}
+                        {% if current_user.is_admin or current_user.tem_permissao('gerenciar_faq') %}
                         <a href="{{ url_for('admin.gerenciar_faq') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> Perguntas</a>
+                        {% endif %}
+                        {% if current_user.is_admin or current_user.tem_permissao('gerenciar_ouvidoria') %}
                         <a href="{{ url_for('admin.gerenciar_ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Mensagens<span x-show="hasNewOuvidoria" class="notification-dot" x-cloak></span></a>
+                        {% endif %}
+                        {% if current_user.is_admin or current_user.tem_permissao('gerenciar_eventos') %}
                         <a href="{{ url_for('admin.gerenciar_eventos') }}" class="list-group-item"><i class="bi bi-calendar-event-fill"></i> Gerir Eventos</a>
+                        {% endif %}
+                        {% if current_user.is_admin or current_user.tem_permissao('gerenciar_links') %}
                         <a href="{{ url_for('admin.gerenciar_links') }}" class="list-group-item"><i class="bi bi-link-45deg"></i> Gerir Links</a>
+                        {% endif %}
                     </div>
                 {% endif %}
                 <hr class="mx-3" style="color: rgba(255,255,255,0.3);">

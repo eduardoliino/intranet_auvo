@@ -3,12 +3,12 @@ from flask_login import login_required
 from app import db
 from app.models import Aviso
 from . import admin
-from .utils import admin_required
+from .utils import permission_required
 
 
 @admin.route('/avisos')
 @login_required
-@admin_required
+@permission_required('gerenciar_avisos')
 def gerenciar_avisos():
     """Exibe e permite a gestão dos avisos publicados."""
     avisos_objetos = Aviso.query.order_by(Aviso.id.desc()).all()
@@ -27,7 +27,7 @@ def gerenciar_avisos():
 
 @admin.route('/avisos/adicionar', methods=['POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_avisos')
 def adicionar_aviso():
     """Regista um novo aviso no sistema."""
     titulo = request.form.get('titulo')
@@ -55,7 +55,7 @@ def adicionar_aviso():
 
 @admin.route('/avisos/remover/<int:id>', methods=['DELETE'])
 @login_required
-@admin_required
+@permission_required('gerenciar_avisos')
 def remover_aviso(id):
     """Exclui um aviso existente."""
     aviso = Aviso.query.get_or_404(id)

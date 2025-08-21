@@ -119,19 +119,7 @@ Siga os passos abaixo para configurar e executar o projeto numa nova máquina.
    Abra o shell interativo do Flask para criar o primeiro administrador.
 
    ```bash
-   flask shell
-   ```
-
-   Dentro do shell, execute os seguintes comandos Python:
-
-   ```python
-   from app.models import User
-   from app import db
-   admin = User(username='admin')
-   admin.set_password('sua_senha_segura_aqui')
-   db.session.add(admin)
-   db.session.commit()
-   exit()
+   flask seed
    ```
 
 ---

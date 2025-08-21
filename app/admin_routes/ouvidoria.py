@@ -3,12 +3,12 @@ from flask_login import login_required
 from app import db
 from app.models import Ouvidoria
 from . import admin
-from .utils import admin_required
+from .utils import permission_required
 
 
 @admin.route('/ouvidoria')
 @login_required
-@admin_required
+@permission_required('gerenciar_ouvidoria')
 def gerenciar_ouvidoria():
     entradas_obj = Ouvidoria.query.order_by(Ouvidoria.data_envio.desc()).all()
     entradas_json = [
@@ -29,7 +29,7 @@ def gerenciar_ouvidoria():
 
 @admin.route('/ouvidoria/atualizar_status/<int:id>', methods=['POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_ouvidoria')
 def atualizar_status_ouvidoria(id):
     entrada = Ouvidoria.query.get_or_404(id)
     data = request.get_json()
