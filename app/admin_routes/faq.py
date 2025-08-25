@@ -3,12 +3,12 @@ from flask_login import login_required
 from app import db
 from app.models import FaqCategoria, FaqPergunta
 from . import admin
-from .utils import admin_required
+from .utils import permission_required
 
 
 @admin.route('/faq/gerenciar')
 @login_required
-@admin_required
+@permission_required('gerenciar_faq')
 def gerenciar_faq():
     perguntas_obj = FaqPergunta.query.order_by(FaqPergunta.id.desc()).all()
     perguntas_json = [
@@ -26,7 +26,7 @@ def gerenciar_faq():
 
 @admin.route('/faq/categorias', methods=['GET'])
 @login_required
-@admin_required
+@permission_required('gerenciar_faq')
 def gerenciar_categorias_faq():
     categorias_obj = FaqCategoria.query.order_by(FaqCategoria.nome).all()
     categorias_json = [{'id': cat.id, 'nome': cat.nome} for cat in categorias_obj]
@@ -35,7 +35,7 @@ def gerenciar_categorias_faq():
 
 @admin.route('/faq/categorias/adicionar', methods=['POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_faq')
 def adicionar_categoria_faq():
     data = request.json
     nome = data.get('nome')
@@ -57,7 +57,7 @@ def adicionar_categoria_faq():
 
 @admin.route('/faq/categorias/remover/<int:id>', methods=['DELETE'])
 @login_required
-@admin_required
+@permission_required('gerenciar_faq')
 def remover_categoria_faq(id):
     categoria = FaqCategoria.query.get_or_404(id)
     if categoria.perguntas:
@@ -70,7 +70,7 @@ def remover_categoria_faq(id):
 
 @admin.route('/faq/perguntas/adicionar', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_faq')
 def adicionar_pergunta_faq():
     categorias = FaqCategoria.query.order_by(FaqCategoria.nome).all()
     if request.method == 'POST':
@@ -95,7 +95,7 @@ def adicionar_pergunta_faq():
 
 @admin.route('/faq/perguntas/remover/<int:id>', methods=['DELETE'])
 @login_required
-@admin_required
+@permission_required('gerenciar_faq')
 def remover_pergunta_faq(id):
     pergunta = FaqPergunta.query.get_or_404(id)
     db.session.delete(pergunta)
@@ -105,7 +105,7 @@ def remover_pergunta_faq(id):
 
 @admin.route('/faq/perguntas/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_faq')
 def editar_pergunta_faq(id):
     pergunta = FaqPergunta.query.get_or_404(id)
     categorias = FaqCategoria.query.order_by(FaqCategoria.nome).all()

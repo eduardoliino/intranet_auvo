@@ -6,12 +6,12 @@ from sqlalchemy.orm import joinedload
 from app import db
 from app.models import Destaque, Colaborador, Departamento
 from . import admin
-from .utils import admin_required, salvar_foto
+from .utils import permission_required, salvar_foto
 
 
 @admin.route('/destaques')
 @login_required
-@admin_required
+@permission_required('gerenciar_destaques')
 def gerenciar_destaques():
     destaques_obj = Destaque.query.options(
         joinedload(Destaque.colaborador).joinedload(Colaborador.departamento)
@@ -55,7 +55,7 @@ def gerenciar_destaques():
 
 @admin.route('/destaques/adicionar', methods=['POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_destaques')
 def adicionar_destaque():
     titulo = request.form.get('titulo')
     colaborador_id = request.form.get('colaborador_id')
@@ -100,7 +100,7 @@ def adicionar_destaque():
 
 @admin.route('/destaques/remover/<int:id>', methods=['DELETE'])
 @login_required
-@admin_required
+@permission_required('gerenciar_destaques')
 def remover_destaque(id):
     destaque = Destaque.query.get_or_404(id)
     if destaque.imagem_filename:
@@ -115,7 +115,7 @@ def remover_destaque(id):
 
 
 @admin.route('/destaques/remover-em-massa', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_destaques')
 def remover_destaques_em_massa():
     data = request.get_json()
     mes = data.get('mes')
@@ -149,7 +149,7 @@ def remover_destaques_em_massa():
 
 @admin.route('/destaques/editar/<int:id>', methods=['POST'])
 @login_required
-@admin_required
+@permission_required('gerenciar_destaques')
 def editar_destaque(id):
     destaque = Destaque.query.get_or_404(id)
     if 'imagem_destaque' in request.files:

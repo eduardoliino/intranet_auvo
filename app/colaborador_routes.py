@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, jsonify, current_app
 from flask_login import login_required
 from app import db
-from app.models import Colaborador, Cargo, Departamento
-from app.admin_routes.utils import admin_required, salvar_foto
+from app.models import Colaborador, Cargo, Departamento, Permissao
+from app.admin_routes.utils import permission_required, salvar_foto
 from sqlalchemy.orm import joinedload
+from flask_login import current_user
 import pandas as pd
 import io
 import os
@@ -16,7 +17,7 @@ colaborador_bp = Blueprint('colaborador', __name__,
 
 
 @colaborador_bp.route('/')
-@admin_required
+@permission_required('gerenciar_colaboradores')
 def listar():
     """Exibe a lista de colaboradores cadastrados."""
     colaboradores = Colaborador.query.options(
@@ -44,7 +45,7 @@ def listar():
 
 
 @colaborador_bp.route('/adicionar', methods=['GET', 'POST'])
-@admin_required
+@permission_required('gerenciar_colaboradores')
 def adicionar():
     """Adiciona um novo colaborador manualmente."""
     cargos = Cargo.query.order_by(Cargo.titulo).all()
@@ -95,7 +96,7 @@ def adicionar():
 
 
 @colaborador_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
-@admin_required
+@permission_required('gerenciar_colaboradores')
 def editar(id):
     """Atualiza os dados de um colaborador existente."""
     colaborador = Colaborador.query.get_or_404(id)
@@ -103,6 +104,7 @@ def editar(id):
     departamentos = Departamento.query.order_by(Departamento.nome).all()
     superiores = Colaborador.query.filter(
         Colaborador.id != id).order_by(Colaborador.nome).all()
+    permissoes = Permissao.query.order_by(Permissao.nome).all()
 
     if request.method == 'POST':
         form_data = request.form
@@ -113,7 +115,7 @@ def editar(id):
                 form_data.get('data_inicio'), dayfirst=True).date()
         except (ValueError, TypeError):
             flash('Data inválida. Por favor, verifique o dia, mês e ano.', 'danger')
-            return render_template('admin/edit_colaborador.html', colaborador=colaborador, form_data=form_data, cargos=cargos, departamentos=departamentos, superiores=superiores)
+            return render_template('admin/edit_colaborador.html', colaborador=colaborador, form_data=form_data, cargos=cargos, departamentos=departamentos, superiores=superiores, permissoes=permissoes)
 
         novo_superior_id = form_data.get('superior_id')
         novo_superior_id = int(
@@ -122,7 +124,7 @@ def editar(id):
         if is_circular_reference(id, novo_superior_id):
             flash(
                 'Erro de hierarquia: Um colaborador não pode ser seu próprio superior.', 'danger')
-            return render_template('admin/edit_colaborador.html', colaborador=colaborador, form_data=form_data, cargos=cargos, departamentos=departamentos, superiores=superiores)
+            return render_template('admin/edit_colaborador.html', colaborador=colaborador, form_data=form_data, cargos=cargos, departamentos=departamentos, superiores=superiores, permissoes=permissoes)
 
         colaborador.nome = form_data.get('nome')
         colaborador.sobrenome = form_data.get('sobrenome')
@@ -135,6 +137,16 @@ def editar(id):
             'departamento_id')) if form_data.get('departamento_id') else None
         colaborador.superior_id = novo_superior_id
 
+        if current_user.is_admin:
+            colaborador.is_admin = form_data.get('is_admin') == 'on'
+
+        permissoes_ids = request.form.getlist('permissoes')
+        if not colaborador.is_admin:
+            colaborador.permissoes = Permissao.query.filter(
+                Permissao.id.in_(permissoes_ids)).all()
+        else:
+            colaborador.permissoes = []
+
         if 'foto' in request.files and request.files['foto'].filename != '':
             colaborador.foto_filename = salvar_foto(request.files['foto'])
 
@@ -146,10 +158,10 @@ def editar(id):
         flash('Colaborador atualizado com sucesso!', 'success')
         return redirect(url_for('colaborador.listar'))
 
-    return render_template('admin/edit_colaborador.html', colaborador=colaborador, cargos=cargos, departamentos=departamentos, superiores=superiores)
+    return render_template('admin/edit_colaborador.html', colaborador=colaborador, cargos=cargos, departamentos=departamentos, superiores=superiores, permissoes=permissoes)
 
 @colaborador_bp.route('/remover/<int:id>', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_colaboradores')
 def remover(id):
     """Remove um colaborador e a sua foto associada."""
     colaborador = Colaborador.query.get_or_404(id)
@@ -169,7 +181,7 @@ def remover(id):
 
 
 @colaborador_bp.route('/importar', methods=['GET', 'POST'])
-@admin_required
+@permission_required('gerenciar_colaboradores')
 def importar():
     """Importa colaboradores a partir de uma planilha Excel."""
     if request.method == 'POST':
@@ -246,7 +258,7 @@ def importar():
 
 
 @colaborador_bp.route('/baixar_modelo')
-@admin_required
+@permission_required('gerenciar_colaboradores')
 def baixar_modelo():
     dados_modelo = {
         'nome': ['João'],

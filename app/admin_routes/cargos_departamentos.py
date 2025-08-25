@@ -2,11 +2,11 @@ from flask import render_template, request, flash, redirect, url_for, jsonify
 from app import db
 from app.models import ConfigLink, Colaborador, Cargo, Departamento
 from . import admin
-from .utils import admin_required
+from .utils import permission_required
 
 
 @admin.route('/cargos-departamentos', methods=['GET'])
-@admin_required
+@permission_required('gerenciar_cargos_departamentos')
 def gerenciar_cargos_departamentos():
     """Painel de gestão de cargos, departamentos e configuração do CEO."""
     cargos_obj = Cargo.query.order_by(Cargo.titulo).all()
@@ -29,7 +29,7 @@ def gerenciar_cargos_departamentos():
 
 
 @admin.route('/cargos-departamentos/ceo', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_cargos_departamentos')
 def definir_ceo():
     """Define qual colaborador será exibido como CEO no organograma."""
     ceo_id = request.form.get('ceo_id')
@@ -44,7 +44,7 @@ def definir_ceo():
 
 
 @admin.route('/cargos/adicionar', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_cargos_departamentos')
 def adicionar_cargo():
     data = request.json
     titulo = data.get('titulo')
@@ -59,7 +59,7 @@ def adicionar_cargo():
 
 
 @admin.route('/cargos/editar/<int:id>', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_cargos_departamentos')
 def editar_cargo(id):
     cargo = Cargo.query.get_or_404(id)
     data = request.json
@@ -74,7 +74,7 @@ def editar_cargo(id):
 
 
 @admin.route('/cargos/remover/<int:id>', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_cargos_departamentos')
 def remover_cargo(id):
     cargo = Cargo.query.get_or_404(id)
     Colaborador.query.filter_by(cargo_id=id).update({'cargo_id': None})
@@ -84,7 +84,7 @@ def remover_cargo(id):
 
 
 @admin.route('/departamentos/adicionar', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_cargos_departamentos')
 def adicionar_departamento():
     data = request.json
     nome = data.get('nome')
@@ -99,7 +99,7 @@ def adicionar_departamento():
 
 
 @admin.route('/departamentos/editar/<int:id>', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_cargos_departamentos')
 def editar_departamento(id):
     depto = Departamento.query.get_or_404(id)
     data = request.json
@@ -114,7 +114,7 @@ def editar_departamento(id):
 
 
 @admin.route('/departamentos/remover/<int:id>', methods=['POST'])
-@admin_required
+@permission_required('gerenciar_cargos_departamentos')
 def remover_departamento(id):
     depto = Departamento.query.get_or_404(id)
     Colaborador.query.filter_by(departamento_id=id).update({'departamento_id': None})

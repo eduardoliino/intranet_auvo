@@ -4,23 +4,16 @@ from flask_login import UserMixin
 from datetime import datetime
 
 
-class User(UserMixin, db.Model):
+colaborador_permissoes = db.Table(
+    'colaborador_permissoes',
+    db.Column('colaborador_id', db.Integer, db.ForeignKey('colaborador.id'), primary_key=True),
+    db.Column('permissao_id', db.Integer, db.ForeignKey('permissao.id'), primary_key=True)
+)
+
+
+class Permissao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256))
-
-    def get_id(self):
-        return f"admin-{self.id}"
-
-    @property
-    def is_admin(self):
-        return True
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+    nome = db.Column(db.String(100), unique=True, nullable=False)
 
 
 class Departamento(db.Model):
@@ -56,13 +49,19 @@ class Colaborador(UserMixin, db.Model):
     cargo_id = db.Column(db.Integer, db.ForeignKey('cargo.id'), nullable=True)
     departamento_id = db.Column(
         db.Integer, db.ForeignKey('departamento.id'), nullable=True)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+
+    permissoes = db.relationship(
+        'Permissao',
+        secondary=colaborador_permissoes,
+        backref=db.backref('colaboradores', lazy='dynamic')
+    )
 
     def get_id(self):
-        return f"colaborador-{self.id}"
+        return str(self.id)
 
-    @property
-    def is_admin(self):
-        return False
+    def tem_permissao(self, nome):
+        return self.is_admin or any(p.nome == nome for p in self.permissoes)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -149,7 +148,7 @@ class Evento(db.Model):
     end = db.Column(db.DateTime, nullable=True)
     location = db.Column(db.String(200), nullable=True)
     color = db.Column(db.String(20), nullable=True, default='#3788d8')
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    colaborador_id = db.Column(db.Integer, db.ForeignKey('colaborador.id'), nullable=False)
 
     def to_dict(self):
         return {
@@ -172,9 +171,4 @@ class ConfigLink(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    """Carrega o utilizador correto com base no prefixo do ID."""
-    if user_id.startswith('admin-'):
-        return User.query.get(int(user_id.split('-')[1]))
-    elif user_id.startswith('colaborador-'):
-        return Colaborador.query.get(int(user_id.split('-')[1]))
-    return None
+    return Colaborador.query.get(int(user_id))

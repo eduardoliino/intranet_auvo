@@ -5,8 +5,10 @@ from sqlalchemy import extract, desc, or_
 from . import db
 from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink, Cargo
 import locale
-
-locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+try:
+    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+except locale.Error:
+    pass
 
 main = Blueprint('main', __name__)
 
@@ -130,7 +132,7 @@ def api_faq_data():
 @main.route('/api/ouvidoria/status')
 @login_required
 def api_ouvidoria_status():
-    if not getattr(current_user, 'is_admin', False):
+    if not current_user.tem_permissao('gerenciar_ouvidoria'):
         return jsonify({'has_new': False}), 403
 
     tem_nova = db.session.query(
