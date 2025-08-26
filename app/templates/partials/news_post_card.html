@@ -1,0 +1,23 @@
+<div class="border rounded p-4 shadow-sm" x-data="{open:false}" @click="open=true">
+  <h2 class="font-semibold">{{ post.titulo }}</h2>
+  <p class="text-sm text-gray-700 line-clamp-3">{{ post.conteudo_md[:150] }}</p>
+  <div class="text-xs text-gray-500 mt-2">
+    <span>{{ post.reacoes|length }} reações</span>
+    <span class="ml-2">{{ post.comentarios|selectattr('excluido','equalto',False)|list|length }} comentários</span>
+  </div>
+  <div class="mt-2 space-y-1">
+    {% for c in post.comentarios[:3] %}
+      {% if not c.excluido %}
+      <p class="text-sm">{{ c.texto }}</p>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div x-show="open" x-cloak>
+    <div class="fixed inset-0 bg-black/50" @click="open=false"></div>
+    <div class="fixed inset-0 flex items-center justify-center">
+      <div class="bg-white p-4 rounded shadow max-w-xl w-full overflow-y-auto max-h-full">
+        {% include 'newsletter_post_modal.html' %}
+      </div>
+    </div>
+  </div>
+</div>

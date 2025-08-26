@@ -177,6 +177,33 @@ intranet_auvo/
 
 ---
 
+## 📰 Newsletter
+
+Rotas e página dedicadas ao painel de posts e enquetes em `/newsletter`.
+
+### Migração e Seed
+
+```bash
+flask db upgrade
+flask seed_newsletter
+```
+
+### Exemplos de payload
+
+Reação a post:
+
+```http
+POST /api/news/post/1/reacao
+{"tipo":"like"}
+```
+
+Voto em enquete:
+
+```http
+POST /api/news/enquete/1/voto
+{"opcoes":[1]}
+```
+
 ## 👨‍💻 Autor
 
 **Eduardo Lino** - [eduardoliino](mailto:eduardoliino)

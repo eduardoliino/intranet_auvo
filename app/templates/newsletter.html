@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-4" x-data>
+  <h1 class="text-2xl font-bold mb-4">Newsletter</h1>
+  <div id="destaques" class="space-y-4 mb-6">
+    {% for post in fixados_posts %}
+      {% include 'partials/news_post_card.html' %}
+    {% endfor %}
+    {% for enquete in fixados_enquetes %}
+      {% include 'partials/news_enquete_card.html' %}
+    {% endfor %}
+  </div>
+  <div id="feed" class="space-y-4">
+    {% for post in feed_posts %}
+      {% include 'partials/news_post_card.html' %}
+    {% endfor %}
+    {% for enquete in feed_enquetes %}
+      {% include 'partials/news_enquete_card.html' %}
+    {% endfor %}
+  </div>
+</div>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="{{ url_for('static', filename='js/newsletter-api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/newsletter-ui.js') }}"></script>
+{% endblock %}
