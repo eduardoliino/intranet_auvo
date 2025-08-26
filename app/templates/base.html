@@ -69,6 +69,7 @@
                     <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
                     <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
                     <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
+                    <a href="{{ url_for('newsletter.feed') }}" class="list-group-item"><i class="bi bi-newspaper"></i> Newsletter</a>
                 </div>
 
                 {% if current_user.is_admin or current_user.permissoes %}
@@ -115,6 +116,7 @@
                     <a href="{{ url_for('main.ouvidoria') }}" class="list-group-item"><i class="bi bi-ear-fill"></i> Ouvidoria</a>
                     <a href="{{ url_for('main.faq_publico') }}" class="list-group-item"><i class="bi bi-patch-question-fill"></i> FAQ</a>
                     <a href="{{ url_for('main.ver_organograma') }}" class="list-group-item"><i class="bi bi-diagram-3-fill"></i> Organograma</a>
+                    <a href="{{ url_for('newsletter.feed') }}" class="list-group-item"><i class="bi bi-newspaper"></i> Newsletter</a>
                 </div>
                 {% if current_user.is_admin or current_user.permissoes %}
                     <hr class="mx-3" style="color: rgba(255,255,255,0.3);">

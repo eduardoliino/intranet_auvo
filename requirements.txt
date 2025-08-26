@@ -2,8 +2,9 @@ Flask
 Flask-SQLAlchemy
 Flask-Migrate
 Flask-Login
+Flask-Session
 pandas
 openpyxl
 Werkzeug
 python-dotenv
-Flask-Session
+bleach

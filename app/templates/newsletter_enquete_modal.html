@@ -1,0 +1,12 @@
+<div x-data>
+  <h2 class="text-xl font-bold mb-2">{{ enquete.pergunta }}</h2>
+  <div class="space-y-1" id="enquete-opts-{{enquete.id}}">
+    {% for opcao in enquete.opcoes|sort(attribute='ordem') %}
+    <label class="block">
+      <input type="{{ 'checkbox' if enquete.tipo_selecao=='multi' else 'radio' }}" name="opcao" value="{{ opcao.id }}" class="mr-2">{{ opcao.texto }}
+    </label>
+    {% endfor %}
+  </div>
+  <button class="bg-blue-500 text-white px-2 mt-2" @click="votePoll({{enquete.id}})">Votar</button>
+  <div id="resultado-{{enquete.id}}" class="mt-4"></div>
+</div>

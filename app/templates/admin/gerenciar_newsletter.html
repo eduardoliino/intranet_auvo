@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container p-4">
+  <h1 class="mb-4">Admin Newsletter</h1>
+  <div class="mb-4">
+    <h2>Posts</h2>
+    <ul>
+    {% for p in posts %}
+      <li>{{ p.titulo }} ({{ p.status }})</li>
+    {% endfor %}
+    </ul>
+  </div>
+  <div>
+    <h2>Enquetes</h2>
+    <ul>
+    {% for e in enquetes %}
+      <li>{{ e.pergunta }} ({{ e.status }})</li>
+    {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

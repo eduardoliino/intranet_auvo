@@ -68,6 +68,11 @@ def create_app():
     app.register_blueprint(admin_blueprint)
     from .colaborador_routes import colaborador_bp
     app.register_blueprint(colaborador_bp)
+    from .newsletter import newsletter_bp  # Newsletter blueprint
+    app.register_blueprint(newsletter_bp)
+
+    # Import models for migrations
+    from .newsletter import models as _newsletter_models  # noqa: F401
 
     @app.cli.command('seed')
     def seed():
@@ -104,5 +109,40 @@ def create_app():
 
         db.session.commit()
         print('Seed completed')
+
+    @app.cli.command('seed_newsletter')
+    def seed_newsletter():
+        from datetime import date
+        from .models import Colaborador
+        from .newsletter.models import (
+            NewsPost, NewsComentario, NewsReacao, NewsEnquete, NewsEnqueteOpcao
+        )
+
+        admin = Colaborador.query.filter_by(email_corporativo='rh@auvo.com.br').first()
+        colaborador = Colaborador.query.filter_by(email_corporativo='colab@auvo.com.br').first()
+        if not colaborador:
+            colaborador = Colaborador(
+                nome='Colaborador', sobrenome='Teste', email_corporativo='colab@auvo.com.br',
+                data_nascimento=date.today(), data_inicio=date.today()
+            )
+            colaborador.set_password('changeme')
+            db.session.add(colaborador)
+            db.session.commit()
+
+        post = NewsPost(autor_id=admin.id, titulo='Post de exemplo', conteudo_md='Conteúdo *markdown*', publicado_em=datetime.utcnow())
+        db.session.add(post)
+        db.session.flush()
+        db.session.add(NewsComentario(post_id=post.id, usuario_id=colaborador.id, texto='Primeiro!'))
+        db.session.add(NewsReacao(post_id=post.id, usuario_id=colaborador.id, tipo='like'))
+
+        enquete = NewsEnquete(autor_id=admin.id, pergunta='Qual seu emoji favorito?')
+        db.session.add(enquete)
+        db.session.flush()
+        opcoes = ['😀', '😎', '🤖']
+        for idx, texto in enumerate(opcoes):
+            db.session.add(NewsEnqueteOpcao(enquete_id=enquete.id, texto=texto, ordem=idx))
+
+        db.session.commit()
+        print('Newsletter seed completed')
 
     return app
