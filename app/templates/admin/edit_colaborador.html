@@ -1,102 +1,109 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Editar Colaborador</h2>
-    <a href="{{ url_for('colaborador.listar') }}" class="btn btn-secondary">Voltar</a>
-</div>
+<div x-data="{isAdmin: {{ 'true' if colaborador.is_admin else 'false' }}, permissoesSelecionadas: {{ colaborador.permissoes|map(attribute='id')|list|tojson }} }">
 
-<div class="card">
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('colaborador.editar', id=colaborador.id) }}" enctype="multipart/form-data" autocomplete="off"
-            x-data="{isAdmin: {{ 'true' if colaborador.is_admin else 'false' }}, permissoesSelecionadas: {{ colaborador.permissoes|map(attribute='id')|list|tojson }} }">
-            <div class="row">
-                <div class="col-md-3 text-center">
-                    <img src="{{ url_for('static', filename='fotos_colaboradores/' + colaborador.foto_filename) if colaborador.foto_filename else url_for('static', filename='img/default_avatar.png') }}" alt="Foto" class="img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
-                    <div class="mb-3"><label class="form-label">Alterar Foto</label><input class="form-control form-control-sm" type="file" name="foto" accept="image/*"></div>
-                </div>
-                <div class="col-md-9">
-                    <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Nome</label><input type="text" name="nome" class="form-control" value="{{ form_data.nome if form_data else colaborador.nome }}" required></div>
-                        <div class="col-md-6 mb-3"><label class="form-label">Sobrenome</label><input type="text" name="sobrenome" class="form-control" value="{{ form_data.sobrenome if form_data else colaborador.sobrenome }}" required></div>
-                    </div>
-                    <div class="mb-3"><label class="form-label">E-mail</label><input type="email" name="email_corporativo" class="form-control" value="{{ form_data.email_corporativo if form_data else colaborador.email_corporativo }}" required></div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="text" class="form-control" name="data_nascimento" value="{{ form_data.data_nascimento if form_data else colaborador.data_nascimento.strftime('%d/%m/%Y') }}" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
-                        <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="text" class="form-control" name="data_inicio" value="{{ form_data.data_inicio if form_data else (colaborador.data_inicio.strftime('%d/%m/%Y') if colaborador.data_inicio else '') }}" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
-                    </div>
-                     <div class="mb-3"><label class="form-label">Nova Senha</label><input type="password" name="senha" class="form-control" autocomplete="new-password"><small class="form-text text-muted">Deixe em branco para não alterar.</small></div>
-                </div>
-            </div>
-            <hr>
-            <h5 class="mb-3">Estrutura Organizacional</h5>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Cargo</label>
-                    <select name="cargo_id" class="form-select custom-select">
-                        <option value="">Selecione...</option>
-                        {% set cargo_id_selecionado = (form_data.cargo_id if form_data else colaborador.cargo_id)|int %}
-                        {% for cargo in cargos %}<option value="{{ cargo.id }}" {% if cargo_id_selecionado == cargo.id %}selected{% endif %}>{{ cargo.titulo }}</option>{% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Departamento</label>
-                    <select name="departamento_id" class="form-select custom-select">
-                        <option value="">Selecione...</option>
-                        {% set depto_id_selecionado = (form_data.departamento_id if form_data else colaborador.departamento_id)|int %}
-                        {% for depto in departamentos %}<option value="{{ depto.id }}" {% if depto_id_selecionado == depto.id %}selected{% endif %}>{{ depto.nome }}</option>{% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Superior Imediato</label>
-                    <select name="superior_id" class="form-select custom-select">
-                        <option value="None">Nenhum</option>
-                        {% set superior_id_selecionado = (form_data.superior_id if form_data else colaborador.superior_id)|string %}
-                        {% for sup in superiores %}<option value="{{ sup.id }}" {% if superior_id_selecionado == sup.id|string %}selected{% endif %}>{{ sup.nome }} {{ sup.sobrenome }}</option>{% endfor %}
-                    </select>
-                </div>
-            </div>
-             <div class="d-flex justify-content-end gap-2 mt-3">
-                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#permissoesModal">Gerir Permissões</button>
-                <button type="submit" class="btn btn-auvo">Salvar Alterações</button>
-            </div>
-            <input type="hidden" name="is_admin" :value="isAdmin ? 'on' : ''">
-            <template x-for="pid in permissoesSelecionadas" :key="pid">
-                <input type="hidden" name="permissoes" :value="pid">
-            </template>
-        </form>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Editar Colaborador</h2>
+        <a href="{{ url_for('colaborador.listar') }}" class="btn btn-secondary">Voltar</a>
     </div>
-</div>
 
-<!-- Modal de Permissões -->
-<div class="modal fade" id="permissoesModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Gerir Permissões</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {% if current_user.is_admin %}
-                <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" id="toggleAdmin" x-model="isAdmin">
-                    <label class="form-check-label" for="toggleAdmin">Administrador</label>
-                </div>
-                {% endif %}
-                <div x-show="!isAdmin">
-                    {% for permissao in permissoes %}
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="perm-{{ permissao.id }}" value="{{ permissao.id }}" x-model="permissoesSelecionadas">
-                        <label class="form-check-label" for="perm-{{ permissao.id }}">{{ permissao.nome.replace('_', ' ').title() }}</label>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('colaborador.editar', id=colaborador.id) }}" enctype="multipart/form-data" autocomplete="off">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <img src="{{ url_for('static', filename='fotos_colaboradores/' + colaborador.foto_filename) if colaborador.foto_filename else url_for('static', filename='img/default_avatar.png') }}" alt="Foto" class="img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;">
+                        <div class="mb-3"><label class="form-label">Alterar Foto</label><input class="form-control form-control-sm" type="file" name="foto" accept="image/*"></div>
                     </div>
-                    {% endfor %}
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Nome</label><input type="text" name="nome" class="form-control" value="{{ form_data.nome if form_data else colaborador.nome }}" required></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Sobrenome</label><input type="text" name="sobrenome" class="form-control" value="{{ form_data.sobrenome if form_data else colaborador.sobrenome }}" required></div>
+                        </div>
+                        <div class="mb-3"><label class="form-label">E-mail</label><input type="email" name="email_corporativo" class="form-control" value="{{ form_data.email_corporativo if form_data else colaborador.email_corporativo }}" required></div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Data de Nascimento</label><input type="text" class="form-control" name="data_nascimento" value="{{ form_data.data_nascimento if form_data else colaborador.data_nascimento.strftime('%d/%m/%Y') }}" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Data de Início</label><input type="text" class="form-control" name="data_inicio" value="{{ form_data.data_inicio if form_data else (colaborador.data_inicio.strftime('%d/%m/%Y') if colaborador.data_inicio else '') }}" required placeholder="DD/MM/AAAA" maxlength="10" oninput="formatarData(this)"></div>
+                        </div>
+                         <div class="mb-3"><label class="form-label">Nova Senha</label><input type="password" name="senha" class="form-control" autocomplete="new-password"><small class="form-text text-muted">Deixe em branco para não alterar.</small></div>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <hr>
+                <h5 class="mb-3">Estrutura Organizacional</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Cargo</label>
+                        <select name="cargo_id" class="form-select custom-select">
+                            <option value="">Selecione...</option>
+                            {% set cargo_id_selecionado = (form_data.cargo_id if form_data else colaborador.cargo_id)|int %}
+                            {% for cargo in cargos %}<option value="{{ cargo.id }}" {% if cargo_id_selecionado == cargo.id %}selected{% endif %}>{{ cargo.titulo }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Departamento</label>
+                        <select name="departamento_id" class="form-select custom-select">
+                            <option value="">Selecione...</option>
+                            {% set depto_id_selecionado = (form_data.departamento_id if form_data else colaborador.departamento_id)|int %}
+                            {% for depto in departamentos %}<option value="{{ depto.id }}" {% if depto_id_selecionado == depto.id %}selected{% endif %}>{{ depto.nome }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Superior Imediato</label>
+                        <select name="superior_id" class="form-select custom-select">
+                            <option value="None">Nenhum</option>
+                            {% set superior_id_selecionado = (form_data.superior_id if form_data else colaborador.superior_id)|string %}
+                            {% for sup in superiores %}<option value="{{ sup.id }}" {% if superior_id_selecionado == sup.id|string %}selected{% endif %}>{{ sup.nome }} {{ sup.sobrenome }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                 <div class="d-flex justify-content-end gap-2 mt-3">
+                    {% if current_user.email_corporativo == 'rh@auvo.com.br' %}
+                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#permissoesModal">Gerir Permissões</button>
+                    {% endif %}
+                    <button type="submit" class="btn btn-auvo">Salvar Alterações</button>
+                </div>
+
+                {% if current_user.email_corporativo == 'rh@auvo.com.br' %}
+                <input type="hidden" name="is_admin" :value="isAdmin ? 'on' : 'off'">
+                <template x-for="pid in permissoesSelecionadas" :key="pid">
+                    <input type="hidden" name="permissoes" :value="pid">
+                </template>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    {% if current_user.email_corporativo == 'rh@auvo.com.br' %}
+    <div class="modal fade" id="permissoesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Gerir Permissões</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="toggleAdmin" x-model="isAdmin">
+                        <label class="form-check-label" for="toggleAdmin">Administrador</label>
+                    </div>
+                    <div x-show="!isAdmin">
+                        {% for permissao in permissoes %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="perm-{{ permissao.id }}" value="{{ permissao.id }}" x-model="permissoesSelecionadas">
+                            <label class="form-check-label" for="perm-{{ permissao.id }}">{{ permissao.nome.replace('_', ' ').title() }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
             </div>
         </div>
     </div>
+    {% endif %}
+
 </div>
 {% endblock %}
 

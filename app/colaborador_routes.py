@@ -137,15 +137,22 @@ def editar(id):
             'departamento_id')) if form_data.get('departamento_id') else None
         colaborador.superior_id = novo_superior_id
 
+        # --- LÓGICA DE PERMISSÕES CORRIGIDA ---
         if current_user.is_admin:
-            colaborador.is_admin = form_data.get('is_admin') == 'on'
+            # Verifica o valor enviado pelo formulário para o status de admin
+            is_admin_request = request.form.get('is_admin') == 'on'
+            colaborador.is_admin = is_admin_request
 
-        permissoes_ids = request.form.getlist('permissoes')
-        if not colaborador.is_admin:
-            colaborador.permissoes = Permissao.query.filter(
-                Permissao.id.in_(permissoes_ids)).all()
-        else:
-            colaborador.permissoes = []
+            # Se o colaborador for definido como admin, as suas permissões individuais são limpas
+            if is_admin_request:
+                colaborador.permissoes = []
+            # Caso contrário, atribui as permissões que foram selecionadas
+            else:
+                permissoes_ids = request.form.getlist('permissoes')
+                permissoes_selecionadas = Permissao.query.filter(
+                    Permissao.id.in_(permissoes_ids)).all()
+                colaborador.permissoes = permissoes_selecionadas
+        # --- FIM DA CORREÇÃO ---
 
         if 'foto' in request.files and request.files['foto'].filename != '':
             colaborador.foto_filename = salvar_foto(request.files['foto'])
