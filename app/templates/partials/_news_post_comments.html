@@ -1,0 +1,18 @@
+{% for c in post.comentarios %}
+    {% if not c.excluido %}
+    <div class="d-flex align-items-start my-3">
+        {% if c.usuario.foto_filename %}
+            <img src="{{ url_for('static', filename='fotos_colaboradores/' + c.usuario.foto_filename) }}" class="nl-avatar me-3" alt="Foto de {{ c.usuario.nome }}">
+        {% else %}
+            <div class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0">
+                <span>{{ c.usuario.nome[0] }}{{ c.usuario.sobrenome[0] }}</span>
+            </div>
+        {% endif %}
+        
+        <div class="w-100">
+            <strong>{{ c.usuario.nome }} {{ c.usuario.sobrenome }}</strong>
+            <p class="mb-0">{{ c.texto }}</p>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}

@@ -1,25 +1,80 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="max-w-3xl mx-auto p-4" x-data>
-  <h1 class="text-2xl font-bold mb-4">Newsletter</h1>
-  <div id="destaques" class="space-y-4 mb-6">
-    {% for post in fixados_posts %}
-      {% include 'partials/news_post_card.html' %}
-    {% endfor %}
-    {% for enquete in fixados_enquetes %}
-      {% include 'partials/news_enquete_card.html' %}
-    {% endfor %}
-  </div>
-  <div id="feed" class="space-y-4">
-    {% for post in feed_posts %}
-      {% include 'partials/news_post_card.html' %}
-    {% endfor %}
-    {% for enquete in feed_enquetes %}
-      {% include 'partials/news_enquete_card.html' %}
-    {% endfor %}
-  </div>
-</div>
-<script src="https://cdn.tailwindcss.com"></script>
+{% block page_scripts %}
 <script src="{{ url_for('static', filename='js/newsletter-api.js') }}"></script>
-<script src="{{ url_for('static', filename='js/newsletter-ui.js') }}"></script>
+<script>
+  // 1. Dados do usuário logado, passados de forma segura com o filtro 'tojson'
+  const currentUserData = {
+    nome: {{ current_user.nome | tojson }},
+    sobrenome: {{ current_user.sobrenome | tojson }},
+    foto_url: {{ (url_for('static', filename='fotos_colaboradores/' + current_user.foto_filename) if current_user.foto_filename else '') | tojson }},
+    iniciais: {{ ((current_user.nome[0] if current_user.nome else '') + (current_user.sobrenome[0] if current_user.sobrenome else '')) | tojson }}
+  };
+
+  // 2. Função para criar o HTML do comentário otimista
+  function createOptimisticComment(texto) {
+    const element = document.createElement('div');
+    element.classList.add('d-flex', 'align-items-start', 'my-3', 'optimistic-comment');
+
+    let avatarHtml = '';
+    if (currentUserData.foto_url) {
+      avatarHtml = `<img src="${currentUserData.foto_url}" class="nl-avatar me-3" alt="Foto de ${currentUserData.nome}">`;
+    } else {
+      avatarHtml = `
+        <div class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0">
+            <span>${currentUserData.iniciais}</span>
+        </div>`;
+    }
+
+    // Usamos 'escape' para evitar problemas com textos que contenham HTML
+    const escapedText = document.createElement('p');
+    escapedText.textContent = texto;
+    escapedText.classList.add('mb-0');
+
+    element.innerHTML = `
+      ${avatarHtml}
+      <div class="w-100">
+          <strong>${currentUserData.nome} ${currentUserData.sobrenome}</strong>
+          ${escapedText.outerHTML}
+      </div>
+    `;
+    return element;
+  }
+
+  // 3. Função de envio global e segura
+  async function submitComment(postId) {
+    const input = document.getElementById(`comment-input-${postId}`);
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    const commentList = document.getElementById(`comments-list-${postId}`);
+    const optimisticElement = createOptimisticComment(texto);
+    commentList.appendChild(optimisticElement);
+    
+    input.value = '';
+    input.focus();
+
+    const response = await createComment(postId, texto); // Função de newsletter-api.js
+
+    if (!response.ok) {
+      optimisticElement.remove();
+      alert('Erro ao enviar o comentário. Tente novamente.');
+      input.value = texto;
+    } else {
+      htmx.trigger(`#comments-list-${postId}`, 'load');
+      htmx.trigger(`[hx-get='/newsletter/post/${postId}/_footer']`, 'load');
+    }
+  }
+
+  // 4. Componente AlpineJS simples para gerenciar o modal
+  function newsletterFeed() {
+    return {
+      modalInstance: null,
+      init() {
+        this.modalInstance = new bootstrap.Modal(document.getElementById('newsletterModal'));
+        document.getElementById('newsletterModal').addEventListener('hidden.bs.modal', event => {
+          document.getElementById('modal-content-target').innerHTML = '<div class="d-flex justify-content-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        });
+      }
+    }
+  }
+</script>
 {% endblock %}

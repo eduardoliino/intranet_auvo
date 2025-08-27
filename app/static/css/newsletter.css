@@ -1,0 +1,120 @@
+/* app/static/css/newsletter.css */
+
+/* Seletor raiz para escopar todas as regras */
+.nl-feed {
+  --nl-card-bg: var(--bs-body-bg);
+  --nl-card-border: 1px solid var(--bs-border-color);
+  --nl-card-radius: 8px;
+  --nl-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
+  --nl-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --nl-text-color: var(--bs-body-color);
+  --nl-meta-color: var(--bs-gray-600);
+  --nl-action-color: var(--bs-gray-600);
+  --nl-link-color: var(--bs-primary);
+
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Estrutura do Card */
+.nl-card {
+  background-color: var(--nl-card-bg);
+  border: var(--nl-card-border);
+  border-radius: var(--nl-card-radius);
+  box-shadow: var(--nl-card-shadow);
+  transition: box-shadow 180ms ease-in-out;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer; /* <-- ADICIONE ESTA LINHA */
+}
+
+.nl-card:hover {
+  box-shadow: var(--nl-card-shadow-hover);
+}
+
+/* Header do Card */
+.nl-hd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.nl-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.nl-hd h5 {
+  margin-bottom: 0;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--nl-text-color);
+}
+
+.nl-meta {
+  font-size: 0.875rem;
+  color: var(--nl-meta-color);
+}
+
+/* Corpo do Card */
+.nl-body {
+  padding: 0 20px 16px;
+  flex-grow: 1; /* Faz o corpo ocupar o espaço disponível */
+}
+
+/* NOVA CLASSE PARA CONTEÚDO DE TEXTO */
+.nl-content {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--nl-text-color);
+  
+  /* Mantém a formatação de parágrafos e quebras de linha */
+  white-space: pre-wrap;
+
+  /* Força a quebra de palavras muito longas para evitar overflow */
+  overflow-wrap: break-word;
+  word-wrap: break-word; /* Compatibilidade */
+}
+
+.nl-body img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--nl-card-radius);
+    margin-top: 1rem;
+}
+
+/* Footer do Card */
+.nl-ft {
+  padding: 12px 20px;
+  border-top: var(--nl-card-border);
+  font-size: 0.875rem;
+  color: var(--nl-action-color);
+}
+
+.nl-ft .nl-link {
+  color: var(--nl-link-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nl-ft .nl-link:hover {
+  text-decoration: underline;
+}
+
+/* Acessibilidade e Responsividade */
+.nl-feed a:focus-visible,
+.nl-feed button:focus-visible {
+    outline: 2px solid var(--nl-link-color);
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .nl-hd, .nl-body, .nl-ft {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}

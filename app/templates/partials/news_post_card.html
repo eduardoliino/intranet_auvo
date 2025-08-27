@@ -1,23 +1,45 @@
-<div class="border rounded p-4 shadow-sm" x-data="{open:false}" @click="open=true">
-  <h2 class="font-semibold">{{ post.titulo }}</h2>
-  <p class="text-sm text-gray-700 line-clamp-3">{{ post.conteudo_md[:150] }}</p>
-  <div class="text-xs text-gray-500 mt-2">
-    <span>{{ post.reacoes|length }} reações</span>
-    <span class="ml-2">{{ post.comentarios|selectattr('excluido','equalto',False)|list|length }} comentários</span>
-  </div>
-  <div class="mt-2 space-y-1">
-    {% for c in post.comentarios[:3] %}
-      {% if not c.excluido %}
-      <p class="text-sm">{{ c.texto }}</p>
-      {% endif %}
-    {% endfor %}
-  </div>
-  <div x-show="open" x-cloak>
-    <div class="fixed inset-0 bg-black/50" @click="open=false"></div>
-    <div class="fixed inset-0 flex items-center justify-center">
-      <div class="bg-white p-4 rounded shadow max-w-xl w-full overflow-y-auto max-h-full">
-        {% include 'newsletter_post_modal.html' %}
+<!-- Mova os atributos data-bs-* e hx-* para a tag <article> -->
+<article
+  class="nl-card h-100"
+  data-bs-toggle="modal"
+  data-bs-target="#newsletterModal"
+  hx-get="{{ url_for('newsletter.ver_post', post_id=post.id) }}"
+  hx-target="#modal-content-target"
+  hx-swap="innerHTML"
+>
+  <header class="nl-hd">
+    {% if post.autor.foto_filename %}
+    <img
+      src="{{ url_for('static', filename='fotos_colaboradores/' + post.autor.foto_filename) }}"
+      class="nl-avatar"
+      alt="Foto de {{ post.autor.nome }}"
+    />
+    {% else %}
+    <div
+      class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white"
+    >
+      <span>{{ post.autor.nome[0] }}{{ post.autor.sobrenome[0] }}</span>
+    </div>
+    {% endif %}
+    <div>
+      <h5>{{ post.autor.nome }} {{ post.autor.sobrenome }}</h5>
+      <div class="nl-meta">
+        {{ post.publicado_em.strftime('%d de %B de %Y') }}
       </div>
     </div>
+  </header>
+
+  <div class="nl-body">
+    <h5>{{ post.titulo }}</h5>
+    <p class="nl-content">{{ post.conteudo_md | striptags | truncate(280) }}</p>
   </div>
-</div>
+
+  <!-- O footer agora só contém o div de polling -->
+  <footer 
+  class="nl-ft"
+  hx-get="{{ url_for('newsletter.render_post_footer', post_id=post.id) }}"
+  hx-trigger="every 15s[document.body.classList.contains('modal-open') === false]"
+  hx-swap="innerHTML">
+    {% include 'partials/_news_post_footer.html' %}
+</footer>
+</article>

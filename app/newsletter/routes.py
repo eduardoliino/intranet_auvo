@@ -6,6 +6,7 @@ import re
 
 from flask import render_template, request, jsonify, abort
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload, subqueryload
 
 from app import db
 from app.utils.gamificacao_utils import registrar_acao
@@ -45,22 +46,28 @@ def feed():
     periodo = int(request.args.get('periodo', 30))
     limite = datetime.utcnow() - timedelta(days=periodo)
 
-    posts_q = NewsPost.query.filter(NewsPost.publicado_em >= limite, NewsPost.status == 'publicado')
+    posts_q = NewsPost.query.options(joinedload(NewsPost.autor)).filter(
+        NewsPost.publicado_em >= limite, NewsPost.status == 'publicado')
     enquetes_q = NewsEnquete.query.filter(NewsEnquete.status != 'rascunho')
 
     if search:
         posts_q = posts_q.filter(NewsPost.titulo.ilike(f"%{search}%"))
-        enquetes_q = enquetes_q.filter(NewsEnquete.pergunta.ilike(f"%{search}%"))
+        enquetes_q = enquetes_q.filter(
+            NewsEnquete.pergunta.ilike(f"%{search}%"))
 
-    fixados_posts = posts_q.filter(NewsPost.fixado_ordem.isnot(None)).order_by(NewsPost.fixado_ordem).all()
-    fixados_enquetes = enquetes_q.filter(NewsEnquete.fixado_ordem.isnot(None)).order_by(NewsEnquete.fixado_ordem).all()
+    fixados_posts = posts_q.filter(NewsPost.fixado_ordem.isnot(
+        None)).order_by(NewsPost.fixado_ordem).all()
+    fixados_enquetes = enquetes_q.filter(NewsEnquete.fixado_ordem.isnot(
+        None)).order_by(NewsEnquete.fixado_ordem).all()
 
     feed_posts = []
     if tipo in ('all', 'post'):
-        feed_posts.extend(posts_q.filter(NewsPost.fixado_ordem.is_(None)).order_by(NewsPost.publicado_em.desc()).all())
+        feed_posts.extend(posts_q.filter(NewsPost.fixado_ordem.is_(
+            None)).order_by(NewsPost.publicado_em.desc()).all())
     feed_enquetes = []
     if tipo in ('all', 'enquete'):
-        feed_enquetes.extend(enquetes_q.filter(NewsEnquete.fixado_ordem.is_(None)).order_by(NewsEnquete.inicio_em.desc()).all())
+        feed_enquetes.extend(enquetes_q.filter(NewsEnquete.fixado_ordem.is_(
+            None)).order_by(NewsEnquete.inicio_em.desc()).all())
 
     return render_template(
         'newsletter.html',
@@ -76,7 +83,10 @@ def feed():
 @newsletter_bp.route('/newsletter/post/<int:post_id>')
 @login_required
 def ver_post(post_id: int):
-    post = NewsPost.query.get_or_404(post_id)
+    # Substitua a linha antiga por esta consulta otimizada
+    post = NewsPost.query.options(
+        subqueryload(NewsPost.comentarios).joinedload(NewsComentario.usuario)
+    ).get_or_404(post_id)
     return render_template('newsletter_post_modal.html', post=post)
 
 
@@ -95,11 +105,13 @@ def reagir(post_id: int):
     tipo = request.json.get('tipo')
     if tipo not in {'like', 'palmas', 'coracao', 'genial', 'feliz'}:
         abort(400)
-    reacao = NewsReacao.query.filter_by(post_id=post_id, usuario_id=current_user.id).first()
+    reacao = NewsReacao.query.filter_by(
+        post_id=post_id, usuario_id=current_user.id).first()
     if reacao:
         reacao.tipo = tipo
     else:
-        reacao = NewsReacao(post_id=post_id, usuario_id=current_user.id, tipo=tipo)
+        reacao = NewsReacao(
+            post_id=post_id, usuario_id=current_user.id, tipo=tipo)
         db.session.add(reacao)
     db.session.commit()
     registrar_acao(current_user.id, "reagir_post", "post", post_id)
@@ -109,7 +121,8 @@ def reagir(post_id: int):
 @newsletter_bp.delete('/api/news/post/<int:post_id>/reacao')
 @login_required
 def remover_reacao(post_id: int):
-    reacao = NewsReacao.query.filter_by(post_id=post_id, usuario_id=current_user.id).first()
+    reacao = NewsReacao.query.filter_by(
+        post_id=post_id, usuario_id=current_user.id).first()
     if reacao:
         db.session.delete(reacao)
         db.session.commit()
@@ -147,7 +160,8 @@ def criar_comentario(post_id: int):
         texto = sanitize_comment(texto)
     except ValueError as e:
         abort(400, str(e))
-    comentario = NewsComentario(post_id=post_id, usuario_id=current_user.id, texto=texto, gif_id=gif_id)
+    comentario = NewsComentario(
+        post_id=post_id, usuario_id=current_user.id, texto=texto, gif_id=gif_id)
     db.session.add(comentario)
     db.session.commit()
     registrar_acao(current_user.id, "comentar_post", "post", post_id)
@@ -165,7 +179,8 @@ def editar_comentario(comentario_id: int):
         comentario.texto = sanitize_comment(texto)
         comentario.editado_em = datetime.utcnow()
         db.session.commit()
-        registrar_acao(current_user.id, "editar_comentario", "post", comentario_id)
+        registrar_acao(current_user.id, "editar_comentario",
+                       "post", comentario_id)
     except ValueError as e:
         abort(400, str(e))
     return jsonify({'status': 'ok'})
@@ -179,7 +194,8 @@ def excluir_comentario(comentario_id: int):
         abort(403)
     comentario.excluido = True
     db.session.commit()
-    registrar_acao(current_user.id, "excluir_comentario", "post", comentario_id)
+    registrar_acao(current_user.id, "excluir_comentario",
+                   "post", comentario_id)
     return jsonify({'status': 'ok'})
 
 
@@ -191,14 +207,17 @@ def avaliar_post(post_id: int):
     estrelas = int(request.json.get('estrelas', 0))
     if not 1 <= estrelas <= 5:
         abort(400)
-    avaliacao = NewsAvaliacao.query.filter_by(post_id=post_id, usuario_id=current_user.id).first()
+    avaliacao = NewsAvaliacao.query.filter_by(
+        post_id=post_id, usuario_id=current_user.id).first()
     if avaliacao:
         avaliacao.estrelas = estrelas
     else:
-        avaliacao = NewsAvaliacao(post_id=post_id, usuario_id=current_user.id, estrelas=estrelas)
+        avaliacao = NewsAvaliacao(
+            post_id=post_id, usuario_id=current_user.id, estrelas=estrelas)
         db.session.add(avaliacao)
     db.session.commit()
-    registrar_acao(current_user.id, "avaliar_post", "post", post_id, {"estrelas": estrelas})
+    registrar_acao(current_user.id, "avaliar_post",
+                   "post", post_id, {"estrelas": estrelas})
     return jsonify({'status': 'ok'})
 
 
@@ -223,9 +242,11 @@ def votar_enquete(enquete_id: int):
 
     # remove votos anteriores
     if enquete.anonima:
-        NewsEnqueteVoto.query.filter_by(enquete_id=enquete.id, hash_anon=hash_anon).delete()
+        NewsEnqueteVoto.query.filter_by(
+            enquete_id=enquete.id, hash_anon=hash_anon).delete()
     else:
-        NewsEnqueteVoto.query.filter_by(enquete_id=enquete.id, usuario_id=current_user.id).delete()
+        NewsEnqueteVoto.query.filter_by(
+            enquete_id=enquete.id, usuario_id=current_user.id).delete()
 
     for opcao_id in opcoes:
         voto = NewsEnqueteVoto(
@@ -236,7 +257,8 @@ def votar_enquete(enquete_id: int):
         )
         db.session.add(voto)
     db.session.commit()
-    registrar_acao(current_user.id, "votar_enquete", "enquete", enquete_id, {"opcoes": opcoes})
+    registrar_acao(current_user.id, "votar_enquete",
+                   "enquete", enquete_id, {"opcoes": opcoes})
     return jsonify({'status': 'ok'})
 
 
@@ -250,9 +272,11 @@ def resultado_enquete(enquete_id: int):
     elif enquete.vis_resultado == 'after_vote':
         if enquete.anonima:
             hash_anon = get_user_hash(enquete.id, current_user.id)
-            voto = NewsEnqueteVoto.query.filter_by(enquete_id=enquete.id, hash_anon=hash_anon).first()
+            voto = NewsEnqueteVoto.query.filter_by(
+                enquete_id=enquete.id, hash_anon=hash_anon).first()
         else:
-            voto = NewsEnqueteVoto.query.filter_by(enquete_id=enquete.id, usuario_id=current_user.id).first()
+            voto = NewsEnqueteVoto.query.filter_by(
+                enquete_id=enquete.id, usuario_id=current_user.id).first()
         if voto:
             pode_ver = True
     elif enquete.vis_resultado == 'after_close' and enquete.status == 'encerrada':
@@ -260,14 +284,16 @@ def resultado_enquete(enquete_id: int):
     if not pode_ver:
         abort(403)
     resultados = (
-        db.session.query(NewsEnqueteOpcao.id, NewsEnqueteOpcao.texto, db.func.count(NewsEnqueteVoto.id))
+        db.session.query(NewsEnqueteOpcao.id, NewsEnqueteOpcao.texto,
+                         db.func.count(NewsEnqueteVoto.id))
         .outerjoin(NewsEnqueteVoto, NewsEnqueteVoto.opcao_id == NewsEnqueteOpcao.id)
         .filter(NewsEnqueteOpcao.enquete_id == enquete.id)
         .group_by(NewsEnqueteOpcao.id)
         .order_by(NewsEnqueteOpcao.ordem)
         .all()
     )
-    data = [{'id': oid, 'texto': texto, 'votos': votos} for oid, texto, votos in resultados]
+    data = [{'id': oid, 'texto': texto, 'votos': votos}
+            for oid, texto, votos in resultados]
     return jsonify({'opcoes': data})
 
 
@@ -347,7 +373,8 @@ def criar_enquete():
     db.session.flush()
     opcoes = data.get('opcoes', [])
     for idx, texto in enumerate(opcoes):
-        db.session.add(NewsEnqueteOpcao(enquete_id=enquete.id, texto=texto, ordem=idx))
+        db.session.add(NewsEnqueteOpcao(
+            enquete_id=enquete.id, texto=texto, ordem=idx))
     db.session.commit()
     return jsonify({'id': enquete.id})
 
@@ -406,3 +433,21 @@ def desfazer_fixacao(tipo: str, ref_id: int):
     obj.fixado_ordem = None
     db.session.commit()
     return jsonify({'status': 'ok'})
+
+
+@newsletter_bp.route('/newsletter/post/<int:post_id>/_footer')
+@login_required
+def render_post_footer(post_id: int):
+    """Renderiza apenas o rodapé do card do post (contadores)."""
+    post = NewsPost.query.get_or_404(post_id)
+    return render_template('partials/_news_post_footer.html', post=post)
+
+
+@newsletter_bp.route('/newsletter/post/<int:post_id>/_comments')
+@login_required
+def render_post_comments(post_id: int):
+    """Renderiza apenas a lista de comentários do post."""
+    post = NewsPost.query.options(
+        subqueryload(NewsPost.comentarios).joinedload(NewsComentario.usuario)
+    ).get_or_404(post_id)
+    return render_template('partials/_news_post_comments.html', post=post)

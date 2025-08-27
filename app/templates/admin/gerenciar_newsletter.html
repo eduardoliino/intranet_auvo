@@ -1,22 +1,109 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<div class="container p-4">
-  <h1 class="mb-4">Admin Newsletter</h1>
-  <div class="mb-4">
-    <h2>Posts</h2>
-    <ul>
-    {% for p in posts %}
-      <li>{{ p.titulo }} ({{ p.status }})</li>
-    {% endfor %}
-    </ul>
-  </div>
-  <div>
-    <h2>Enquetes</h2>
-    <ul>
-    {% for e in enquetes %}
-      <li>{{ e.pergunta }} ({{ e.status }})</li>
-    {% endfor %}
-    </ul>
-  </div>
+<div class="container p-4" x-data="gerenciarNewsletter()">
+    <h1 class="mb-4">Admin Newsletter</h1>
+
+    <div class="card mb-4">
+        <div class="card-header fw-bold" x-text="editPost.id ? 'Editar Post' : 'Adicionar Novo Post'"></div>
+        <div class="card-body">
+            <form @submit.prevent="salvarPost">
+                <div class="mb-3">
+                    <label class="form-label">Título</label>
+                    <input type="text" class="form-control" x-model="editPost.titulo" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Conteúdo (Markdown)</label>
+                    <textarea class="form-control" rows="5" x-model="editPost.conteudo_md"></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-secondary me-2" x-show="editPost.id" @click="resetForm()">Cancelar Edição</button>
+                    <button type="submit" class="btn btn-success" x-text="editPost.id ? 'Salvar Alterações' : 'Criar Post'"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header fw-bold">Posts Existentes</div>
+        <div class="card-body">
+            <div class="table-responsive" style="max-height: 65vh; overflow-y: auto;">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Status</th>
+                            <th>Publicado em</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in posts %}
+                        <tr>
+                            <td>{{ p.titulo }}</td>
+                            <td><span class="badge" :class="p.status === 'publicado' ? 'bg-success' : 'bg-secondary'">{{ p.status }}</span></td>
+                            <td>{{ p.publicado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-secondary" @click="editarPost({{ p.id }}, '{{ p.titulo }}', '{{ p.conteudo_md | safe }}')"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" @click="removerPost({{ p.id }})"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+function gerenciarNewsletter() {
+    return {
+        editPost: { id: null, titulo: '', conteudo_md: '' },
+
+        resetForm() {
+            this.editPost = { id: null, titulo: '', conteudo_md: '' };
+        },
+
+        async salvarPost() {
+            const url = this.editPost.id ? `/api/news/post/${this.editPost.id}` : '/api/news/post';
+            const method = this.editPost.id ? 'PATCH' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    titulo: this.editPost.titulo,
+                    conteudo_md: this.editPost.conteudo_md,
+                    status: 'publicado'
+                })
+            });
+
+            if (response.ok) {
+                window.location.reload(); // Recarrega a página para ver as alterações
+            } else {
+                alert('Ocorreu um erro ao salvar o post.');
+            }
+        },
+        
+        editarPost(id, titulo, conteudo) {
+            this.editPost = { id, titulo, conteudo_md: conteudo };
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+
+        async removerPost(id) {
+            if (confirm('Tem a certeza de que deseja remover este post?')) {
+                const response = await fetch(`/api/news/post/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Ocorreu um erro ao remover o post.');
+                }
+            }
+        }
+    }
+}
+</script>
 {% endblock %}

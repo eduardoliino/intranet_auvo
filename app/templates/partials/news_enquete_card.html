@@ -1,12 +1,18 @@
-<div class="border rounded p-4 shadow-sm" x-data="{open:false}" @click="open=true">
-  <h2 class="font-semibold">{{ enquete.pergunta }}</h2>
-  <p class="text-xs text-gray-500">{{ 'Encerrada' if enquete.status == 'encerrada' else 'Aberta' }}</p>
-  <div x-show="open" x-cloak>
-    <div class="fixed inset-0 bg-black/50" @click="open=false"></div>
-    <div class="fixed inset-0 flex items-center justify-center">
-      <div class="bg-white p-4 rounded shadow max-w-xl w-full overflow-y-auto max-h-full">
-        {% include 'newsletter_enquete_modal.html' %}
-      </div>
+<article 
+  class="nl-card"
+  data-bs-toggle="modal" 
+  data-bs-target="#newsletterModal" 
+  hx-get="{{ url_for('newsletter.ver_enquete', enquete_id=enquete.id) }}" 
+  hx-target="#modal-content-target"
+  hx-swap="innerHTML">
+    
+    <div class="nl-body py-4">
+        <h5>{{ enquete.pergunta }}</h5>
+        <p class="nl-meta">{{ 'Encerrada' if enquete.status == 'encerrada' else 'Aberta' }}</p>
+        
+        {% for opcao in enquete.opcoes|sort(attribute='ordem') %}
+            <div class="nl-poll-option">{{ opcao.texto }}</div>
+        {% endfor %}
     </div>
-  </div>
-</div>
+
+    </article>

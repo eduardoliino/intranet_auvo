@@ -1,26 +1,58 @@
-<div class="space-y-2" x-data="{novoComentario:'', estrelas:''}">
-  <h2 class="text-xl font-bold">{{ post.titulo }}</h2>
-  <div class="prose max-w-none">{{ post.conteudo_md }}</div>
-  <div class="flex space-x-2 mt-2">
-    {% for r in ['like','palmas','coracao','genial','feliz'] %}
-    <button class="px-2" @click.stop="react('{{r}}', {{post.id}})">{{ {'like':'👍','palmas':'👏','coracao':'❤️','genial':'💡','feliz':'😊'}[r] }}</button>
-    {% endfor %}
+<div x-data="{ novoComentario: '' }">
+  <div class="modal-header">
+    <h5 class="modal-title">{{ post.titulo }}</h5>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="modal"
+      aria-label="Close"
+    ></button>
   </div>
-  <div id="comentarios-{{post.id}}" class="space-y-1 mt-2">
-    {% for c in post.comentarios %}
-      {% if not c.excluido %}
-      <p class="text-sm">{{ c.texto }}</p>
-      {% endif %}
-    {% endfor %}
+  <div class="modal-body">
+    <div class="nl-content mb-3">{{ post.conteudo_md }}</div>
+    <hr />
+
+    <div class="mb-3">
+      <strong>Reações:</strong>
+      {% for r in ['like','palmas','coracao','genial','feliz'] %}
+      <button class="btn btn-light" @click.stop="react('{{r}}', {{post.id}})">
+        {{
+        {'like':'👍','palmas':'👏','coracao':'❤️','genial':'💡','feliz':'😊'}[r]
+        }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <h6>Comentários</h6>
+    <div
+      id="comments-list-{{ post.id }}"
+      class="mb-4"
+      hx-get="{{ url_for('newsletter.render_post_comments', post_id=post.id) }}"
+      hx-trigger="load, every 10s"
+      hx-swap="innerHTML"
+    >
+      {% include 'partials/_news_post_comments.html' %}
+    </div>
+
+    <div class="input-group">
+      <input
+        id="comment-input-{{ post.id }}"
+        type="text"
+        class="form-control"
+        placeholder="Adicionar um comentário..."
+        onkeydown="if(event.key === 'Enter'){ submitComment({{ post.id }}); event.preventDefault(); }"
+      />
+      <button
+        class="btn btn-outline-secondary"
+        onclick="submitComment({{ post.id }})"
+      >
+        Enviar
+      </button>
+    </div>
   </div>
-  <div class="mt-2 flex space-x-2">
-    <input type="text" class="border flex-1" x-model="novoComentario" placeholder="Comentário" />
-    <button class="bg-blue-500 text-white px-2" @click="createComment({{post.id}}, novoComentario); novoComentario=''">Enviar</button>
-  </div>
-  <div class="mt-2">
-    <select x-model="estrelas" @change="ratePost({{post.id}}, estrelas)">
-      <option value="">Avaliar</option>
-      {% for i in range(1,6) %}<option value="{{i}}">{{i}} ⭐</option>{% endfor %}
-    </select>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+      Fechar
+    </button>
   </div>
 </div>
