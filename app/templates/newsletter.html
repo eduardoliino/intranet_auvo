@@ -71,12 +71,8 @@
       </header>
 
       <div class="nl-modal-body" x-ref="modalBody">
-        <div
-          x-show="isLoading"
-          class="embed-placeholder"
-          :class="modalContent.embedRatio"
-        ></div>
-        <div x-show="!isLoading" x-html="modalContent.embedHtml"></div>
+        <div x-show="isLoading" class="embed-placeholder aspect-video"></div>
+        <div x-show="!isLoading" x-html="modalContent.post_html"></div>
         <hr class="my-4" />
 
         <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
@@ -153,13 +149,10 @@
       isModalOpen: false,
       isLoading: true,
       newCommentText: "",
-      isEnqueteModalOpen: false, // Nova propriedade para o modal de enquete
-      enqueteContent: "", // Para guardar o HTML da enquete
       modalContent: {
         postId: null,
         postTitle: "Carregando...",
-        embedHtml: "",
-        embedRatio: "aspect-video",
+        post_html: "", // <-- CORREÇÃO: Usaremos 'post_html' para o conteúdo.
         reactions: { counts: {}, user_reaction: null },
         comments: [],
       },
@@ -175,74 +168,91 @@
       socket: null,
 
       init() {
+        // A função init() e os listeners do socket.io permanecem os mesmos.
         this.socket = io();
         this.socket.on("connect", () => {
           console.log("Socket.IO Conectado!");
         });
 
         this.socket.on("update_reactions", (data) => {
+          const reactionCountEl = document.getElementById(
+            `reactions-count-${data.post_id}`
+          );
+          if (reactionCountEl) {
+            const totalReactions = Object.values(data.counts).reduce(
+              (a, b) => a + b,
+              0
+            );
+            reactionCountEl.innerText = ` ${totalReactions}`;
+          }
+
           if (this.isModalOpen && this.modalContent.postId === data.post_id) {
             this.modalContent.reactions.counts = data.counts;
           }
         });
 
         this.socket.on("new_comment", (data) => {
-          // CORRIGIDO: A verificação deve usar data.post_id, que é enviado pelo backend no nível raiz do evento.
-          if (this.isModalOpen && this.modalContent.postId === data.post_id) {
+          const postId = data.comment.post_id;
+          const commentCountEl = document.getElementById(
+            `comments-count-${postId}`
+          );
+          if (commentCountEl) {
+            const current_count =
+              parseInt(commentCountEl.innerText.trim()) || 0;
+            commentCountEl.innerText = ` ${current_count + 1}`;
+          }
+
+          if (this.isModalOpen && this.modalContent.postId === postId) {
             if (
               !this.modalContent.comments.some((c) => c.id === data.comment.id)
             ) {
-              this.modalContent.comments.push(data.comment);
+              this.modalContent.comments = [
+                ...this.modalContent.comments,
+                data.comment,
+              ];
+
               this.$nextTick(() => {
-                this.$refs.modalBody.scrollTop =
-                  this.$refs.modalBody.scrollHeight;
+                if (this.$refs.modalBody) {
+                  this.$refs.modalBody.scrollTop =
+                    this.$refs.modalBody.scrollHeight;
+                }
               });
             }
           }
         });
       },
 
-      openModal(event, postId, postUrl) {
-        if (!postUrl) {
-          return;
-        }
+      // A função openModal agora recebe apenas 2 argumentos.
+      openModal(event, postId) {
         this.lastTrigger = event.currentTarget;
         document.body.style.overflow = "hidden";
         this.isModalOpen = true;
         this.isLoading = true;
 
-        fetch(
-          `/api/news/post_details?url=${encodeURIComponent(
-            postUrl
-          )}&post_id=${postId}`
-        )
+        // CORREÇÃO: A URL da API foi simplificada.
+        fetch(`/api/news/post_details?post_id=${postId}`)
           .then((res) => res.json())
           .then((data) => {
             if (data.success) {
               this.modalContent = data;
+              // Simplificamos a lógica de loading.
+              this.isLoading = false;
+
+              // CORREÇÃO: Chame o processador do Instagram aqui!
               this.$nextTick(() => {
-                const iframe = document.querySelector(
-                  ".nl-modal-dialog iframe"
-                );
-                if (iframe) {
-                  iframe.onload = () => {
-                    this.isLoading = false;
-                  };
-                  setTimeout(() => {
-                    this.isLoading = false;
-                  }, 1500);
-                } else {
-                  this.isLoading = false;
+                // Esta verificação garante que o script já carregou
+                if (window.instgrm) {
+                  window.instgrm.Embeds.process();
                 }
-                if (window.instgrm) window.instgrm.Embeds.process();
               });
             } else {
               this.isLoading = false;
-              this.modalContent.embedHtml = `<p class="text-danger text-center">${data.error}</p>`;
+              this.modalContent.post_html = `<p class="text-danger text-center">${data.error}</p>`;
             }
           });
       },
 
+      // O resto das funções (closeModal, toggleReaction, etc.) permanece igual...
       closeModal() {
         this.isModalOpen = false;
         document.body.style.overflow = "";
@@ -250,41 +260,35 @@
         this.modalContent = {
           postId: null,
           postTitle: "Carregando...",
-          embedHtml: "",
-          embedRatio: "aspect-video",
+          post_html: "",
           reactions: { counts: {}, user_reaction: null },
           comments: [],
         };
       },
-
-      // --- NOVA FUNÇÃO ADICIONADA ---
       async openEnqueteModal(event, enqueteId) {
         this.lastTrigger = event.currentTarget;
         this.isLoading = true;
-        this.isModalOpen = true; // Reutiliza o mesmo modal
+        this.isModalOpen = true;
         document.body.style.overflow = "hidden";
 
-        // Limpa o conteúdo de post para evitar mostrar reações/comentários antigos
         this.modalContent.reactions = { counts: {}, user_reaction: null };
         this.modalContent.comments = [];
 
         const response = await fetch(`/newsletter/enquete/${enqueteId}`);
         if (response.ok) {
           const html = await response.text();
-          this.modalContent.postTitle = "Enquete"; // Título genérico
-          this.modalContent.embedHtml = html;
+          this.modalContent.postTitle = "Enquete";
+          this.modalContent.post_html = html;
         } else {
           this.modalContent.postTitle = "Erro";
-          this.modalContent.embedHtml = `<p class="text-center text-danger">Não foi possível carregar a enquete.</p>`;
+          this.modalContent.post_html = `<p class="text-center text-danger">Não foi possível carregar a enquete.</p>`;
         }
-        this.isLoading = false; // Garante que o loading termine
+        this.isLoading = false;
       },
-
       async toggleReaction(type) {
         const postId = this.modalContent.postId;
         const currentReaction = this.modalContent.reactions.user_reaction;
 
-        // Lógica otimista para feedback imediato
         if (currentReaction === type) {
           this.modalContent.reactions.user_reaction = null;
           this.modalContent.reactions.counts[type]--;
@@ -303,7 +307,6 @@
           body: JSON.stringify({ tipo: type }),
         });
       },
-
       handleCommentSubmit(event) {
         if (!event.shiftKey) this.submitComment();
       },
@@ -311,7 +314,6 @@
         el.style.height = "auto";
         el.style.height = el.scrollHeight + "px";
       },
-
       async submitComment() {
         const text = this.newCommentText.trim();
         if (!text) return;
@@ -326,9 +328,6 @@
         );
 
         if (response.ok) {
-          // CORRIGIDO: Remove a atualização otimista. O novo comentário será adicionado
-          // de forma confiável pelo evento 'new_comment' do WebSocket para todos os usuários,
-          // incluindo quem enviou, garantindo uma única fonte de verdade.
           this.newCommentText = "";
           this.$nextTick(() => {
             const input = document.querySelector(".nl-modal-dialog textarea");
@@ -341,4 +340,5 @@
     };
   }
 </script>
+
 {% endblock %}

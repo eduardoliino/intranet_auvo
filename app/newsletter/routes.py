@@ -51,7 +51,8 @@ def feed():
 @login_required
 def get_post_details():
     post_id = request.args.get('post_id', type=int)
-    post_url = request.args.get('url')
+    # A linha abaixo que pegava a 'url' não é mais necessária e foi removida.
+
     if not post_id:
         return jsonify({'success': False, 'error': 'Post ID não fornecido'}), 400
 
@@ -60,23 +61,27 @@ def get_post_details():
         subqueryload(NewsPost.reacoes)
     ).get_or_404(post_id)
 
-    embed_data = generate_embed_data(post_url) or {
-        'type': 'error', 'html': '<p class="text-center text-danger">Não foi possível gerar uma pré-visualização.</p>', 'ratio': 'aspect-video'}
+    # A lógica de 'generate_embed_data' foi removida daqui.
 
     reaction_counts = Counter(r.tipo for r in post.reacoes)
     user_reaction = next(
         (r.tipo for r in post.reacoes if r.usuario_id == current_user.id), None)
 
     comments_data = [{
-        'id': c.id, 'text': c.texto,
+        'id': c.id,
+        'text': c.texto,
         'user_name': f"{c.usuario.nome} {c.usuario.sobrenome}",
         'user_initials': f"{c.usuario.nome[0] if c.usuario.nome else ''}{c.usuario.sobrenome[0] if c.usuario.sobrenome else ''}",
-        'user_photo': url_for('static', filename=f'fotos_colaboradores/{c.usuario.foto_filename}') if c.usuario.foto_filename else None
+        'user_photo': url_for('static', filename=f'fotos_colaboradores/{c.usuario.foto_filename}') if c.usuario.foto_filename else None,
+        'post_id': c.post_id
     } for c in sorted(post.comentarios, key=lambda c: c.criado_em) if not c.excluido]
 
     return jsonify({
-        'success': True, 'postId': post.id, 'postTitle': post.titulo,
-        'embed': embed_data,
+        'success': True,
+        'postId': post.id,
+        'postTitle': post.titulo,
+        # <-- CORREÇÃO: Enviando o conteúdo HTML completo do post.
+        'post_html': post.conteudo_md,
         'reactions': {'counts': dict(reaction_counts), 'user_reaction': user_reaction},
         'comments': comments_data
     })
@@ -140,12 +145,13 @@ def criar_comentario(post_id: int):
 
     comment_data = {
         'id': comentario.id,
-        'post_id': post_id,  # Adicionado para o evento do socket
+        'post_id': post_id,  # <<< ADICIONE ESTA LINHA
         'text': comentario.texto,
         'user_name': f"{current_user.nome} {current_user.sobrenome}",
         'user_initials': f"{(current_user.nome or ' ')[0]}{(current_user.sobrenome or ' ')[0]}",
         'user_photo': url_for('static', filename=f'fotos_colaboradores/{current_user.foto_filename}') if current_user.foto_filename else None
     }
+    # Agora o evento 'new_comment' leva o post_id junto com os dados do comentário
     socketio.emit('new_comment', {'comment': comment_data})
 
     return jsonify({'success': True, 'comment': comment_data})

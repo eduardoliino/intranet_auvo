@@ -1,9 +1,9 @@
 <article
-  class="nl-card h-100"
-  @click="openModal($event, {{ post.id }}, '{{ post.source_url | urlencode }}')"
+  class="nl-card nl-card-post h-100"
+  @click="openModal($event, {{ post.id }})"
   style="cursor: pointer;"
   tabindex="0"
-  @keydown.enter.prevent="openModal($event, {{ post.id }}, '{{ post.source_url | urlencode }}')"
+  @keydown.enter.prevent="openModal($event, {{ post.id }})"
 >
   <header class="nl-hd">
     {% if post.autor.foto_filename %}

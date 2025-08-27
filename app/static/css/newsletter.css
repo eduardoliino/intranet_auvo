@@ -268,3 +268,32 @@
     border: none;
     border-radius: 0.75rem;
 }
+
+/* Ajuste específico para o embed do Instagram não criar barras de rolagem horizontais */
+.instagram-media {
+    max-width: 100%;
+}
+
+
+/* === NOVAS FAIXAS COLORIDAS LATERAIS === */
+
+.nl-card {
+  /* Adiciona a base da borda em todos os cards da newsletter */
+  border-left: 5px solid transparent;
+}
+
+.nl-card-post {
+  /* Define a cor da faixa para Posts (Roxo) */
+  border-left-color: var(--cor-primaria);
+}
+
+.nl-card-enquete {
+  /* Define a cor da faixa para Enquetes (Verde) */
+  border-left-color: var(--cor-destaque);
+}
+
+/* Centraliza o bloco de embed do Instagram dentro do corpo do modal */
+.nl-modal-body .instagram-media {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
