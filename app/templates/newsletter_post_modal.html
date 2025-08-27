@@ -9,7 +9,7 @@
     ></button>
   </div>
   <div class="modal-body">
-    <div class="nl-content mb-3">{{ post.conteudo_md }}</div>
+    <div class="nl-content mb-3">{{ post.conteudo_md | safe }}</div>
     <hr />
 
     <div id="reactions-block-{{ post.id }}" class="mb-3">

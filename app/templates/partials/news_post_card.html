@@ -1,11 +1,9 @@
-<!-- Mova os atributos data-bs-* e hx-* para a tag <article> -->
 <article
   class="nl-card h-100"
-  data-bs-toggle="modal"
-  data-bs-target="#newsletterModal"
-  hx-get="{{ url_for('newsletter.ver_post', post_id=post.id) }}"
-  hx-target="#modal-content-target"
-  hx-swap="innerHTML"
+  @click="openModal($event, {{ post.id }}, '{{ post.source_url | urlencode }}')"
+  style="cursor: pointer;"
+  tabindex="0"
+  @keydown.enter.prevent="openModal($event, {{ post.id }}, '{{ post.source_url | urlencode }}')"
 >
   <header class="nl-hd">
     {% if post.autor.foto_filename %}
@@ -34,10 +32,7 @@
     <p class="nl-content">{{ post.conteudo_md | striptags | truncate(280) }}</p>
   </div>
 
-  <!-- O footer agora só contém o div de polling -->
-  <footer 
-  id="footer-card-{{ post.id }}"
-  class="nl-ft">
+  <footer class="nl-ft">
     {% include 'partials/_news_post_footer.html' %}
-</footer>
+  </footer>
 </article>

@@ -1,3 +1,5 @@
+# requirements.txt
+
 Flask
 Flask-SQLAlchemy
 Flask-Migrate
@@ -8,3 +10,7 @@ openpyxl
 Werkzeug
 python-dotenv
 bleach
+beautifulsoup4
+requests
+Flask-SocketIO
+eventlet

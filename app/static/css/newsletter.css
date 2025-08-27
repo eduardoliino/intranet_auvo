@@ -164,3 +164,107 @@
   transform: none;
   box-shadow: none;
 }
+
+
+/* === NOVO MODAL UNIVERSAL === */
+.nl-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nl-modal-dialog {
+    background-color: white;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    
+    /* Dimensões e Responsividade */
+    width: 95vw;
+    max-width: 48rem; /* Equivale a max-w-3xl, ajustável para 4xl se necessário */
+    max-height: 90vh;
+    border-radius: 1rem; /* rounded-2xl */
+}
+
+.nl-modal-header,
+.nl-modal-footer {
+    flex-shrink: 0; /* Impede que encolham */
+    padding: 0.75rem 1.25rem;
+    border-color: #e5e7eb; /* border-gray-200 */
+}
+
+.nl-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid;
+}
+
+.nl-modal-footer {
+    border-top: 1px solid;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0) + 0.75rem); /* Suporte para iOS */
+}
+
+.nl-modal-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+    scrollbar-gutter: stable; /* Evita pulo do conteúdo */
+}
+
+.nl-modal-title {
+    font-weight: 600;
+    font-size: 1.125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nl-modal-close-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #6b7280;
+    transition: background-color 0.2s;
+}
+.nl-modal-close-btn:hover {
+    background-color: #f3f4f6;
+}
+
+/* --- Embed Placeholders --- */
+.embed-placeholder {
+    width: 100%;
+    background-color: #f3f4f6; /* bg-gray-100 */
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border-radius: 0.75rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.aspect-video { aspect-ratio: 16 / 9; }
+.aspect-square { aspect-ratio: 1 / 1; }
+.aspect-document { min-height: 400px; aspect-ratio: 4 / 3; }
+.aspect-og { min-height: 150px; }
+
+.embed-placeholder iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0.75rem;
+}

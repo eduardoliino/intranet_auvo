@@ -1,7 +1,8 @@
 from app import create_app
 
-app = create_app()
+# create_app() agora retorna 'app' e 'socketio'
+app, socketio = create_app()
 
 if __name__ == '__main__':
-    # Torna a aplicação acessível em toda a rede.
-    app.run(host='0.0.0.0', debug=True)
+    # Usa o servidor do SocketIO com o worker eventlet para suportar WebSockets
+    socketio.run(app, host='0.0.0.0', debug=True)

@@ -1,10 +1,7 @@
 <article 
   class="nl-card"
-  data-bs-toggle="modal" 
-  data-bs-target="#newsletterModal" 
-  hx-get="{{ url_for('newsletter.ver_enquete', enquete_id=enquete.id) }}" 
-  hx-target="#modal-content-target"
-  hx-swap="innerHTML">
+  style="cursor: pointer;"
+  @click="openEnqueteModal({{ enquete.id }})">
     
     <div class="nl-body py-4">
         <h5>{{ enquete.pergunta }}</h5>
@@ -14,5 +11,4 @@
             <div class="nl-poll-option">{{ opcao.texto }}</div>
         {% endfor %}
     </div>
-
-    </article>
+</article>

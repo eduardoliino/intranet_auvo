@@ -3,7 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, current_user
 from flask_session import Session
-from datetime import datetime, timedelta  # Import timedelta
+from datetime import datetime, timedelta
+from flask_socketio import SocketIO
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -13,6 +14,7 @@ login_manager.login_message = None
 login_manager.login_message_category = "info"
 
 sess = Session()
+socketio = SocketIO()
 
 
 def create_app():
@@ -35,6 +37,7 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
     sess.init_app(app)
+    socketio.init_app(app)
 
     @app.template_filter('datetimeformat')
     def datetimeformat(value, format='%d/%m/%Y %H:%M'):
@@ -118,8 +121,10 @@ def create_app():
             NewsPost, NewsComentario, NewsReacao, NewsEnquete, NewsEnqueteOpcao
         )
 
-        admin = Colaborador.query.filter_by(email_corporativo='rh@auvo.com.br').first()
-        colaborador = Colaborador.query.filter_by(email_corporativo='colab@auvo.com.br').first()
+        admin = Colaborador.query.filter_by(
+            email_corporativo='rh@auvo.com.br').first()
+        colaborador = Colaborador.query.filter_by(
+            email_corporativo='colab@auvo.com.br').first()
         if not colaborador:
             colaborador = Colaborador(
                 nome='Colaborador', sobrenome='Teste', email_corporativo='colab@auvo.com.br',
@@ -129,20 +134,25 @@ def create_app():
             db.session.add(colaborador)
             db.session.commit()
 
-        post = NewsPost(autor_id=admin.id, titulo='Post de exemplo', conteudo_md='Conteúdo *markdown*', publicado_em=datetime.utcnow())
+        post = NewsPost(autor_id=admin.id, titulo='Post de exemplo',
+                        conteudo_md='Conteúdo *markdown*', publicado_em=datetime.utcnow())
         db.session.add(post)
         db.session.flush()
-        db.session.add(NewsComentario(post_id=post.id, usuario_id=colaborador.id, texto='Primeiro!'))
-        db.session.add(NewsReacao(post_id=post.id, usuario_id=colaborador.id, tipo='like'))
+        db.session.add(NewsComentario(post_id=post.id,
+                       usuario_id=colaborador.id, texto='Primeiro!'))
+        db.session.add(NewsReacao(post_id=post.id,
+                       usuario_id=colaborador.id, tipo='like'))
 
-        enquete = NewsEnquete(autor_id=admin.id, pergunta='Qual seu emoji favorito?')
+        enquete = NewsEnquete(
+            autor_id=admin.id, pergunta='Qual seu emoji favorito?')
         db.session.add(enquete)
         db.session.flush()
         opcoes = ['😀', '😎', '🤖']
         for idx, texto in enumerate(opcoes):
-            db.session.add(NewsEnqueteOpcao(enquete_id=enquete.id, texto=texto, ordem=idx))
+            db.session.add(NewsEnqueteOpcao(
+                enquete_id=enquete.id, texto=texto, ordem=idx))
 
         db.session.commit()
         print('Newsletter seed completed')
 
-    return app
+    return app, socketio

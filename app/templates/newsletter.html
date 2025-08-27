@@ -25,113 +25,320 @@
     {% endfor %} {% for enquete in feed_enquetes %}
     <div class="col-md-6">{% include 'partials/news_enquete_card.html' %}</div>
     {% endfor %} {% if not feed_posts and not feed_enquetes %}
-    <p class="text-center text-muted">
-      Nenhuma publicação no feed por enquanto.
-    </p>
+    <p class="text-center text-muted">Nenhuma publicação no feed.</p>
     {% endif %}
   </div>
 
-  <div class="modal fade" id="newsletterModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div id="modal-content-target">
-          <div class="d-flex justify-content-center p-5">
-            <div class="spinner-border" role="status">
-              <span class="visually-hidden">Loading...</span>
+  <div
+    x-show="isModalOpen"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="nl-modal-overlay"
+    @click.self="closeModal()"
+    @keydown.escape.window="closeModal()"
+    x-cloak
+  >
+    <div
+      x-show="isModalOpen"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 scale-95"
+      x-transition:enter-end="opacity-100 scale-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 scale-100"
+      x-transition:leave-end="opacity-0 scale-95"
+      class="nl-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="'modal-title-' + modalContent.postId"
+    >
+      <header class="nl-modal-header">
+        <h2
+          :id="'modal-title-' + modalContent.postId"
+          class="nl-modal-title"
+          x-text="modalContent.postTitle"
+        ></h2>
+        <button
+          @click="closeModal()"
+          class="nl-modal-close-btn"
+          aria-label="Fechar modal"
+        >
+          &times;
+        </button>
+      </header>
+
+      <div class="nl-modal-body" x-ref="modalBody">
+        <div
+          x-show="isLoading"
+          class="embed-placeholder"
+          :class="modalContent.embedRatio"
+        ></div>
+        <div x-show="!isLoading" x-html="modalContent.embedHtml"></div>
+        <hr class="my-4" />
+
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+          <template
+            x-for="reactionType in reactionTypes"
+            :key="reactionType.type"
+          >
+            <button
+              :class="['nl-reaction-chip', { 'selected': modalContent.reactions.user_reaction === reactionType.type, 'zero-count': !(modalContent.reactions.counts[reactionType.type] > 0) }]"
+              @click="toggleReaction(reactionType.type)"
+            >
+              <i class="bi" :class="reactionType.icon"></i>
+              <span
+                x-text="modalContent.reactions.counts[reactionType.type] || 0"
+              ></span>
+            </button>
+          </template>
+        </div>
+
+        <h6>Comentários</h6>
+        <div class="mb-4">
+          <template x-for="comment in modalContent.comments" :key="comment.id">
+            <div class="d-flex align-items-start my-3">
+              <template x-if="comment.user_photo">
+                <img
+                  :src="comment.user_photo"
+                  class="nl-avatar me-3"
+                  :alt="'Foto de ' + comment.user_name"
+                />
+              </template>
+              <template x-if="!comment.user_photo">
+                <div
+                  class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0"
+                >
+                  <span x-text="comment.user_initials"></span>
+                </div>
+              </template>
+              <div class="w-100">
+                <strong x-text="comment.user_name"></strong>
+                <p
+                  class="mb-0"
+                  style="white-space: pre-wrap; word-break: break-word"
+                  x-text="comment.text"
+                ></p>
+              </div>
             </div>
-          </div>
+          </template>
         </div>
       </div>
+
+      <footer class="nl-modal-footer">
+        <div class="input-group">
+          <textarea
+            x-model="newCommentText"
+            rows="1"
+            class="form-control"
+            placeholder="Adicionar um comentário..."
+            @keydown.enter.prevent.stop="handleCommentSubmit($event)"
+            @input="autosizeTextarea($event.target)"
+          ></textarea>
+          <button class="btn btn-outline-secondary" @click="submitComment()">
+            Enviar
+          </button>
+        </div>
+      </footer>
     </div>
   </div>
 </div>
 {% endblock %} {% block page_scripts %}
-<script src="{{ url_for('static', filename='js/newsletter-api.js') }}"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-  // 1. Dados do usuário logado, passados de forma segura com o filtro 'tojson'
-  const currentUserData = {
-    nome: {{ current_user.nome | tojson }},
-    sobrenome: {{ current_user.sobrenome | tojson }},
-    foto_url: {{ (url_for('static', filename='fotos_colaboradores/' + current_user.foto_filename) if current_user.foto_filename else '') | tojson }},
-    iniciais: {{ ((current_user.nome[0] if current_user.nome else '') + (current_user.sobrenome[0] if current_user.sobrenome else '')) | tojson }}
-  };
-
-  // 2. Função para criar o HTML do comentário otimista
-  function createOptimisticComment(texto) {
-    const element = document.createElement('div');
-    element.classList.add('d-flex', 'align-items-start', 'my-3', 'optimistic-comment');
-
-    let avatarHtml = '';
-    if (currentUserData.foto_url) {
-      avatarHtml = `<img src="${currentUserData.foto_url}" class="nl-avatar me-3" alt="Foto de ${currentUserData.nome}">`;
-    } else {
-      avatarHtml = `
-        <div class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0">
-            <span>${currentUserData.iniciais}</span>
-        </div>`;
-    }
-
-    const escapedText = document.createElement('p');
-    escapedText.textContent = texto;
-    escapedText.classList.add('mb-0');
-
-    element.innerHTML = `
-      ${avatarHtml}
-      <div class="w-100">
-          <strong>${currentUserData.nome} ${currentUserData.sobrenome}</strong>
-          ${escapedText.outerHTML}
-      </div>
-    `;
-    return element;
-  }
-
-  // MODIFIQUE a função submitComment para atualizar o contador do card
-  async function submitComment(postId) {
-    const input = document.getElementById(`comment-input-${postId}`);
-    const texto = input.value.trim();
-    if (!texto) return;
-
-    // --- LÓGICA OTIMISTA PARA O CARD ---
-    const commentsCountElement = document.getElementById(`comments-count-${postId}`);
-    if (commentsCountElement) {
-        const currentComments = parseInt(commentsCountElement.innerText, 10);
-        commentsCountElement.innerText = ` ${currentComments + 1}`;
-    }
-    // --- FIM DA LÓGICA OTIMISTA ---
-
-    const commentList = document.getElementById(`comments-list-${postId}`);
-    const optimisticElement = createOptimisticComment(texto);
-    commentList.appendChild(optimisticElement);
-
-    input.value = '';
-    input.focus();
-
-    const response = await createComment(postId, texto);
-
-    if (!response.ok) {
-      optimisticElement.remove();
-      // Reverte o contador do card em caso de erro
-      if (commentsCountElement) {
-          const currentComments = parseInt(commentsCountElement.innerText, 10);
-          commentsCountElement.innerText = ` ${currentComments - 1}`;
-      }
-      alert('Erro ao enviar o comentário. Tente novamente.');
-      input.value = texto;
-    }
-
-  }
-
-
   function newsletterFeed() {
     return {
-      modalInstance: null,
+      isModalOpen: false,
+      isLoading: true,
+      newCommentText: "",
+      isEnqueteModalOpen: false, // Nova propriedade para o modal de enquete
+      enqueteContent: "", // Para guardar o HTML da enquete
+      modalContent: {
+        postId: null,
+        postTitle: "Carregando...",
+        embedHtml: "",
+        embedRatio: "aspect-video",
+        reactions: { counts: {}, user_reaction: null },
+        comments: [],
+      },
+      reactionTypes: [
+        { type: "heart", icon: "bi-heart-fill" },
+        { type: "lightbulb", icon: "bi-lightbulb-fill" },
+        { type: "rocket", icon: "bi-rocket-takeoff-fill" },
+        { type: "grin", icon: "bi-emoji-grin-fill" },
+        { type: "hearteyes", icon: "bi-emoji-heart-eyes-fill" },
+        { type: "surprise", icon: "bi-emoji-surprise-fill" },
+      ],
+      lastTrigger: null,
+      socket: null,
+
       init() {
-        this.modalInstance = new bootstrap.Modal(document.getElementById('newsletterModal'));
-        document.getElementById('newsletterModal').addEventListener('hidden.bs.modal', event => {
-          document.getElementById('modal-content-target').innerHTML = '<div class="d-flex justify-content-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        this.socket = io();
+        this.socket.on("connect", () => {
+          console.log("Socket.IO Conectado!");
         });
-      }
-    }
+
+        this.socket.on("update_reactions", (data) => {
+          if (this.isModalOpen && this.modalContent.postId === data.post_id) {
+            this.modalContent.reactions.counts = data.counts;
+          }
+        });
+
+        this.socket.on("new_comment", (data) => {
+          // CORRIGIDO: A verificação deve usar data.post_id, que é enviado pelo backend no nível raiz do evento.
+          if (this.isModalOpen && this.modalContent.postId === data.post_id) {
+            if (
+              !this.modalContent.comments.some((c) => c.id === data.comment.id)
+            ) {
+              this.modalContent.comments.push(data.comment);
+              this.$nextTick(() => {
+                this.$refs.modalBody.scrollTop =
+                  this.$refs.modalBody.scrollHeight;
+              });
+            }
+          }
+        });
+      },
+
+      openModal(event, postId, postUrl) {
+        if (!postUrl) {
+          return;
+        }
+        this.lastTrigger = event.currentTarget;
+        document.body.style.overflow = "hidden";
+        this.isModalOpen = true;
+        this.isLoading = true;
+
+        fetch(
+          `/api/news/post_details?url=${encodeURIComponent(
+            postUrl
+          )}&post_id=${postId}`
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              this.modalContent = data;
+              this.$nextTick(() => {
+                const iframe = document.querySelector(
+                  ".nl-modal-dialog iframe"
+                );
+                if (iframe) {
+                  iframe.onload = () => {
+                    this.isLoading = false;
+                  };
+                  setTimeout(() => {
+                    this.isLoading = false;
+                  }, 1500);
+                } else {
+                  this.isLoading = false;
+                }
+                if (window.instgrm) window.instgrm.Embeds.process();
+              });
+            } else {
+              this.isLoading = false;
+              this.modalContent.embedHtml = `<p class="text-danger text-center">${data.error}</p>`;
+            }
+          });
+      },
+
+      closeModal() {
+        this.isModalOpen = false;
+        document.body.style.overflow = "";
+        if (this.lastTrigger) this.lastTrigger.focus();
+        this.modalContent = {
+          postId: null,
+          postTitle: "Carregando...",
+          embedHtml: "",
+          embedRatio: "aspect-video",
+          reactions: { counts: {}, user_reaction: null },
+          comments: [],
+        };
+      },
+
+      // --- NOVA FUNÇÃO ADICIONADA ---
+      async openEnqueteModal(event, enqueteId) {
+        this.lastTrigger = event.currentTarget;
+        this.isLoading = true;
+        this.isModalOpen = true; // Reutiliza o mesmo modal
+        document.body.style.overflow = "hidden";
+
+        // Limpa o conteúdo de post para evitar mostrar reações/comentários antigos
+        this.modalContent.reactions = { counts: {}, user_reaction: null };
+        this.modalContent.comments = [];
+
+        const response = await fetch(`/newsletter/enquete/${enqueteId}`);
+        if (response.ok) {
+          const html = await response.text();
+          this.modalContent.postTitle = "Enquete"; // Título genérico
+          this.modalContent.embedHtml = html;
+        } else {
+          this.modalContent.postTitle = "Erro";
+          this.modalContent.embedHtml = `<p class="text-center text-danger">Não foi possível carregar a enquete.</p>`;
+        }
+        this.isLoading = false; // Garante que o loading termine
+      },
+
+      async toggleReaction(type) {
+        const postId = this.modalContent.postId;
+        const currentReaction = this.modalContent.reactions.user_reaction;
+
+        // Lógica otimista para feedback imediato
+        if (currentReaction === type) {
+          this.modalContent.reactions.user_reaction = null;
+          this.modalContent.reactions.counts[type]--;
+        } else {
+          if (currentReaction) {
+            this.modalContent.reactions.counts[currentReaction]--;
+          }
+          this.modalContent.reactions.user_reaction = type;
+          this.modalContent.reactions.counts[type] =
+            (this.modalContent.reactions.counts[type] || 0) + 1;
+        }
+
+        await fetch(`/api/news/post/${postId}/reacao`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tipo: type }),
+        });
+      },
+
+      handleCommentSubmit(event) {
+        if (!event.shiftKey) this.submitComment();
+      },
+      autosizeTextarea(el) {
+        el.style.height = "auto";
+        el.style.height = el.scrollHeight + "px";
+      },
+
+      async submitComment() {
+        const text = this.newCommentText.trim();
+        if (!text) return;
+
+        const response = await fetch(
+          `/api/news/post/${this.modalContent.postId}/comentarios`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ texto: text }),
+          }
+        );
+
+        if (response.ok) {
+          // CORRIGIDO: Remove a atualização otimista. O novo comentário será adicionado
+          // de forma confiável pelo evento 'new_comment' do WebSocket para todos os usuários,
+          // incluindo quem enviou, garantindo uma única fonte de verdade.
+          this.newCommentText = "";
+          this.$nextTick(() => {
+            const input = document.querySelector(".nl-modal-dialog textarea");
+            this.autosizeTextarea(input);
+          });
+        } else {
+          alert("Erro ao enviar comentário.");
+        }
+      },
+    };
   }
 </script>
 {% endblock %}
