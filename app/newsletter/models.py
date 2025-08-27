@@ -36,8 +36,8 @@ class NewsReacao(db.Model):
         'tb_news_post.id'), nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey(
         'colaborador.id'), nullable=False)
-    tipo = db.Column(db.Enum('like', 'palmas', 'coracao', 'genial',
-                     'feliz', name='news_reacao_tipo'), nullable=False)
+    tipo = db.Column(db.Enum('like', 'palmas', 'coracao', 'genial', 'feliz', 'heart', 'lightbulb',
+                     'surprise', 'rocket', 'grin', 'hearteyes', name='news_reacao_tipo'), nullable=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     __table_args__ = (db.UniqueConstraint(
         'post_id', 'usuario_id', name='uix_reacao_post_usuario'),)

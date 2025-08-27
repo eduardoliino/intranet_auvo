@@ -118,3 +118,55 @@
         padding-right: 16px;
     }
 }
+
+
+
+/* Estilo base para os 'chips' de reação */
+.nl-reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem; /* gap-2 do Bootstrap */
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 50px; /* Bordas arredondadas */
+  border: 1px solid var(--bs-border-color);
+  background-color: var(--bs-gray-100);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--nl-action-color);
+  transition: all 150ms ease-in-out;
+}
+
+/* Estado Hover: leve elevação */
+.nl-reaction-chip:not(.zero-count):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bs-box-shadow-sm);
+}
+
+/* Micro-interação ao clicar */
+.nl-reaction-chip:active {
+  transform: scale(0.98);
+}
+
+/* Estado Selecionado (reação do usuário) */
+.nl-reaction-chip.selected {
+  background-color: var(--bs-primary-bg-subtle);
+  border-color: var(--bs-primary);
+  color: var(--bs-primary-text-emphasis);
+  box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.25); /* Anel/ring */
+}
+
+/* Ícone dentro do chip */
+.nl-reaction-chip .bi {
+  font-size: 18px;
+}
+
+/* Estado para contagem zero */
+.nl-reaction-chip.zero-count {
+  opacity: 0.5;
+  background-color: transparent;
+}
+.nl-reaction-chip.zero-count:hover {
+  transform: none;
+  box-shadow: none;
+}

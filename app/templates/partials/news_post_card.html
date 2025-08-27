@@ -36,10 +36,8 @@
 
   <!-- O footer agora só contém o div de polling -->
   <footer 
-  class="nl-ft"
-  hx-get="{{ url_for('newsletter.render_post_footer', post_id=post.id) }}"
-  hx-trigger="every 15s[document.body.classList.contains('modal-open') === false]"
-  hx-swap="innerHTML">
+  id="footer-card-{{ post.id }}"
+  class="nl-ft">
     {% include 'partials/_news_post_footer.html' %}
 </footer>
 </article>

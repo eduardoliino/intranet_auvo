@@ -12,15 +12,8 @@
     <div class="nl-content mb-3">{{ post.conteudo_md }}</div>
     <hr />
 
-    <div class="mb-3">
-      <strong>Reações:</strong>
-      {% for r in ['like','palmas','coracao','genial','feliz'] %}
-      <button class="btn btn-light" @click.stop="react('{{r}}', {{post.id}})">
-        {{
-        {'like':'👍','palmas':'👏','coracao':'❤️','genial':'💡','feliz':'😊'}[r]
-        }}
-      </button>
-      {% endfor %}
+    <div id="reactions-block-{{ post.id }}" class="mb-3">
+      {% include 'partials/_news_post_reactions.html' %}
     </div>
 
     <h6>Comentários</h6>

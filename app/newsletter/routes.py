@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import hashlib
 import json
 import re
+from collections import Counter
 
 from flask import render_template, request, jsonify, abort
 from flask_login import login_required, current_user
@@ -85,9 +86,24 @@ def feed():
 def ver_post(post_id: int):
     # Substitua a linha antiga por esta consulta otimizada
     post = NewsPost.query.options(
-        subqueryload(NewsPost.comentarios).joinedload(NewsComentario.usuario)
+        subqueryload(NewsPost.comentarios).joinedload(NewsComentario.usuario),
+        # Garante que as reações sejam carregadas
+        subqueryload(NewsPost.reacoes)
     ).get_or_404(post_id)
-    return render_template('newsletter_post_modal.html', post=post)
+
+    # Contabiliza as reações
+    reaction_counts = Counter(r.tipo for r in post.reacoes)
+
+    # Encontra a reação do usuário atual
+    user_reaction = next(
+        (r.tipo for r in post.reacoes if r.usuario_id == current_user.id), None)
+
+    return render_template(
+        'newsletter_post_modal.html',
+        post=post,
+        reaction_counts=reaction_counts,
+        user_reaction=user_reaction
+    )
 
 
 @newsletter_bp.route('/newsletter/enquete/<int:enquete_id>')
@@ -102,9 +118,10 @@ def ver_enquete(enquete_id: int):
 @newsletter_bp.post('/api/news/post/<int:post_id>/reacao')
 @login_required
 def reagir(post_id: int):
-    tipo = request.json.get('tipo')
-    if tipo not in {'like', 'palmas', 'coracao', 'genial', 'feliz'}:
+    tipo = request.form.get('tipo')
+    if tipo not in {'like', 'palmas', 'coracao', 'genial', 'feliz', 'heart', 'lightbulb', 'surprise', 'rocket', 'grin', 'hearteyes'}:
         abort(400)
+
     reacao = NewsReacao.query.filter_by(
         post_id=post_id, usuario_id=current_user.id).first()
     if reacao:
@@ -113,9 +130,12 @@ def reagir(post_id: int):
         reacao = NewsReacao(
             post_id=post_id, usuario_id=current_user.id, tipo=tipo)
         db.session.add(reacao)
+
     db.session.commit()
     registrar_acao(current_user.id, "reagir_post", "post", post_id)
-    return jsonify({'status': 'ok'})
+
+    # Renderiza o template multi-swap
+    return render_multi_swap(post_id)
 
 
 @newsletter_bp.delete('/api/news/post/<int:post_id>/reacao')
@@ -127,10 +147,49 @@ def remover_reacao(post_id: int):
         db.session.delete(reacao)
         db.session.commit()
         registrar_acao(current_user.id, "remover_reacao", "post", post_id)
-    return jsonify({'status': 'ok'})
 
+    # Renderiza o template multi-swap
+    return render_multi_swap(post_id)
+
+
+# Adicione esta função helper para evitar repetição de código
+def render_multi_swap(post_id):
+    post = NewsPost.query.options(
+        subqueryload(NewsPost.reacoes),
+        subqueryload(NewsPost.comentarios)
+    ).get_or_404(post_id)
+
+    reaction_counts = Counter(r.tipo for r in post.reacoes)
+    user_reaction = next(
+        (r.tipo for r in post.reacoes if r.usuario_id == current_user.id), None)
+
+    # Dicionário com os dados completos das reações
+    reaction_types = {
+        'heart': {'icon': 'bi-heart-fill', 'name': 'Coração'},
+        'lightbulb': {'icon': 'bi-lightbulb-fill', 'name': 'Genial'},
+        'rocket': {'icon': 'bi-rocket-takeoff-fill', 'name': 'Foguete'},
+        'grin': {'icon': 'bi-emoji-grin-fill', 'name': 'Feliz'},
+        'hearteyes': {'icon': 'bi-emoji-heart-eyes-fill', 'name': 'Amei'},
+        'surprise': {'icon': 'bi-emoji-surprise-fill', 'name': 'Uau'},
+    }
+
+    # Ordena as reações: as mais contadas primeiro
+    sorted_reactions = sorted(
+        reaction_types.items(),
+        key=lambda item: reaction_counts.get(item[0], 0),
+        reverse=True
+    )
+
+    return render_template(
+        'partials/_multi_swap_reactions.html',
+        post=post,
+        reaction_counts=reaction_counts,
+        user_reaction=user_reaction,
+        sorted_reactions=sorted_reactions  # Envia a lista ordenada para o template
+    )
 
 # Comentários --------------------------------------------
+
 
 @newsletter_bp.get('/api/news/post/<int:post_id>/comentarios')
 @login_required
@@ -433,6 +492,25 @@ def desfazer_fixacao(tipo: str, ref_id: int):
     obj.fixado_ordem = None
     db.session.commit()
     return jsonify({'status': 'ok'})
+
+
+@newsletter_bp.route('/newsletter/post/<int:post_id>/_reactions')
+@login_required
+def render_post_reactions(post_id: int):
+    """Renderiza apenas a seção de reações do post."""
+    post = NewsPost.query.options(subqueryload(
+        NewsPost.reacoes)).get_or_404(post_id)
+
+    reaction_counts = Counter(r.tipo for r in post.reacoes)
+    user_reaction = next(
+        (r.tipo for r in post.reacoes if r.usuario_id == current_user.id), None)
+
+    return render_template(
+        'partials/_news_post_reactions.html',
+        post=post,
+        reaction_counts=reaction_counts,
+        user_reaction=user_reaction
+    )
 
 
 @newsletter_bp.route('/newsletter/post/<int:post_id>/_footer')

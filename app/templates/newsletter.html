@@ -1,4 +1,51 @@
-{% block page_scripts %}
+{% extends 'base.html' %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/newsletter.css') }}"
+/>
+
+<div class="nl-feed py-4" x-data="newsletterFeed()">
+  <h1 class="mb-4">Newsletter</h1>
+
+  {% if fixados_posts or fixados_enquetes %}
+  <h4 class="mb-3 text-muted">Destaques</h4>
+  <div class="row g-4 mb-5">
+    {% for post in fixados_posts %}
+    <div class="col-md-6">{% include 'partials/news_post_card.html' %}</div>
+    {% endfor %} {% for enquete in fixados_enquetes %}
+    <div class="col-md-6">{% include 'partials/news_enquete_card.html' %}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <h4 class="mb-3 text-muted">Feed</h4>
+  <div class="row g-4">
+    {% for post in feed_posts %}
+    <div class="col-md-6">{% include 'partials/news_post_card.html' %}</div>
+    {% endfor %} {% for enquete in feed_enquetes %}
+    <div class="col-md-6">{% include 'partials/news_enquete_card.html' %}</div>
+    {% endfor %} {% if not feed_posts and not feed_enquetes %}
+    <p class="text-center text-muted">
+      Nenhuma publicação no feed por enquanto.
+    </p>
+    {% endif %}
+  </div>
+
+  <div class="modal fade" id="newsletterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div id="modal-content-target">
+          <div class="d-flex justify-content-center p-5">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block page_scripts %}
 <script src="{{ url_for('static', filename='js/newsletter-api.js') }}"></script>
 <script>
   // 1. Dados do usuário logado, passados de forma segura com o filtro 'tojson'
@@ -24,7 +71,6 @@
         </div>`;
     }
 
-    // Usamos 'escape' para evitar problemas com textos que contenham HTML
     const escapedText = document.createElement('p');
     escapedText.textContent = texto;
     escapedText.classList.add('mb-0');
@@ -39,32 +85,43 @@
     return element;
   }
 
-  // 3. Função de envio global e segura
+  // MODIFIQUE a função submitComment para atualizar o contador do card
   async function submitComment(postId) {
     const input = document.getElementById(`comment-input-${postId}`);
     const texto = input.value.trim();
     if (!texto) return;
 
+    // --- LÓGICA OTIMISTA PARA O CARD ---
+    const commentsCountElement = document.getElementById(`comments-count-${postId}`);
+    if (commentsCountElement) {
+        const currentComments = parseInt(commentsCountElement.innerText, 10);
+        commentsCountElement.innerText = ` ${currentComments + 1}`;
+    }
+    // --- FIM DA LÓGICA OTIMISTA ---
+
     const commentList = document.getElementById(`comments-list-${postId}`);
     const optimisticElement = createOptimisticComment(texto);
     commentList.appendChild(optimisticElement);
-    
+
     input.value = '';
     input.focus();
 
-    const response = await createComment(postId, texto); // Função de newsletter-api.js
+    const response = await createComment(postId, texto);
 
     if (!response.ok) {
       optimisticElement.remove();
+      // Reverte o contador do card em caso de erro
+      if (commentsCountElement) {
+          const currentComments = parseInt(commentsCountElement.innerText, 10);
+          commentsCountElement.innerText = ` ${currentComments - 1}`;
+      }
       alert('Erro ao enviar o comentário. Tente novamente.');
       input.value = texto;
-    } else {
-      htmx.trigger(`#comments-list-${postId}`, 'load');
-      htmx.trigger(`[hx-get='/newsletter/post/${postId}/_footer']`, 'load');
     }
+
   }
 
-  // 4. Componente AlpineJS simples para gerenciar o modal
+
   function newsletterFeed() {
     return {
       modalInstance: null,

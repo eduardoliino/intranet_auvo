@@ -485,6 +485,14 @@
               return new bootstrap.Tooltip(tooltipTriggerEl)
           });
       });
+
+      // ADICIONE ESTE BLOCO para reinicializar tooltips após o HTMX agir
+      document.body.addEventListener('htmx:afterSwap', function(event) {
+          var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+          var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+              return new bootstrap.Tooltip(tooltipTriggerEl)
+          });
+      });
     </script>
   </body>
 </html>

@@ -1,0 +1,28 @@
+<div class="d-flex align-items-center gap-2 flex-wrap">
+    <strong>Reações:</strong>
+    {% for type, data in sorted_reactions %}
+        {% set count = reaction_counts.get(type, 0) %}
+        {% if user_reaction == type or count > 0 %}
+            {% if user_reaction == type %}
+                <button 
+                  class="nl-reaction-chip selected"
+                  hx-delete="{{ url_for('newsletter.remover_reacao', post_id=post.id) }}"
+                  hx-swap="none"
+                  data-bs-toggle="tooltip" title="{{ data.name }}">
+                  <i class="bi {{ data.icon }}"></i>
+                  <span>{{ count }}</span>
+                </button>
+            {% else %}
+                <button 
+                  class="nl-reaction-chip {% if count == 0 %}zero-count{% endif %}"
+                  hx-post="{{ url_for('newsletter.reagir', post_id=post.id) }}"
+                  hx-vals='{"tipo": "{{ type }}"}'
+                  hx-swap="none"
+                  data-bs-toggle="tooltip" title="{{ data.name }}">
+                  <i class="bi {{ data.icon }}"></i>
+                  <span>{{ count }}</span>
+                </button>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+</div>

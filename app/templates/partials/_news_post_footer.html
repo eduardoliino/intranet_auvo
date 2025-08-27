@@ -1,6 +1,7 @@
 <div class="d-flex justify-content-between align-items-center w-100">
     <div class="text-muted small">
-        <i class="bi bi-hand-thumbs-up"></i> {{ post.reacoes|length }}
-        <i class="bi bi-chat-left ms-2"></i> {{ post.comentarios|selectattr('excluido','equalto',False)|list|length }}
+        <i class="bi bi-hand-thumbs-up-fill nl-counter-icon" id="reactions-count-{{ post.id }}"> {{ post.reacoes|length }}</i>
+        
+        <i class="bi bi-chat-text nl-counter-icon" id="comments-count-{{ post.id }}"> {{ post.comentarios|selectattr('excluido','equalto',False)|list|length }}</i>
     </div>
-    </div>
+</div>
