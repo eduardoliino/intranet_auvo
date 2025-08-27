@@ -137,23 +137,17 @@
   transition: all 150ms ease-in-out;
 }
 
-/* Estado Hover: leve elevação */
+/* Estado Hover: sutil, sem deslocamento vertical */
 .nl-reaction-chip:not(.zero-count):hover {
-  transform: translateY(-2px);
-  box-shadow: var(--bs-box-shadow-sm);
+  border-color: var(--bs-gray-400); /* Apenas escurece a borda no hover */
 }
 
-/* Micro-interação ao clicar */
-.nl-reaction-chip:active {
-  transform: scale(0.98);
-}
-
-/* Estado Selecionado (reação do usuário) */
+/* Estado Selecionado (sem o anel/ring) */
 .nl-reaction-chip.selected {
-  background-color: var(--bs-primary-bg-subtle);
-  border-color: var(--bs-primary);
-  color: var(--bs-primary-text-emphasis);
-  box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.25); /* Anel/ring */
+  background-color: var(--cor-primaria-muito-clara); /* Usa a cor lilás clara do seu tema */
+  border-color: var(--cor-primaria); /* Usa a cor roxa principal do seu tema */
+  color: var(--cor-primaria-escura);
+  /* A linha do box-shadow foi removida */
 }
 
 /* Ícone dentro do chip */
