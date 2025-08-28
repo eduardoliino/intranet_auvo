@@ -1,14 +1,18 @@
-<article 
+<article
   class="nl-card nl-card-enquete"
-  style="cursor: pointer;"
-  @click="openEnqueteModal(enquete.id)">
-    
-    <div class="nl-body py-4">
-        <h5>{{ enquete.pergunta }}</h5>
-        <p class="nl-meta">{{ 'Encerrada' if enquete.status == 'encerrada' else 'Aberta' }}</p>
-        
-        {% for opcao in enquete.opcoes|sort(attribute='ordem') %}
-            <div class="nl-poll-option">{{ opcao.texto }}</div>
-        {% endfor %}
-    </div>
+  style="cursor: pointer"
+  @click="openEnqueteModal($event, {{ enquete.id }})"
+  tabindex="0"
+  @keydown.enter.prevent="openEnqueteModal($event, {{ enquete.id }})"
+>
+  <div class="nl-body py-4">
+    <h5>{{ enquete.pergunta }}</h5>
+    <p class="nl-meta">
+      {{ 'Encerrada' if enquete.status == 'encerrada' else 'Aberta' }}
+    </p>
+
+    {% for opcao in enquete.opcoes|sort(attribute='ordem') %}
+    <div class="nl-poll-option">{{ opcao.texto }}</div>
+    {% endfor %}
+  </div>
 </article>

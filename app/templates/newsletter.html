@@ -9,7 +9,7 @@
 
   {% if fixados_posts or fixados_enquetes %}
   <h4 class="mb-3 text-muted">Destaques</h4>
-  <div class="row g-4 mb-5">
+  <div class="row g-5 mb-5">
     {% for post in fixados_posts %}
     <div class="col-md-6">{% include 'partials/news_post_card.html' %}</div>
     {% endfor %} {% for enquete in fixados_enquetes %}
@@ -19,7 +19,7 @@
   {% endif %}
 
   <h4 class="mb-3 text-muted">Feed</h4>
-  <div class="row g-4">
+  <div class="row g-5">
     {% for post in feed_posts %}
     <div class="col-md-6">{% include 'partials/news_post_card.html' %}</div>
     {% endfor %} {% for enquete in feed_enquetes %}
@@ -56,23 +56,64 @@
       :aria-labelledby="'modal-title-' + modalContent.postId"
     >
       <header class="nl-modal-header">
-        <h2
-          :id="'modal-title-' + modalContent.postId"
+        <h5
           class="nl-modal-title"
-          x-text="modalContent.postTitle"
-        ></h2>
-        <button
-          @click="closeModal()"
-          class="nl-modal-close-btn"
-          aria-label="Fechar modal"
-        >
-          &times;
-        </button>
+          x-text="modalContent.postTitle || 'Detalhes'"
+        ></h5>
+        <div class="nl-modal-actions">
+          <!-- aparece se encontrarmos um link de origem no conteúdo -->
+          <a
+            x-show="sourceLink"
+            :href="sourceLink"
+            target="_blank"
+            rel="noopener"
+            class="nl-link-out"
+            >Abrir link</a
+          >
+          <button
+            x-show="sourceLink"
+            type="button"
+            class="nl-btn-icon"
+            @click="copySourceLink()"
+            aria-label="Copiar link"
+          >
+            <i class="bi bi-link-45deg" aria-hidden="true"></i>
+          </button>
+          <button
+            type="button"
+            class="nl-btn-icon"
+            @click="closeModal"
+            aria-label="Fechar"
+          >
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <!-- progresso de leitura -->
+        <div class="nl-progress">
+          <span :style="{ width: scrollPct + '%' }"></span>
+        </div>
       </header>
 
-      <div class="nl-modal-body" x-ref="modalBody">
-        <div x-show="isLoading" class="embed-placeholder aspect-video"></div>
-        <div x-show="!isLoading" x-html="modalContent.post_html"></div>
+      <div
+        class="nl-modal-body nl-scrollfade custom-scrollbar"
+        x-ref="modalBody"
+        :class="{'has-top-shadow': !atTop, 'has-bottom-shadow': !atBottom}"
+        @scroll.debounce.100ms="onBodyScroll($event)"
+        :aria-busy="isLoading"
+      >
+        <div
+          x-show="isLoading"
+          :class="'embed-placeholder ' + (placeholderClass || 'aspect-video')"
+        ></div>
+
+        <div
+          x-show="!isLoading"
+          x-ref="embedContent"
+          class="nl-embed-wrap"
+          x-html="modalContent.post_html"
+        ></div>
+
         <hr class="my-4" />
 
         <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
@@ -86,6 +127,7 @@
             >
               <i class="bi" :class="reactionType.icon"></i>
               <span
+                class="nl-count"
                 x-text="modalContent.reactions.counts[reactionType.type] || 0"
               ></span>
             </button>
@@ -124,19 +166,29 @@
       </div>
 
       <footer class="nl-modal-footer">
-        <div class="input-group">
-          <textarea
-            x-model="newCommentText"
-            rows="1"
-            class="form-control"
-            placeholder="Adicionar um comentário..."
-            @keydown.enter.prevent.stop="handleCommentSubmit($event)"
-            @input="autosizeTextarea($event.target)"
-          ></textarea>
-          <button class="btn btn-outline-secondary" @click="submitComment()">
-            Enviar
-          </button>
-        </div>
+        <form class="nl-comment-bar" @submit.prevent="submitComment()">
+          <div class="nl-comment-field">
+            <textarea
+              x-model="newCommentText"
+              x-ref="commentInput"
+              rows="1"
+              class="nl-comment-input"
+              placeholder="Adicionar um comentário..."
+              @keydown.enter.prevent.stop="handleCommentSubmit($event)"
+              @input="autosizeTextarea($event.target)"
+              aria-label="Adicionar um comentário"
+            ></textarea>
+
+            <button
+              type="submit"
+              class="nl-comment-send"
+              :disabled="isSubmitting || !newCommentText.trim()"
+              aria-label="Enviar comentário"
+            >
+              <i class="bi bi-send-fill" aria-hidden="true"></i>
+            </button>
+          </div>
+        </form>
       </footer>
     </div>
   </div>
@@ -146,13 +198,20 @@
 <script>
   function newsletterFeed() {
     return {
+      // STATE
       isModalOpen: false,
       isLoading: true,
       newCommentText: "",
+      isSubmitting: false,
+      sourceLink: "",
+      scrollPct: 0,
+      atTop: true,
+      atBottom: false,
+      placeholderClass: "aspect-video",
       modalContent: {
         postId: null,
         postTitle: "Carregando...",
-        post_html: "", // <-- CORREÇÃO: Usaremos 'post_html' para o conteúdo.
+        post_html: "",
         reactions: { counts: {}, user_reaction: null },
         comments: [],
       },
@@ -167,25 +226,175 @@
       lastTrigger: null,
       socket: null,
 
-      init() {
-        // A função init() e os listeners do socket.io permanecem os mesmos.
-        this.socket = io();
-        this.socket.on("connect", () => {
-          console.log("Socket.IO Conectado!");
+      // HELPERS
+      guessPlaceholderClass(html) {
+        const h = (html || "").toLowerCase();
+        if (h.includes("instagram.com")) return "aspect-square";
+        if (h.includes("youtube.com") || h.includes("youtu.be"))
+          return "aspect-video";
+        if (
+          h.includes("docs.google.com") ||
+          h.includes("drive.google.com") ||
+          h.includes("linkedin.com")
+        )
+          return "aspect-document";
+        return "aspect-og";
+      },
+
+      async waitForEmbeds(container, timeoutMs = 2500) {
+        if (!container) return;
+
+        const collect = () => {
+          const iframes = Array.from(container.querySelectorAll("iframe"));
+          const imgs = Array.from(container.querySelectorAll("img"));
+          return { iframes, imgs };
+        };
+
+        const onceLoad = (el) =>
+          new Promise((res) => {
+            if (el.tagName === "IMG" && el.complete) return res();
+            el.addEventListener("load", () => res(), { once: true });
+            setTimeout(() => res(), 1200); // fallback
+          });
+
+        // Instagram que usa <blockquote>
+        try {
+          if (
+            window.instgrm &&
+            container.querySelector("blockquote.instagram-media")
+          ) {
+            window.instgrm.Embeds.process();
+          }
+        } catch (_) {}
+
+        await new Promise((r) => requestAnimationFrame(r));
+        let { iframes, imgs } = collect();
+
+        // Se ainda não veio o iframe do Instagram, observa rapidinho
+        if (
+          iframes.length === 0 &&
+          container.querySelector("blockquote.instagram-media")
+        ) {
+          await new Promise((res) => {
+            const obs = new MutationObserver(() => {
+              const found = container.querySelector("iframe");
+              if (found) {
+                obs.disconnect();
+                res();
+              }
+            });
+            obs.observe(container, { childList: true, subtree: true });
+            setTimeout(() => {
+              obs.disconnect();
+              res();
+            }, 1200);
+          });
+          ({ iframes, imgs } = collect());
+        }
+
+        const mediaPromises = [...iframes.map(onceLoad), ...imgs.map(onceLoad)];
+
+        if (mediaPromises.length === 0) {
+          await new Promise((r) => setTimeout(r, 200));
+          return;
+        }
+
+        await Promise.race([
+          Promise.all(mediaPromises),
+          new Promise((r) => setTimeout(r, timeoutMs)),
+        ]);
+      },
+
+      normalizeEmbeds(container) {
+        if (!container) return;
+
+        // largura total e centralização
+        container.querySelectorAll("iframe").forEach((f) => {
+          f.removeAttribute("width");
+          f.style.width = "100%";
+          f.style.maxWidth = "100%";
+          f.style.display = "block";
+          f.style.margin = "0 auto";
+          f.setAttribute("loading", f.getAttribute("loading") || "lazy");
         });
+
+        container.querySelectorAll("img").forEach((img) => {
+          img.style.maxWidth = "100%";
+          img.style.height = "auto";
+          img.style.display = "block";
+          img.style.margin = "0 auto";
+        });
+
+        container
+          .querySelectorAll("blockquote.instagram-media")
+          .forEach((bq) => {
+            bq.style.margin = "0 auto";
+            bq.style.maxWidth = "100%";
+            try {
+              window.instgrm && window.instgrm.Embeds.process();
+            } catch (_) {}
+          });
+
+        // Wrap 16:9 para players de vídeo
+        container.querySelectorAll("iframe").forEach((f) => {
+          const src = (f.getAttribute("src") || "").toLowerCase();
+          const isVideo =
+            src.includes("youtube.com") ||
+            src.includes("youtu.be") ||
+            src.includes("player.vimeo.com");
+          if (
+            isVideo &&
+            !f.parentElement.classList.contains("nl-embed-video")
+          ) {
+            const wrap = document.createElement("div");
+            wrap.className = "nl-embed-video";
+            f.parentElement.insertBefore(wrap, f);
+            wrap.appendChild(f);
+          }
+        });
+      },
+
+      copySourceLink() {
+        if (!this.sourceLink) return;
+        navigator.clipboard.writeText(this.sourceLink);
+      },
+
+      onBodyScroll(e) {
+        const el = e?.target || this.$refs.modalBody;
+        if (!el) return;
+        const max = el.scrollHeight - el.clientHeight;
+        this.scrollPct = max > 0 ? Math.round((el.scrollTop / max) * 100) : 0;
+        this.atTop = el.scrollTop <= 2;
+        this.atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+      },
+
+      scrollToTop() {
+        this.$refs.modalBody?.scrollTo({ top: 0, behavior: "smooth" });
+      },
+
+      setSourceLink() {
+        try {
+          const cnt = this.$refs.embedContent || this.$refs.modalBody;
+          const a = cnt?.querySelector('a[href^="http"]');
+          this.sourceLink = a ? a.href : "";
+        } catch {
+          this.sourceLink = "";
+        }
+      },
+
+      // LIFECYCLE / SOCKET
+      init() {
+        this.socket = io();
+        this.socket.on("connect", () => console.log("Socket.IO Conectado!"));
 
         this.socket.on("update_reactions", (data) => {
           const reactionCountEl = document.getElementById(
             `reactions-count-${data.post_id}`
           );
           if (reactionCountEl) {
-            const totalReactions = Object.values(data.counts).reduce(
-              (a, b) => a + b,
-              0
-            );
-            reactionCountEl.innerText = ` ${totalReactions}`;
+            const total = Object.values(data.counts).reduce((a, b) => a + b, 0);
+            reactionCountEl.innerText = ` ${total}`;
           }
-
           if (this.isModalOpen && this.modalContent.postId === data.post_id) {
             this.modalContent.reactions.counts = data.counts;
           }
@@ -197,11 +406,9 @@
             `comments-count-${postId}`
           );
           if (commentCountEl) {
-            const current_count =
-              parseInt(commentCountEl.innerText.trim()) || 0;
-            commentCountEl.innerText = ` ${current_count + 1}`;
+            const current = parseInt(commentCountEl.innerText.trim()) || 0;
+            commentCountEl.innerText = ` ${current + 1}`;
           }
-
           if (this.isModalOpen && this.modalContent.postId === postId) {
             if (
               !this.modalContent.comments.some((c) => c.id === data.comment.id)
@@ -210,53 +417,60 @@
                 ...this.modalContent.comments,
                 data.comment,
               ];
-
               this.$nextTick(() => {
-                if (this.$refs.modalBody) {
-                  this.$refs.modalBody.scrollTop =
-                    this.$refs.modalBody.scrollHeight;
-                }
+                this.$refs.modalBody &&
+                  (this.$refs.modalBody.scrollTop =
+                    this.$refs.modalBody.scrollHeight);
               });
             }
           }
         });
       },
 
-      // A função openModal agora recebe apenas 2 argumentos.
+      // OPEN/CLOSE
       openModal(event, postId) {
         this.lastTrigger = event.currentTarget;
         document.body.style.overflow = "hidden";
         this.isModalOpen = true;
         this.isLoading = true;
 
-        // CORREÇÃO: A URL da API foi simplificada.
         fetch(`/api/news/post_details?post_id=${postId}`)
           .then((res) => res.json())
-          .then((data) => {
-            if (data.success) {
-              this.modalContent = data;
-              // Simplificamos a lógica de loading.
-              this.isLoading = false;
-
-              // CORREÇÃO: Chame o processador do Instagram aqui!
-              this.$nextTick(() => {
-                // Esta verificação garante que o script já carregou
-                if (window.instgrm) {
-                  window.instgrm.Embeds.process();
-                }
-              });
-            } else {
-              this.isLoading = false;
+          .then(async (data) => {
+            if (!data.success) {
+              this.modalContent.postTitle = "Erro";
               this.modalContent.post_html = `<p class="text-danger text-center">${data.error}</p>`;
+              this.isLoading = false;
+              return;
+            }
+
+            this.modalContent = data;
+            this.placeholderClass = this.guessPlaceholderClass(
+              this.modalContent.post_html
+            );
+
+            await this.$nextTick();
+            this.normalizeEmbeds(
+              this.$refs.embedContent || this.$refs.modalBody
+            );
+            try {
+              this.onBodyScroll({ target: this.$refs.modalBody });
+              this.setSourceLink();
+              await this.waitForEmbeds(this.$refs.embedContent, 2500);
+            } finally {
+              this.isLoading = false;
+              // Instagram reprocess
+              try {
+                window.instgrm && window.instgrm.Embeds.process();
+              } catch (_) {}
             }
           });
       },
 
-      // O resto das funções (closeModal, toggleReaction, etc.) permanece igual...
       closeModal() {
         this.isModalOpen = false;
         document.body.style.overflow = "";
-        if (this.lastTrigger) this.lastTrigger.focus();
+        this.lastTrigger && this.lastTrigger.focus();
         this.modalContent = {
           postId: null,
           postTitle: "Carregando...",
@@ -264,7 +478,12 @@
           reactions: { counts: {}, user_reaction: null },
           comments: [],
         };
+        this.sourceLink = "";
+        this.scrollPct = 0;
+        this.atTop = true;
+        this.atBottom = false;
       },
+
       async openEnqueteModal(event, enqueteId) {
         this.lastTrigger = event.currentTarget;
         this.isLoading = true;
@@ -285,17 +504,17 @@
         }
         this.isLoading = false;
       },
+
+      // REACTIONS / COMMENTS
       async toggleReaction(type) {
         const postId = this.modalContent.postId;
-        const currentReaction = this.modalContent.reactions.user_reaction;
+        const current = this.modalContent.reactions.user_reaction;
 
-        if (currentReaction === type) {
+        if (current === type) {
           this.modalContent.reactions.user_reaction = null;
           this.modalContent.reactions.counts[type]--;
         } else {
-          if (currentReaction) {
-            this.modalContent.reactions.counts[currentReaction]--;
-          }
+          if (current) this.modalContent.reactions.counts[current]--;
           this.modalContent.reactions.user_reaction = type;
           this.modalContent.reactions.counts[type] =
             (this.modalContent.reactions.counts[type] || 0) + 1;
@@ -307,34 +526,42 @@
           body: JSON.stringify({ tipo: type }),
         });
       },
-      handleCommentSubmit(event) {
-        if (!event.shiftKey) this.submitComment();
+
+      handleCommentSubmit(e) {
+        if (!e.shiftKey) this.submitComment();
       },
+
       autosizeTextarea(el) {
         el.style.height = "auto";
         el.style.height = el.scrollHeight + "px";
       },
+
       async submitComment() {
         const text = this.newCommentText.trim();
-        if (!text) return;
+        if (!text || this.isSubmitting) return;
 
-        const response = await fetch(
-          `/api/news/post/${this.modalContent.postId}/comentarios`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ texto: text }),
+        this.isSubmitting = true;
+        try {
+          const response = await fetch(
+            `/api/news/post/${this.modalContent.postId}/comentarios`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ texto: text }),
+            }
+          );
+
+          if (response.ok) {
+            this.newCommentText = "";
+            this.$nextTick(() => {
+              const input = this.$refs.commentInput;
+              if (input) this.autosizeTextarea(input);
+            });
+          } else {
+            alert("Erro ao enviar comentário.");
           }
-        );
-
-        if (response.ok) {
-          this.newCommentText = "";
-          this.$nextTick(() => {
-            const input = document.querySelector(".nl-modal-dialog textarea");
-            this.autosizeTextarea(input);
-          });
-        } else {
-          alert("Erro ao enviar comentário.");
+        } finally {
+          this.isSubmitting = false;
         }
       },
     };

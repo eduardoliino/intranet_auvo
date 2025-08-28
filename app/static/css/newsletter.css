@@ -121,33 +121,25 @@
 
 
 
-/* Estilo base para os 'chips' de reação */
+/* Chips de reação */
 .nl-reaction-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem; /* gap-2 do Bootstrap */
+  gap: .5rem;
   height: 36px;
   padding: 0 12px;
-  border-radius: 50px; /* Bordas arredondadas */
+  border-radius: 50px;
   border: 1px solid var(--bs-border-color);
   background-color: var(--bs-gray-100);
-  font-size: 0.875rem;
+  font-size: .875rem;
   font-weight: 500;
   color: var(--nl-action-color);
   transition: all 150ms ease-in-out;
 }
-
-/* Estado Hover: sutil, sem deslocamento vertical */
-.nl-reaction-chip:not(.zero-count):hover {
-  border-color: var(--bs-gray-400); /* Apenas escurece a borda no hover */
-}
-
-/* Estado Selecionado (sem o anel/ring) */
 .nl-reaction-chip.selected {
-  background-color: var(--cor-primaria-muito-clara); /* Usa a cor lilás clara do seu tema */
-  border-color: var(--cor-primaria); /* Usa a cor roxa principal do seu tema */
+  background-color: var(--cor-primaria-muito-clara); /* lilás claro do tema */
+  border-color: var(--cor-primaria);                 /* roxo principal */
   color: var(--cor-primaria-escura);
-  /* A linha do box-shadow foi removida */
 }
 
 /* Ícone dentro do chip */
@@ -296,4 +288,298 @@
 .nl-modal-body .instagram-media {
     margin-left: auto !important;
     margin-right: auto !important;
+}
+
+/* === Feed: ajustes visuais sem tocar no modal === */
+
+/* Mais largura útil no feed */
+.nl-feed {
+  max-width: 1240px !important;   /* antes era ~880px */
+  padding-left: .25rem;
+  padding-right: .25rem;
+}
+@media (min-width: 1200px) {
+  .nl-feed { max-width: 1340px !important; }
+}
+
+/* Card: leve elevação/anel sutil */
+.nl-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+  outline: 1px solid rgba(0,0,0,0.05);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.nl-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
+
+/* Título e resumo mais consistentes dentro do card */
+.nl-card .nl-body { gap: .25rem; }
+
+/* CLAMP do resumo somente no card (não afeta o modal) */
+.nl-card .nl-content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;  /* 3 linhas */
+  overflow: hidden;
+}
+
+/* Separador acima das reações um pouco mais suave */
+.nl-sep { border-top: 1px solid #f3f4f6; }
+
+/* Foco visível no “link inteiro” do card, sem mudar o modal */
+.nl-link:focus-visible {
+  outline: 2px solid var(--cor-primaria-clara);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+/* Modal em carregamento: cursor de progresso */
+.nl-modal-body[aria-busy="true"] { cursor: progress; }
+
+/* --- Modal acima da navbar e com folga nas bordas --- */
+.nl-modal-overlay {
+  /* estava z-index: 60 */
+  z-index: 2000 !important;                       /* fica acima da navbar (1050) */
+}
+
+.nl-modal-dialog {
+  /* estava z-index: 70 */
+  z-index: 2010 !important;
+
+  /* folga nas bordas para nunca encostar/topar no topo/rodapé */
+  margin: 16px;
+
+  /* usa viewport dinâmico + safe-area para não cortar em devices com notch */
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top,0) - env(safe-area-inset-bottom,0)) !important;
+}
+
+/* === Modal: normalização de embeds (fix) === */
+
+/* wrap que contém o HTML do post dentro do modal */
+.nl-embed-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .75rem;
+}
+
+/* imagens dentro do conteúdo: largura total do modal */
+.nl-embed-wrap img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+/* iframes genéricos (YouTube, LinkedIn, Drive, Instagram EMBED) */
+.nl-embed-wrap iframe {
+  width: 100% !important;      /* ocupa toda a largura disponível */
+  max-width: 100% !important;
+  /* (importante) não force a altura! deixe o provider definir */
+  display: block;
+  margin: 0 auto;
+  border: 0;
+}
+
+/* Instagram legacy (blockquote) – garantimos centralização */
+.nl-embed-wrap blockquote.instagram-media {
+  margin: 0 auto !important;
+  max-width: 100% !important;
+}
+
+/* Elementos com width fixo inline não estouram */
+.nl-embed-wrap [style*="width"] {
+  max-width: 100% !important;
+}
+
+/* Texto comum segue largura total */
+.nl-embed-wrap > p,
+.nl-embed-wrap > div:not(:has(iframe, blockquote.instagram-media)) {
+  width: 100%;
+}
+
+/* wrapper responsivo para players de vídeo */
+.nl-embed-video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;        /* 16:9 */
+  overflow: hidden;
+  border-radius: 12px;
+}
+.nl-embed-video > iframe {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;     /* aqui sim, porque está no wrapper de proporção */
+}
+
+/* === Barra de comentários do modal === */
+.nl-comment-bar {
+  width: 100%;
+}
+
+.nl-comment-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;                 /* combina com seu tema */
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;                /* pill */
+  padding: .25rem .25rem .25rem 1rem;   /* espaço p/ o texto */
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+
+.nl-comment-field:focus-within {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 2px var(--cor-primaria-clara);
+}
+
+.nl-comment-input {
+  flex: 1;
+  min-height: 42px;
+  max-height: 160px;
+  line-height: 1.4;
+  border: 0;
+  background: transparent;
+  outline: none;
+  resize: none;              /* a altura cresce via JS */
+  padding: .5rem 3rem .5rem 0; /* espaço pro botão à direita */
+  color: #374151;
+}
+
+.nl-comment-input::placeholder {
+  color: #6b7280;            /* contraste melhor */
+}
+
+/* Botão de enviar “flutuante” dentro do campo */
+.nl-comment-send {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--cor-primaria);
+  color: white;
+  font-weight: 600;
+  transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+}
+
+.nl-comment-send:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.nl-comment-send:active { transform: translateY(0); }
+.nl-comment-send:disabled { opacity: .5; cursor: not-allowed; }
+
+.nl-comment-send .bi { font-size: 16px; line-height: 1; }
+
+/* ===== Modal: header sticky + progress + sombras de scroll ===== */
+
+/* header do modal */
+.nl-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--cor-neutra);
+  border-bottom: 1px solid #eee;
+}
+
+/* título do modal */
+.nl-modal-header .nl-modal-title {
+  margin: 0;
+  font-weight: 600;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ações à direita do header */
+.nl-modal-actions { display: flex; align-items: center; gap: 8px; }
+
+.nl-btn-icon {
+  display: inline-grid; place-items: center;
+  width: 36px; height: 36px; border-radius: 9999px;
+  border: 1px solid #e5e7eb; background: #fff; color: #4b5563;
+  transition: transform .12s ease, background-color .12s ease, border-color .12s ease;
+}
+.nl-btn-icon:hover { background: #f9fafb; border-color: #d1d5db; transform: translateY(-1px); }
+.nl-btn-icon:active { transform: translateY(0); }
+
+.nl-link-out {
+  font-size: .875rem; color: var(--cor-primaria);
+  text-decoration: none; padding: 6px 10px; border-radius: 8px;
+  background: #f8f5ff; border: 1px solid #ece7ff;
+}
+.nl-link-out:hover { filter: brightness(0.98); }
+
+/* barra de progresso de leitura */
+.nl-progress {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: transparent;
+}
+.nl-progress > span { display: block; height: 100%; width: 0; background: var(--cor-primaria-clara); }
+
+/* container rolável com sombras nas bordas quando há conteúdo fora da tela */
+.nl-scrollfade { position: relative; }
+.nl-scrollfade::before,
+.nl-scrollfade::after {
+  content: ""; position: sticky; left: 0; right: 0; height: 14px; pointer-events: none; z-index: 2; opacity: 0; transition: opacity .15s;
+}
+.nl-scrollfade::before { top: 0; background: linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0)); }
+.nl-scrollfade::after  { bottom: 0; background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0)); }
+.nl-scrollfade.has-top-shadow::before    { opacity: 1; }
+.nl-scrollfade.has-bottom-shadow::after  { opacity: 1; }
+
+/* botão “voltar ao topo” dentro do corpo do modal */
+.nl-scrolltop {
+  position: sticky; bottom: 12px; margin-left: auto;
+  width: 38px; height: 38px; border-radius: 9999px;
+  display: inline-grid; place-items: center;
+  background: var(--cor-primaria); color: #fff; border: 0;
+  box-shadow: 0 6px 16px rgba(0,0,0,.12);
+  transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+}
+.nl-scrolltop:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.nl-scrolltop:active { transform: translateY(0); }
+
+/* HR mais suave dentro do modal */
+.nl-modal-body hr {
+  border: 0;
+  border-top: 1px solid #edf2f7; /* cinza clarinho */
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/* E, se a impressão de “linha preta” vier do topo do footer: */
+.nl-modal-footer {
+  border-top: 1px solid #edf2f7 !important;
+}
+
+/* Clipa qualquer conteúdo interno ao raio do modal */
+.nl-modal-dialog{
+  border-radius: 16px !important;
+  overflow: hidden !important;   /* corta sombras/pseudo-elements que passavam do raio */
+}
+
+/* Header segue o mesmo raio no topo (cosmético) */
+.nl-modal-header{
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+/* Se ainda aparecer “sombra” no topo por causa do scrollfade, suaviza e garante clipping */
+.nl-scrollfade::before,
+.nl-scrollfade::after{
+  /* ficam dentro do dialog por causa do overflow:hidden acima */
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
 }

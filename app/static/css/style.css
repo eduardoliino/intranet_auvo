@@ -587,3 +587,34 @@ body {
     }
 }
 
+/* Chips (mantém seu estilo atual) */
+.nl-reaction-chip{
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bs-border-color);
+  background-color: var(--bs-gray-100);
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--nl-action-color);
+  white-space: nowrap;                 /* evita quebra */
+  transition: all 150ms ease-in-out;
+}
+
+/* Destaque roxinho quando selecionada */
+.nl-reaction-chip.selected{
+  background-color: var(--cor-primaria-muito-clara);
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria-escura);
+}
+
+/* Reserva espaço para até 3 dígitos (não empurra o próximo chip) */
+.nl-reaction-chip .nl-count{
+  display: inline-block;
+  width: 3ch;                          /* reserva espaço p/ 000–999 */
+  text-align: right;
+  font-variant-numeric: tabular-nums;  /* números com largura fixa (sem “pular”) */
+}
