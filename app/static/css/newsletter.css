@@ -583,3 +583,48 @@
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;
 }
+
+/* === Emoji picker no campo de comentários === */
+.nl-emoji-btn{
+  display:inline-grid; place-items:center;
+  width:36px; height:36px; margin-right:.25rem;
+  border-radius:9999px; border:1px solid #e2e8f0;
+  background:#fff; color:#6b7280;
+  transition:transform .12s ease, background-color .12s ease, border-color .12s ease;
+}
+.nl-emoji-btn:hover{ background:#f9fafb; border-color:#d1d5db; transform:translateY(-1px);}
+.nl-emoji-btn:active{ transform:translateY(0); }
+
+.nl-emoji-popover{
+  position:absolute; right:8px; bottom:calc(100% + 8px);
+  width:min(320px, 92vw);
+  background:#fff; border:1px solid #e5e7eb; border-radius:12px;
+  box-shadow:0 16px 40px rgba(0,0,0,.12);
+  padding:6px; z-index:2100;
+}
+.nl-emoji-popover emoji-picker{
+  width: 100%;
+  height: 360px;
+}
+
+/* garante que o container do campo seja o referencial do popover */
+.nl-comment-field{ position:relative; }
+
+/* Título do post dentro do CARD (feed) */
+.nl-card .nl-body > h5{
+  margin: 0 0 .25rem 0;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--nl-text-color);
+
+  /* 1) evita vazamento em palavras sem espaço */
+  overflow-wrap: anywhere;           /* quebra até no meio da “palavra” longa */
+  word-break: break-word;            /* fallback */
+  hyphens: auto;
+
+  /* 2) limita a 2 linhas com reticências */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;             /* troque p/ 1 se quiser uma linha só */
+  overflow: hidden;
+}

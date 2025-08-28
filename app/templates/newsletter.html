@@ -168,13 +168,24 @@
       <footer class="nl-modal-footer">
         <form class="nl-comment-bar" @submit.prevent="submitComment()">
           <div class="nl-comment-field">
+            <!-- Botão Emoji -->
+            <button
+              type="button"
+              class="nl-emoji-btn"
+              @click="showEmojiPicker = !showEmojiPicker; if(showEmojiPicker){ $nextTick(()=> customizeEmojiPicker()) }"
+              :aria-expanded="showEmojiPicker ? 'true' : 'false'"
+              aria-label="Inserir emoji"
+            >
+              <i class="bi bi-emoji-smile"></i>
+            </button>
+
             <textarea
               x-model="newCommentText"
               x-ref="commentInput"
               rows="1"
               class="nl-comment-input"
               placeholder="Adicionar um comentário..."
-              @keydown.enter.prevent.stop="handleCommentSubmit($event)"
+              @keydown.enter.prevent.stop="handleCommentSubmit($event)"  <!-- Enter envia / Shift+Enter quebra linha -->
               @input="autosizeTextarea($event.target)"
               aria-label="Adicionar um comentário"
             ></textarea>
@@ -187,13 +198,31 @@
             >
               <i class="bi bi-send-fill" aria-hidden="true"></i>
             </button>
+
+            <!-- Popover do Emoji Picker -->
+            <div
+              class="nl-emoji-popover"
+              x-show="showEmojiPicker"
+              x-transition
+              @click.outside="showEmojiPicker=false"
+              x-init="$nextTick(()=> customizeEmojiPicker())"
+            >
+              <emoji-picker
+                x-ref="emojiPicker"
+                @emoji-click="onEmojiClick"
+              ></emoji-picker>
+            </div>
           </div>
         </form>
       </footer>
     </div>
   </div>
 </div>
-{% endblock %} {% block page_scripts %}
+{% endblock %}
+
+{% block page_scripts %}
+<!-- Emoji Picker (Web Component) -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
   function newsletterFeed() {
@@ -208,6 +237,9 @@
       atTop: true,
       atBottom: false,
       placeholderClass: "aspect-video",
+      showEmojiPicker: false,
+      emojiPickerStyled: false,
+      emojiPickerObserver: null,
       modalContent: {
         postId: null,
         postTitle: "Carregando...",
@@ -357,6 +389,91 @@
       copySourceLink() {
         if (!this.sourceLink) return;
         navigator.clipboard.writeText(this.sourceLink);
+      },
+
+      customizeEmojiPicker() {
+        const picker = this.$refs.emojiPicker;
+        if (!picker) return;
+
+        // Tenta setar locale (só muda textos/labels; a busca do componente é em inglês)
+        try { picker.locale = 'pt'; picker.setAttribute('locale','pt'); } catch {}
+
+        const root = picker.shadowRoot;
+        if (!root) {
+          // algumas versões expõem evento de pronto; tenta de novo
+          picker.addEventListener('ready', () => this.customizeEmojiPicker(), { once:true });
+          return;
+        }
+
+        // CSS dentro do Shadow para esconder a busca em QUALQUER marcação
+        const styleId = 'nl-emoji-shadow-style';
+        let style = root.getElementById(styleId);
+        if (!style) {
+          style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = `
+      /* esconde a barra de busca e qualquer input de busca */
+      [part="search"],
+      [part="search-row"],
+      [part="search-input"],
+      header:has(input),
+      .search-row,
+      .search,
+      input[type="search"] {
+        display: none !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+      }
+    `;
+          root.appendChild(style);
+        }
+
+        // Remove programaticamente (caso o CSS aplique 1 frame depois)
+        const hideSearch = () => {
+          root.querySelectorAll(
+            '[part="search"],[part="search-row"],[part="search-input"],header,.search-row,.search,input[type="search"]'
+          ).forEach(el => {
+            // se for o input, tenta esconder o contêiner mais próximo
+            if (el.matches('input[type="search"]')) {
+              const row = el.closest('[part="search-row"], .search-row, header, div, section');
+              if (row) row.style.display = 'none';
+            } else {
+              el.style.display = 'none';
+            }
+          });
+        };
+        hideSearch();
+
+        // Observa re-render do web component e reaplica
+        if (!this.emojiPickerObserver) {
+          this.emojiPickerObserver = new MutationObserver(() => hideSearch());
+        }
+        this.emojiPickerObserver.disconnect();
+        this.emojiPickerObserver.observe(root, { childList: true, subtree: true });
+      },
+
+      onEmojiClick(e){
+        const emoji = e.detail?.unicode || "";
+        if(!emoji) return;
+        const el = this.$refs.commentInput;
+        this.insertAtCursor(el, emoji);
+        this.autosizeTextarea(el);
+        // NÃO fecha aqui. Fica aberto para escolher mais emojis.
+      },
+
+      insertAtCursor(el, text){
+        if(!el) return;
+        const start = el.selectionStart ?? el.value.length;
+        const end   = el.selectionEnd   ?? el.value.length;
+        const before = el.value.slice(0, start);
+        const after  = el.value.slice(end);
+        const next   = before + text + after;
+        el.value = next;
+        this.newCommentText = next;              // mantém Alpine em sincronia
+        const pos = start + text.length;
+        requestAnimationFrame(()=>{ el.setSelectionRange(pos, pos); el.focus(); });
       },
 
       onBodyScroll(e) {
@@ -553,6 +670,7 @@
 
           if (response.ok) {
             this.newCommentText = "";
+            this.showEmojiPicker = false;   // fecha somente ao enviar
             this.$nextTick(() => {
               const input = this.$refs.commentInput;
               if (input) this.autosizeTextarea(input);
@@ -567,5 +685,4 @@
     };
   }
 </script>
-
 {% endblock %}
