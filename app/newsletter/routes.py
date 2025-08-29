@@ -164,8 +164,14 @@ def criar_comentario(post_id: int):
 def admin_page():
     if not current_user.is_admin:
         abort(403)
-    posts = NewsPost.query.order_by(NewsPost.publicado_em.desc()).all()
-    return render_template('admin/gerenciar_newsletter.html', posts=posts)
+    # Paginação: 15 por página
+    page = request.args.get('page', 1, type=int)
+    pagination = NewsPost.query.order_by(NewsPost.publicado_em.desc()).paginate(page=page, per_page=15, error_out=False)
+    return render_template(
+        'admin/gerenciar_newsletter.html',
+        posts=pagination.items,
+        pagination=pagination,
+    )
 
 
 @newsletter_bp.post('/api/news/post')

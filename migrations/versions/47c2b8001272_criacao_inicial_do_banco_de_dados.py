@@ -1,8 +1,8 @@
 """Criacao inicial do banco de dados
 
-Revision ID: 27f570511b99
+Revision ID: 47c2b8001272
 Revises: 
-Create Date: 2025-08-26 13:18:23.249753
+Create Date: 2025-08-28 23:13:54.863811
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '27f570511b99'
+revision = '47c2b8001272'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -70,16 +70,6 @@ def upgrade():
     sa.Column('contato', sa.String(length=150), nullable=True),
     sa.Column('status', sa.String(length=50), nullable=False),
     sa.Column('responsavel', sa.String(length=150), nullable=True),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('tb_gam_log',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('usuario_id', sa.Integer(), nullable=False),
-    sa.Column('acao', sa.String(length=50), nullable=False),
-    sa.Column('ref_tipo', sa.String(length=20), nullable=False),
-    sa.Column('ref_id', sa.Integer(), nullable=False),
-    sa.Column('meta_json', sa.JSON(), nullable=True),
-    sa.Column('criado_em', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('colaborador',
@@ -208,7 +198,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('post_id', sa.Integer(), nullable=False),
     sa.Column('usuario_id', sa.Integer(), nullable=False),
-    sa.Column('tipo', sa.Enum('like', 'palmas', 'coracao', 'genial', 'feliz', name='news_reacao_tipo'), nullable=False),
+    sa.Column('tipo', sa.Enum('like', 'palmas', 'coracao', 'genial', 'feliz', 'heart', 'lightbulb', 'surprise', 'rocket', 'grin', 'hearteyes', name='news_reacao_tipo'), nullable=False),
     sa.Column('criado_em', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['post_id'], ['tb_news_post.id'], ),
     sa.ForeignKeyConstraint(['usuario_id'], ['colaborador.id'], ),
@@ -248,7 +238,6 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_colaborador_email_corporativo'))
 
     op.drop_table('colaborador')
-    op.drop_table('tb_gam_log')
     op.drop_table('tbOuvidoria')
     op.drop_table('permissao')
     op.drop_table('faq_categoria')

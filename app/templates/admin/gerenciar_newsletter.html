@@ -66,17 +66,13 @@
             <tr>
               <td>{{ p.titulo }}</td>
               <td>
-                <span
-                  class="badge"
-                  :class="p.status === 'publicado' ? 'bg-success' : 'bg-secondary'"
-                  >{{ p.status }}</span
-                >
+                <span class="badge {{ 'bg-success' if p.status == 'publicado' else 'bg-secondary' }}">{{ p.status }}</span>
               </td>
               <td>{{ p.publicado_em.strftime('%d/%m/%Y %H:%M') }}</td>
               <td class="text-center">
                 <button
                   class="btn btn-sm btn-outline-secondary"
-                  @click="editarPost({{ p.id }}, '{{ p.titulo }}', '{{ p.conteudo_md | tojson | safe }}')"
+                  @click="editarPost({{ p.id }}, {{ p.titulo | tojson }}, {{ p.conteudo_md | tojson }})"
                 >
                   <i class="bi bi-pencil"></i>
                 </button>
@@ -91,6 +87,23 @@
             {% endfor %}
           </tbody>
         </table>
+        {% if pagination and (pagination.pages > 1) %}
+        <nav aria-label="Paginação de posts">
+          <ul class="pagination justify-content-center">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('newsletter.admin_page', page=pagination.prev_num) if pagination.has_prev else '#' }}" tabindex="-1">Anterior</a>
+            </li>
+            {% for pagenum in range(1, pagination.pages + 1) %}
+            <li class="page-item {% if pagenum == pagination.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('newsletter.admin_page', page=pagenum) }}">{{ pagenum }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('newsletter.admin_page', page=pagination.next_num) if pagination.has_next else '#' }}">Próxima</a>
+            </li>
+          </ul>
+        </nav>
+        {% endif %}
       </div>
     </div>
   </div>
