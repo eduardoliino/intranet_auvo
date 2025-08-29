@@ -618,27 +618,3 @@ body {
   text-align: right;
   font-variant-numeric: tabular-nums;  /* números com largura fixa (sem “pular”) */
 }
-
-/* Adicione este código no final do arquivo */
-
-/* === Estilos para o Editor Quill (Newsletter) === */
-.quill-editor-wrapper {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #dee2e6;
-    border-radius: 0.5rem;
-}
-
-.quill-editor-wrapper .ql-toolbar {
-    /* Manda a toolbar para o final da flexbox */
-    order: 2;
-    border: none;
-    border-top: 1px solid #dee2e6;
-}
-
-.quill-editor-wrapper .ql-container {
-    /* Coloca o container do texto no início */
-    order: 1;
-    height: 300px; /* Mantém a altura do editor */
-    border: none;
-}
