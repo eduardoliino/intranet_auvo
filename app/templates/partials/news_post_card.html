@@ -29,7 +29,7 @@
 
   <div class="nl-body">
     <h5>{{ post.titulo }}</h5>
-    <p class="nl-content">{{ post.conteudo_md | striptags | truncate(280) }}</p>
+    <div class="nl-content">{{ post.conteudo_md | striptags | truncate(280) }}</div>
   </div>
 
   <footer class="nl-ft">
