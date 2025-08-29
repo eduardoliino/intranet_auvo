@@ -23,6 +23,7 @@
             >Conteúdo (Cole um link para gerar um preview)</label
           >
           <textarea
+            x-ref="conteudo"
             class="form-control"
             rows="8"
             x-model="editPost.conteudo_md"
@@ -66,13 +67,19 @@
             <tr>
               <td>{{ p.titulo }}</td>
               <td>
-                <span class="badge {{ 'bg-success' if p.status == 'publicado' else 'bg-secondary' }}">{{ p.status }}</span>
+                <span
+                  class="badge {{ 'bg-success' if p.status == 'publicado' else 'bg-secondary' }}"
+                  >{{ p.status }}</span
+                >
               </td>
               <td>{{ p.publicado_em.strftime('%d/%m/%Y %H:%M') }}</td>
               <td class="text-center">
                 <button
                   class="btn btn-sm btn-outline-secondary"
-                  @click="editarPost({{ p.id }}, {{ p.titulo | tojson }}, {{ p.conteudo_md | tojson }})"
+                  @click="editarPost($event)"
+                  data-id="{{ p.id }}"
+                  data-titulo="{{ p.titulo | e }}"
+                  data-conteudo="{{ p.conteudo_md | e }}"
                 >
                   <i class="bi bi-pencil"></i>
                 </button>
@@ -90,16 +97,35 @@
         {% if pagination and (pagination.pages > 1) %}
         <nav aria-label="Paginação de posts">
           <ul class="pagination justify-content-center">
-            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-              <a class="page-link" href="{{ url_for('newsletter.admin_page', page=pagination.prev_num) if pagination.has_prev else '#' }}" tabindex="-1">Anterior</a>
+            <li
+              class="page-item {% if not pagination.has_prev %}disabled{% endif %}"
+            >
+              <a
+                class="page-link"
+                href="{{ url_for('newsletter.admin_page', page=pagination.prev_num) if pagination.has_prev else '#' }}"
+                tabindex="-1"
+                >Anterior</a
+              >
             </li>
             {% for pagenum in range(1, pagination.pages + 1) %}
-            <li class="page-item {% if pagenum == pagination.page %}active{% endif %}">
-              <a class="page-link" href="{{ url_for('newsletter.admin_page', page=pagenum) }}">{{ pagenum }}</a>
+            <li
+              class="page-item {% if pagenum == pagination.page %}active{% endif %}"
+            >
+              <a
+                class="page-link"
+                href="{{ url_for('newsletter.admin_page', page=pagenum) }}"
+                >{{ pagenum }}</a
+              >
             </li>
             {% endfor %}
-            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-              <a class="page-link" href="{{ url_for('newsletter.admin_page', page=pagination.next_num) if pagination.has_next else '#' }}">Próxima</a>
+            <li
+              class="page-item {% if not pagination.has_next %}disabled{% endif %}"
+            >
+              <a
+                class="page-link"
+                href="{{ url_for('newsletter.admin_page', page=pagination.next_num) if pagination.has_next else '#' }}"
+                >Próxima</a
+              >
             </li>
           </ul>
         </nav>
@@ -141,7 +167,11 @@
         }
       },
 
-      editarPost(id, titulo, conteudo) {
+      editarPost(e) {
+        const btn = e.currentTarget;
+        const id = parseInt(btn.dataset.id, 10);
+        const titulo = btn.dataset.titulo || "";
+        const conteudo = btn.dataset.conteudo || "";
         this.editPost = { id, titulo, conteudo_md: conteudo };
         window.scrollTo({ top: 0, behavior: "smooth" });
       },
@@ -244,17 +274,19 @@
 
       // Função auxiliar para inserir o texto na posição do cursor
       insertTextAtCursor(text) {
-        const textarea = this.$event.target;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const currentText = this.editPost.conteudo_md || "";
-
-        const newText =
-          currentText.substring(0, start) + text + currentText.substring(end);
-        this.editPost.conteudo_md = newText;
-
+        const textarea = this.$refs.conteudo;
+        const current = this.editPost.conteudo_md || "";
+        if (!textarea) {
+          this.editPost.conteudo_md = current + text;
+          return;
+        }
+        const start = textarea.selectionStart ?? current.length;
+        const end = textarea.selectionEnd ?? current.length;
+        this.editPost.conteudo_md =
+          current.slice(0, start) + text + current.slice(end);
         this.$nextTick(() => {
           textarea.selectionStart = textarea.selectionEnd = start + text.length;
+          textarea.focus();
         });
       },
     };
