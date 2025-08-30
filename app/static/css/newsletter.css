@@ -658,3 +658,41 @@
 .instagram-media {
     max-width: 100%;
 }
+
+/* Garante que o modal seja a referência para elementos posicionados de forma absoluta */
+.nl-modal-dialog {
+    position: relative;
+}
+
+/* === Notificação de Novo Comentário === */
+.nl-new-comment-toast-wrapper {
+  position: absolute;
+  bottom: 85px; /* Posição acima da barra de comentário */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  pointer-events: none; /* Não bloqueia cliques no conteúdo abaixo */
+}
+
+.nl-new-comment-toast {
+  pointer-events: auto; /* O botão em si pode ser clicado */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: none;
+  background-color: var(--cor-primaria);
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+.nl-new-comment-toast:hover {
+  transform: scale(1.05);
+  background-color: var(--cor-primaria-escura);
+}

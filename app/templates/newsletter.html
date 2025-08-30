@@ -220,6 +220,14 @@
           </div>
         </form>
       </footer>
+
+      <!-- Alerta de novo comentário -->
+      <div class="nl-new-comment-toast-wrapper" x-show="showNewCommentButton" x-transition x-cloak>
+          <button type="button" class="nl-new-comment-toast" @click="scrollToBottom()">
+              <i class="bi bi-arrow-down-circle-fill"></i>
+              <span x-text="newCommentCount > 1 ? `${newCommentCount} novos comentários` : 'Novo comentário'"></span>
+          </button>
+      </div>
     </div>
   </div>
 </div>
@@ -245,6 +253,8 @@
       showEmojiPicker: false,
       emojiPickerStyled: false,
       emojiPickerObserver: null,
+      showNewCommentButton: false, // Controla a visibilidade do alerta
+      newCommentCount: 0, // Conta novos comentários
       modalContent: {
         postId: null,
         postTitle: "Carregando...",
@@ -488,10 +498,18 @@
         this.scrollPct = max > 0 ? Math.round((el.scrollTop / max) * 100) : 0;
         this.atTop = el.scrollTop <= 2;
         this.atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+
+        // Se o usuário rolar para o final, esconde a notificação
+        if (this.atBottom) {
+            this.showNewCommentButton = false;
+            this.newCommentCount = 0;
+        }
       },
 
-      scrollToTop() {
-        this.$refs.modalBody?.scrollTo({ top: 0, behavior: "smooth" });
+      scrollToBottom() {
+        this.$refs.modalBody?.scrollTo({ top: this.$refs.modalBody.scrollHeight, behavior: 'smooth' });
+        this.showNewCommentButton = false;
+        this.newCommentCount = 0;
       },
 
       setSourceLink() {
@@ -535,15 +553,22 @@
             if (
               !this.modalContent.comments.some((c) => c.id === data.comment.id)
             ) {
-              this.modalContent.comments = [
-                ...this.modalContent.comments,
-                data.comment,
-              ];
-              this.$nextTick(() => {
-                this.$refs.modalBody &&
-                  (this.$refs.modalBody.scrollTop =
-                    this.$refs.modalBody.scrollHeight);
-              });
+                const el = this.$refs.modalBody;
+                // Verifica se o usuário está perto do fim ANTES de adicionar o novo comentário
+                const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+
+                this.modalContent.comments.push(data.comment);
+
+                this.$nextTick(() => {
+                    if (isNearBottom) {
+                        // Se já estava no final, rola suavemente para o novo comentário
+                        this.scrollToBottom();
+                    } else {
+                        // Se estava lendo acima, mostra a notificação
+                        this.showNewCommentButton = true;
+                        this.newCommentCount++;
+                    }
+                });
             }
           }
         });
@@ -555,6 +580,8 @@
         document.body.style.overflow = "hidden";
         this.isModalOpen = true;
         this.isLoading = true;
+        this.showNewCommentButton = false; // Reseta a notificação
+        this.newCommentCount = 0;
 
         fetch(`/api/news/post_details?post_id=${postId}`)
           .then((res) => res.json())
@@ -576,7 +603,7 @@
               this.$refs.embedContent || this.$refs.modalBody
             );
             try {
-              this.onBodyScroll({ target: this.$refs.modalBody });
+              this.onBodyScroll();
               this.setSourceLink();
               await this.waitForEmbeds(this.$refs.embedContent, 2500);
             } finally {
@@ -592,7 +619,10 @@
       closeModal() {
         this.isModalOpen = false;
         document.body.style.overflow = "";
-        this.lastTrigger && this.lastTrigger.focus();
+        this.lastTrigger?.focus();
+        this.showNewCommentButton = false; // Reseta a notificação
+        this.newCommentCount = 0;
+        // Limpa o conteúdo ao fechar
         this.modalContent = {
           postId: null,
           postTitle: "Carregando...",
@@ -611,6 +641,8 @@
         this.isLoading = true;
         this.isModalOpen = true;
         document.body.style.overflow = "hidden";
+        this.showNewCommentButton = false;
+        this.newCommentCount = 0;
 
         this.modalContent.reactions = { counts: {}, user_reaction: null };
         this.modalContent.comments = [];
