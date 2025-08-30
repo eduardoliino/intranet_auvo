@@ -166,7 +166,8 @@ def admin_page():
         abort(403)
     # Paginação: 15 por página
     page = request.args.get('page', 1, type=int)
-    pagination = NewsPost.query.order_by(NewsPost.publicado_em.desc()).paginate(page=page, per_page=15, error_out=False)
+    pagination = NewsPost.query.order_by(NewsPost.publicado_em.desc()).paginate(
+        page=page, per_page=15, error_out=False)
     # Render parcial para SPA-like updates
     if request.args.get('_partial') or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render_template(
@@ -223,3 +224,76 @@ def excluir_post(post_id: int):
     db.session.delete(post)
     db.session.commit()
     return jsonify({'status': 'ok'})
+
+
+@newsletter_bp.route('/api/news/feed')
+@login_required
+def api_feed():
+    """
+    Endpoint da API para buscar o feed da newsletter com paginação e pesquisa.
+    """
+    page = request.args.get('page', 1, type=int)
+    search_term = request.args.get('search', '', type=str)
+
+    # Query base para posts e enquetes publicados
+    posts_q = NewsPost.query.options(
+        joinedload(NewsPost.autor),
+        subqueryload(NewsPost.reacoes),
+        subqueryload(NewsPost.comentarios)
+    ).filter(NewsPost.status == 'publicado')
+
+    enquetes_q = NewsEnquete.query.options(
+        joinedload(NewsEnquete.opcoes)
+    ).filter(NewsEnquete.status != 'rascunho')
+
+    # Aplica o filtro de pesquisa se houver um termo
+    if search_term:
+        search_filter = f"%{search_term}%"
+        posts_q = posts_q.filter(NewsPost.titulo.ilike(search_filter))
+        enquetes_q = enquetes_q.filter(
+            NewsEnquete.pergunta.ilike(search_filter))
+
+    # Combina e ordena os resultados
+    # Esta é uma forma simplificada de combinar. Para grandes volumes, uma abordagem mais complexa seria necessária.
+    all_items = sorted(
+        posts_q.all() + enquetes_q.all(),
+        key=lambda x: getattr(x, 'publicado_em', getattr(
+            x, 'inicio_em', datetime.min)) or datetime.min,
+        reverse=True
+    )
+
+    # Paginação manual da lista combinada
+    per_page = 12
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated_items = all_items[start:end]
+    has_next = len(all_items) > end
+
+    feed_data = []
+    for item in paginated_items:
+        if isinstance(item, NewsPost):
+            feed_data.append({
+                'type': 'post',
+                'id': item.id,
+                'titulo': item.titulo,
+                'conteudo_resumo': item.conteudo_md,  # Pode ser truncado se necessário
+                'autor_nome': f"{item.autor.nome} {item.autor.sobrenome}",
+                'autor_foto': url_for('static', filename=f'fotos_colaboradores/{item.autor.foto_filename}') if item.autor.foto_filename else None,
+                'autor_iniciais': f"{(item.autor.nome or ' ')[0]}{(item.autor.sobrenome or ' ')[0]}",
+                'publicado_em': item.publicado_em.strftime('%d de %B de %Y'),
+                'total_reacoes': len(item.reacoes),
+                'total_comentarios': len([c for c in item.comentarios if not c.excluido])
+            })
+        elif isinstance(item, NewsEnquete):
+            feed_data.append({
+                'type': 'enquete',
+                'id': item.id,
+                'pergunta': item.pergunta,
+                'status': 'Encerrada' if item.status == 'encerrada' else 'Aberta',
+                'opcoes': [{'texto': o.texto} for o in sorted(item.opcoes, key=lambda opt: opt.ordem)]
+            })
+
+    return jsonify({
+        'feed': feed_data,
+        'has_next': has_next
+    })
