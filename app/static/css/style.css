@@ -618,3 +618,31 @@ body {
   text-align: right;
   font-variant-numeric: tabular-nums;  /* números com largura fixa (sem “pular”) */
 }
+
+/* Estilo customizado para paginação no painel admin (cinza) */
+.pagination-admin .page-item .page-link {
+  color: #6c757d; /* Cor do texto: cinza secundário */
+  border-color: #dee2e6; /* Cor da borda: cinza claro */
+}
+
+.pagination-admin .page-item.active .page-link {
+  z-index: 3;
+  color: var(--cor-neutra); /* Cor do texto ativo: branco */
+  background-color: var(--cor-primaria); /* Cor de fundo ativo: roxo */
+  border-color: var(--cor-primaria); /* Cor da borda ativa: roxo */
+}
+
+.pagination-admin .page-item.disabled .page-link {
+  color: #adb5bd; /* Cor do texto desabilitado: cinza mais claro */
+}
+
+.pagination-admin .page-item .page-link:hover {
+  color: var(--cor-primaria-escura);
+  background-color: var(--cor-primaria-muito-clara);
+}
+
+/* Mantém o estilo do item ativo mesmo no hover */
+.pagination-admin .page-item.active .page-link:hover {
+    color: var(--cor-neutra);
+    background-color: var(--cor-primaria);
+}

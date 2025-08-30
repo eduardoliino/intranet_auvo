@@ -167,6 +167,14 @@ def admin_page():
     # Paginação: 15 por página
     page = request.args.get('page', 1, type=int)
     pagination = NewsPost.query.order_by(NewsPost.publicado_em.desc()).paginate(page=page, per_page=15, error_out=False)
+    # Render parcial para SPA-like updates
+    if request.args.get('_partial') or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template(
+            'admin/_newsletter_posts_list.html',
+            posts=pagination.items,
+            pagination=pagination,
+        )
+    # Render page completa
     return render_template(
         'admin/gerenciar_newsletter.html',
         posts=pagination.items,
