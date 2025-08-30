@@ -628,3 +628,33 @@
   -webkit-line-clamp: 2;             /* troque p/ 1 se quiser uma linha só */
   overflow: hidden;
 }
+
+/* --- Embed Placeholders --- */
+.embed-placeholder {
+    width: 100%;
+    background-color: #f3f4f6; /* bg-gray-100 */
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border-radius: 0.75rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.aspect-video { aspect-ratio: 16 / 9; }
+.aspect-square { aspect-ratio: 1 / 1; }
+.aspect-document { min-height: 400px; aspect-ratio: 4 / 3; }
+.aspect-og { min-height: 150px; }
+
+.embed-placeholder iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0.75rem;
+}
+
+/* Ajuste específico para o embed do Instagram não criar barras de rolagem horizontais */
+.instagram-media {
+    max-width: 100%;
+}

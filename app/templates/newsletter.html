@@ -107,61 +107,66 @@
           :class="'embed-placeholder ' + (placeholderClass || 'aspect-video')"
         ></div>
 
-        <div
-          x-show="!isLoading"
-          x-ref="embedContent"
-          class="nl-embed-wrap"
-          x-html="modalContent.post_html"
-        ></div>
+        <!-- Container para todo o conteúdo que aparece após o carregamento -->
+        <div x-show="!isLoading" class="w-100">
+          <div
+            x-ref="embedContent"
+            class="nl-embed-wrap"
+            x-html="modalContent.post_html"
+          ></div>
 
-        <hr class="my-4" />
+          <hr class="my-4" />
 
-        <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
-          <template
-            x-for="reactionType in reactionTypes"
-            :key="reactionType.type"
-          >
-            <button
-              :class="['nl-reaction-chip', { 'selected': modalContent.reactions.user_reaction === reactionType.type, 'zero-count': !(modalContent.reactions.counts[reactionType.type] > 0) }]"
-              @click="toggleReaction(reactionType.type)"
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+            <template
+              x-for="reactionType in reactionTypes"
+              :key="reactionType.type"
             >
-              <i class="bi" :class="reactionType.icon"></i>
-              <span
-                class="nl-count"
-                x-text="modalContent.reactions.counts[reactionType.type] || 0"
-              ></span>
-            </button>
-          </template>
-        </div>
+              <button
+                :class="['nl-reaction-chip', { 'selected': modalContent.reactions.user_reaction === reactionType.type, 'zero-count': !(modalContent.reactions.counts[reactionType.type] > 0) }]"
+                @click="toggleReaction(reactionType.type)"
+              >
+                <i class="bi" :class="reactionType.icon"></i>
+                <span
+                  class="nl-count"
+                  x-text="modalContent.reactions.counts[reactionType.type] || 0"
+                ></span>
+              </button>
+            </template>
+          </div>
 
-        <h6>Comentários</h6>
-        <div class="mb-4">
-          <template x-for="comment in modalContent.comments" :key="comment.id">
-            <div class="d-flex align-items-start my-3">
-              <template x-if="comment.user_photo">
-                <img
-                  :src="comment.user_photo"
-                  class="nl-avatar me-3"
-                  :alt="'Foto de ' + comment.user_name"
-                />
-              </template>
-              <template x-if="!comment.user_photo">
-                <div
-                  class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0"
-                >
-                  <span x-text="comment.user_initials"></span>
+          <h6>Comentários</h6>
+          <div class="mb-4">
+            <template
+              x-for="comment in modalContent.comments"
+              :key="comment.id"
+            >
+              <div class="d-flex align-items-start my-3">
+                <template x-if="comment.user_photo">
+                  <img
+                    :src="comment.user_photo"
+                    class="nl-avatar me-3"
+                    :alt="'Foto de ' + comment.user_name"
+                  />
+                </template>
+                <template x-if="!comment.user_photo">
+                  <div
+                    class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0"
+                  >
+                    <span x-text="comment.user_initials"></span>
+                  </div>
+                </template>
+                <div class="w-100">
+                  <strong x-text="comment.user_name"></strong>
+                  <p
+                    class="mb-0"
+                    style="white-space: pre-wrap; word-break: break-word"
+                    x-text="comment.text"
+                  ></p>
                 </div>
-              </template>
-              <div class="w-100">
-                <strong x-text="comment.user_name"></strong>
-                <p
-                  class="mb-0"
-                  style="white-space: pre-wrap; word-break: break-word"
-                  x-text="comment.text"
-                ></p>
               </div>
-            </div>
-          </template>
+            </template>
+          </div>
         </div>
       </div>
 
