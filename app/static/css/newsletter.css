@@ -157,6 +157,15 @@
   box-shadow: none;
 }
 
+/* Garanta que 'selected' sempre vença sobre 'zero-count' */
+.nl-reaction-chip.selected,
+.nl-reaction-chip.selected.zero-count {
+  background-color: var(--cor-primaria-muito-clara) !important;
+  border-color: var(--cor-primaria) !important;
+  color: var(--cor-primaria-escura) !important;
+  opacity: 1 !important;
+}
+
 
 /* === NOVO MODAL UNIVERSAL === */
 .nl-modal-overlay {

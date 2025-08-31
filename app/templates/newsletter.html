@@ -3,6 +3,17 @@
   rel="stylesheet"
   href="{{ url_for('static', filename='css/newsletter.css') }}"
 />
+<style>
+  /* Estilo para destacar a reação selecionada pelo usuário */
+  .nl-reaction-chip.selected {
+    background-color: #e8e3ff; /* Um tom de roxo bem claro (lilás) */
+    border-color: #a891f2;   /* Borda em um tom de roxo mais forte */
+    color: #6c47d8;          /* Cor do ícone e do contador */
+  }
+  .nl-reaction-chip.selected .nl-count {
+    color: #6c47d8; /* Garante que o contador também mude de cor */
+  }
+</style>
 
 <div class="nl-feed py-4" x-data="newsletterFeed()">
   <h1 class="mb-4">Newsletter</h1>
@@ -193,7 +204,9 @@
             >
               <button
                 :class="['nl-reaction-chip', { 'selected': modalContent.reactions.user_reaction === reactionType.type, 'zero-count': !(modalContent.reactions.counts[reactionType.type] > 0) }]"
-                @click="toggleReaction(reactionType.type)"
+                :style="modalContent.reactions.user_reaction === reactionType.type ? 'background-color: var(--cor-primaria-muito-clara); border-color: var(--cor-primaria); color: var(--cor-primaria-escura);' : ''"
+                :aria-pressed="(modalContent.reactions.user_reaction === reactionType.type).toString()"
+                @click.stop.prevent="toggleReaction(reactionType.type)"
               >
                 <i class="bi" :class="reactionType.icon"></i>
                 <span

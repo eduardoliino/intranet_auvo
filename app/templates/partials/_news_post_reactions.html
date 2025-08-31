@@ -4,26 +4,27 @@
 'bi-emoji-heart-eyes-fill', 'Amei'), ('surprise', 'bi-emoji-surprise-fill',
 'Uau') ] %}
 
-<div class="d-flex align-items-center gap-2 flex-wrap">
-  {% for type, icon, name in reaction_types %} {% set count =
-  reaction_counts.get(type, 0) %} {% if user_reaction == type %}
-  <button
-    class="nl-reaction-chip selected"
-    hx-delete="{{ url_for('newsletter.remover_reacao', post_id=post.id) }}"
-    hx-swap="none"
-  >
-    <i class="bi {{ icon }}"></i>
-    <span>{{ count }}</span>
-  </button>
-  {% else %}
-  <button
-    class="nl-reaction-chip {% if count == 0 %}zero-count{% endif %}"
-    hx-post="{{ url_for('newsletter.reagir', post_id=post.id) }}"
-    hx-vals='{"tipo": "{{ type }}"}'
-    hx-swap="none"
-  >
-    <i class="bi {{ icon }}"></i>
-    <span>{{ count }}</span>
-  </button>
-  {% endif %} {% endfor %}
+<div class="d-flex align-items-center gap-2 flex-wrap" id="reactions-block-{{ post.id }}">
+  {% for type, icon, name in reaction_types %}
+    {% set count = reaction_counts.get(type, 0) %}
+    {% if user_reaction == type %}
+      <button
+        class="nl-reaction-chip selected"
+        type="button"
+        data-type="{{ type }}"
+      >
+        <i class="bi {{ icon }}"></i>
+        <span class="nl-count">{{ count }}</span>
+      </button>
+    {% else %}
+      <button
+        class="nl-reaction-chip {% if count == 0 %}zero-count{% endif %}"
+        type="button"
+        data-type="{{ type }}"
+      >
+        <i class="bi {{ icon }}"></i>
+        <span class="nl-count">{{ count }}</span>
+      </button>
+    {% endif %}
+  {% endfor %}
 </div>

@@ -646,3 +646,11 @@ body {
     color: var(--cor-neutra);
     background-color: var(--cor-primaria);
 }
+
+/* Se 'zero-count' for combinado com 'selected', mantenha destaque roxo */
+.nl-reaction-chip.selected.zero-count{
+  background-color: var(--cor-primaria-muito-clara) !important;
+  border-color: var(--cor-primaria) !important;
+  color: var(--cor-primaria-escura) !important;
+  opacity: 1 !important;
+}
