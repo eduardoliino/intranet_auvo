@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, jsonify, current_app
 from flask_login import login_required
 from app import db
-from app.models import Colaborador, Cargo, Departamento, Permissao
+from app.models import Colaborador, Cargo, Departamento, Permissao, SentimentoDia
 from app.newsletter.models import (
     NewsPost,
     NewsComentario,
@@ -218,6 +218,9 @@ def remover(id):
         NewsEnqueteVoto.query.filter_by(enquete_id=e.id).delete(synchronize_session=False)
         NewsEnqueteOpcao.query.filter_by(enquete_id=e.id).delete(synchronize_session=False)
         db.session.delete(e)
+
+    # 1.4 Sentimento do Dia do colaborador
+    SentimentoDia.query.filter_by(usuario_id=id).delete(synchronize_session=False)
 
     # 2) Finalmente, remove o colaborador
     db.session.delete(colaborador)

@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
 from sqlalchemy import extract, desc, or_
 from . import db
-from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink, Cargo
+from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink, Cargo, SentimentoDia
 from app.newsletter.models import NewsPost
 import locale
 try:
@@ -81,6 +81,42 @@ def index():
         latest_post=latest_post,
         current_user=current_user
     )
+
+
+def _today_local():
+    # Considera reset às 07:00 de Brasília (UTC-3)
+    from datetime import timezone, timedelta
+    tz = timezone(timedelta(hours=-3))
+    return datetime.now(tz).date()
+
+
+@main.route('/api/sentimento/status')
+@login_required
+def api_sentimento_status():
+    today = _today_local()
+    rec = SentimentoDia.query.filter_by(usuario_id=current_user.id, data=today).first()
+    return jsonify({
+        'reacted': bool(rec),
+        'sentimento': rec.sentimento if rec else None
+    })
+
+
+@main.route('/api/sentimento', methods=['POST'])
+@login_required
+def api_sentimento_post():
+    data = request.get_json(silent=True) or {}
+    sentimento = data.get('sentimento')
+    allowed = {'muito_triste','triste','neutro','feliz','muito_feliz'}
+    if sentimento not in allowed:
+        return jsonify({'success': False, 'error': 'Sentimento inválido'}), 400
+    today = _today_local()
+    exists = SentimentoDia.query.filter_by(usuario_id=current_user.id, data=today).first()
+    if exists:
+        return jsonify({'success': False, 'error': 'Você já registrou seu sentimento hoje.'}), 400
+    rec = SentimentoDia(usuario_id=current_user.id, data=today, sentimento=sentimento)
+    db.session.add(rec)
+    db.session.commit()
+    return jsonify({'success': True})
 
 
 @main.route('/aviso/<int:aviso_id>')

@@ -11,6 +11,7 @@ from . import (
     ouvidoria,
     eventos,
     links,
+    sentimento,
 )
 
 __all__ = ['admin']

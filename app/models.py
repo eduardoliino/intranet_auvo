@@ -172,3 +172,22 @@ class ConfigLink(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return Colaborador.query.get(int(user_id))
+
+
+# === Sentimento do Dia ===
+class SentimentoDia(db.Model):
+    __tablename__ = 'tb_sentimento_dia'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('colaborador.id'), nullable=False)
+    data = db.Column(db.Date, nullable=False, index=True)
+    sentimento = db.Column(db.Enum(
+        'muito_triste', 'triste', 'neutro', 'feliz', 'muito_feliz',
+        name='sentimento_dia_enum'
+    ), nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+    usuario = db.relationship('Colaborador', backref='sentimentos_dia')
+
+    __table_args__ = (
+        db.UniqueConstraint('usuario_id', 'data', name='uix_sentimento_usuario_data'),
+    )

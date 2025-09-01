@@ -40,10 +40,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     init(){
-      // Conexão compartilhada com Socket.IO
-      this.socket = window.__homeSocket || (window.__homeSocket = io());
-      this.socket.on('update_reactions', (data) => this.handleReactionUpdate(data));
-      this.socket.on('new_comment', (data) => this.handleNewComment(data));
+      // Home: não abre Socket.IO na carga para evitar atrasos.
+      // Conectamos apenas quando o modal é aberto.
+      this.socket = null;
     },
 
     onBodyScroll(e){
@@ -65,6 +64,14 @@ document.addEventListener('alpine:init', () => {
     },
 
     async openModal(event, postId){
+      // Conecta Socket.IO sob demanda (apenas quando o modal abre)
+      if(!this.socket && typeof io === 'function'){
+        try{
+          this.socket = io({ transports: ['websocket'] });
+          this.socket.on('update_reactions', (data) => this.handleReactionUpdate(data));
+          this.socket.on('new_comment', (data) => this.handleNewComment(data));
+        }catch{}
+      }
       this.isModalOpen = true;
       this.isLoading = true;
       this.modalContent = { postId, postTitle: 'Carregando...', post_html: '', reactions: { counts: {}, user_reaction: null }, comments: [] };
@@ -92,6 +99,10 @@ document.addEventListener('alpine:init', () => {
       } finally {
         await this.$nextTick();
         this.normalizeEmbeds(this.$refs.embedContent || this.$refs.modalBody);
+        // Reprocessa embeds do Instagram após injetar HTML
+        try { if(window.instgrm && window.instgrm.Embeds) { window.instgrm.Embeds.process(); } } catch {}
+        // Tenta novamente pouco depois (caso o iframe demore a surgir)
+        setTimeout(() => { try { window.instgrm && window.instgrm.Embeds.process(); } catch {} }, 500);
         this.isLoading = false;
       }
     },

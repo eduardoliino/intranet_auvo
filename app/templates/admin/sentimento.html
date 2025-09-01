@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container p-4">
+  <h1 class="mb-4">Sentimento do Dia</h1>
+
+  <!-- Filtro detalhado por colaborador e período -->
+  <form method="get" class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label">Colaborador</label>
+          <select name="user_id" class="form-select">
+            <option value="">Selecione…</option>
+            {% for c in colaboradores %}
+              <option value="{{ c.id }}" {% if detailed and detailed.user_id == c.id %}selected{% endif %}>{{ c.nome }} {{ c.sobrenome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Início</label>
+          <input type="date" name="start" class="form-control" value="{{ detailed.start if detailed else '' }}" placeholder="YYYY-MM-DD" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fim</label>
+          <input type="date" name="end" class="form-control" value="{{ detailed.end if detailed else '' }}" placeholder="YYYY-MM-DD" />
+        </div>
+        <div class="col-md-1 d-grid">
+          <button class="btn btn-auvo">Filtrar</button>
+        </div>
+      </div>
+      <div class="text-muted small mt-2">Dica: deixe vazio para últimos 30 dias.</div>
+    </div>
+  </form>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="text-muted small">Colaboradores</div>
+        <div class="fs-4 fw-semibold">{{ total_colabs }}</div>
+      </div></div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="text-muted small">Responderam hoje</div>
+        <div class="fs-4 fw-semibold">{{ participantes }}</div>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100"><div class="card-body">
+        <div class="text-muted small mb-2">Distribuição de hoje</div>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge bg-light text-dark">😭 {{ dist['muito_triste'] }}</span>
+          <span class="badge bg-light text-dark">☹️ {{ dist['triste'] }}</span>
+          <span class="badge bg-light text-dark">😐 {{ dist['neutro'] }}</span>
+          <span class="badge bg-light text-dark">🙂 {{ dist['feliz'] }}</span>
+          <span class="badge bg-light text-dark">😄 {{ dist['muito_feliz'] }}</span>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header fw-bold">Reações de hoje</div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead><tr><th>Colaborador</th><th>Sentimento</th><th>Hora</th></tr></thead>
+          <tbody>
+            {% for r in reacoes_hoje %}
+            <tr>
+              <td>{{ r.usuario.nome }} {{ r.usuario.sobrenome }}</td>
+              <td>
+                {% set m = {'muito_triste':'😭','triste':'☹️','neutro':'😐','feliz':'🙂','muito_feliz':'😄'} %}
+                {{ m[r.sentimento] }}
+              </td>
+              <td>{{ r.criado_em|datetimeformat('%H:%M') }}</td>
+            </tr>
+            {% endfor %}
+            {% if reacoes_hoje|length == 0 %}
+            <tr><td colspan="3" class="text-center text-muted py-3">Ninguém respondeu hoje.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+      <span>Alertas (tristeza consecutiva)</span>
+      <small class="text-muted">Streaks consideram até 14 dias e disparam com 3+ dias</small>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead><tr><th>Colaborador</th><th>Dias consecutivos</th></tr></thead>
+          <tbody>
+            {% for a in alertas %}
+            <tr>
+              <td>{{ a.nome }}</td>
+              <td><span class="badge bg-danger">{{ a.dias }}</span></td>
+            </tr>
+            {% endfor %}
+            {% if alertas|length == 0 %}
+            <tr><td colspan="2" class="text-center text-muted py-3">Nenhum alerta no período.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if detailed %}
+  <div class="card mt-4">
+    <div class="card-header fw-bold">Análise detalhada</div>
+    <div class="card-body">
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <div class="text-muted small">Período</div>
+          <div class="fw-semibold">{{ detailed.start }} — {{ detailed.end }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Dias no período</div>
+          <div class="fw-semibold">{{ detailed.dias_periodo }}</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Dias respondidos</div>
+          <div class="fw-semibold">{{ detailed.dias_respondidos }} ({{ detailed.percent_participacao }}%)</div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-muted small">Média do humor</div>
+          <div class="fw-semibold">{{ detailed.media_humor or '-' }}</div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <div class="text-muted small mb-2">Distribuição no período</div>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge bg-light text-dark">😭 {{ detailed.dist['muito_triste'] }}</span>
+          <span class="badge bg-light text-dark">☹️ {{ detailed.dist['triste'] }}</span>
+          <span class="badge bg-light text-dark">😐 {{ detailed.dist['neutro'] }}</span>
+          <span class="badge bg-light text-dark">🙂 {{ detailed.dist['feliz'] }}</span>
+          <span class="badge bg-light text-dark">😄 {{ detailed.dist['muito_feliz'] }}</span>
+        </div>
+      </div>
+      <div class="text-muted small mb-1">Maior sequência de dias tristes no período: <strong>{{ detailed.max_streak_triste }}</strong></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead><tr><th>Data</th><th>Sentimento</th></tr></thead>
+          <tbody>
+            {% for r in detailed.registros %}
+            <tr>
+              <td>{{ r.data }}</td>
+              <td>{% set m = {'muito_triste':'😭 muito triste','triste':'☹️ triste','neutro':'😐 neutro','feliz':'🙂 feliz','muito_feliz':'😄 muito feliz'} %} {{ m[r.sentimento] }}</td>
+            </tr>
+            {% endfor %}
+            {% if detailed.registros|length == 0 %}
+            <tr><td colspan="2" class="text-center text-muted py-3">Sem registros no período.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

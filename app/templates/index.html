@@ -4,6 +4,44 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/newsletter.css') }}">
 <div x-data="dashboard">
 
+  <!-- Sentimento do Dia - full width, some após responder -->
+  <div class="row" x-data>
+    <div class="col-12" x-data="sentimentoDia()" x-show="visible" x-cloak x-transition.opacity.duration.400ms>
+      <div class="card mb-4">
+        <div class="card-body text-center">
+          <template x-if="!reacted">
+            <div>
+              <h5 class="mb-3">Como você está se sentindo?</h5>
+              <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <button type="button" class="sentimento-btn" @click="enviar('muito_triste')" :disabled="loading" title="Muito triste" aria-label="Muito triste">
+                  <img :src="icons.muito_triste" alt="Muito triste" />
+                </button>
+                <button type="button" class="sentimento-btn" @click="enviar('triste')" :disabled="loading" title="Triste" aria-label="Triste">
+                  <img :src="icons.triste" alt="Triste" />
+                </button>
+                <button type="button" class="sentimento-btn" @click="enviar('neutro')" :disabled="loading" title="Neutro" aria-label="Neutro">
+                  <img :src="icons.neutro" alt="Neutro" />
+                </button>
+                <button type="button" class="sentimento-btn" @click="enviar('feliz')" :disabled="loading" title="Feliz" aria-label="Feliz">
+                  <img :src="icons.feliz" alt="Feliz" />
+                </button>
+                <button type="button" class="sentimento-btn" @click="enviar('muito_feliz')" :disabled="loading" title="Muito feliz" aria-label="Muito feliz">
+                  <img :src="icons.muito_feliz" alt="Muito feliz" />
+                </button>
+              </div>
+              <p class="text-muted small mt-2" x-show="loading">Registrando seu sentimento...</p>
+            </div>
+          </template>
+          <template x-if="reacted">
+            <div>
+              <h6 class="mb-1">Obrigado por compartilhar!</h6>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="row">
     <div class="col-lg-7">
         <div class="card card-comunicados mb-4">
@@ -343,4 +381,56 @@
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/latest_news_card.js') }}"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('sentimentoDia', () => ({
+      reacted: false,
+      loading: false,
+      visible: true,
+      loaded: false,
+      icons: {
+        // Ajuste os arquivos conforme os nomes colocados em /static/img/sentimento
+        // Mapeamento: 01 = triste, 05 = muito feliz (conforme instrução)
+        // Para cobrir 5 níveis, usamos:
+        // 01 – muito_triste (ou triste mais forte)
+        // 02 – triste
+        // 03 – neutro
+        // 04 – feliz
+        // 05 – muito_feliz
+        muito_triste: '{{ url_for('static', filename='img/sentimento/01.png') }}',
+        triste: '{{ url_for('static', filename='img/sentimento/02.png') }}',
+        neutro: '{{ url_for('static', filename='img/sentimento/03.png') }}',
+        feliz: '{{ url_for('static', filename='img/sentimento/04.png') }}',
+        muito_feliz: '{{ url_for('static', filename='img/sentimento/05.png') }}',
+      },
+      async init(){
+        // Evita flicker: começa oculto (x-cloak) e só decide visibilidade após carregar status
+        this.visible = false;
+        try{
+          const r = await fetch('/api/sentimento/status');
+          const d = await r.json();
+          this.reacted = !!d.reacted;
+        }catch{}
+        this.loaded = true;
+        this.visible = !this.reacted; // mostra somente se não respondeu hoje
+      },
+      async enviar(tipo){
+        if(this.reacted || this.loading) return;
+        this.loading = true;
+        try{
+          const r = await fetch('/api/sentimento', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sentimento: tipo }) });
+          const d = await r.json();
+          if(r.ok && d.success){
+            this.reacted = true;
+            // Mostra agradecimento por alguns milissegundos e some suavemente
+            setTimeout(() => { this.visible = false; }, 1000);
+          }
+          else { window.dispatchEvent(new CustomEvent('toast', { detail: { type:'warning', message: d.error || 'Não foi possível registrar seu sentimento.' } })); }
+        }catch{
+          window.dispatchEvent(new CustomEvent('toast', { detail: { type:'danger', message: 'Erro ao registrar sentimento.' } }));
+        }finally{ this.loading = false; }
+      }
+    }))
+  })
+</script>
 {% endblock page_scripts %}
