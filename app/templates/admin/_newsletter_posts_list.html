@@ -28,7 +28,7 @@
           </button>
           <button
             class="btn btn-sm btn-outline-danger"
-            @click="removerPost({{ p.id }})"
+            @click="confirmarRemocao({{ p.id }}, '{{ p.titulo | e }}')"
           >
             <i class="bi bi-trash"></i>
           </button>

@@ -2,6 +2,15 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required
 from app import db
 from app.models import Colaborador, Cargo, Departamento, Permissao
+from app.newsletter.models import (
+    NewsPost,
+    NewsComentario,
+    NewsReacao,
+    NewsAvaliacao,
+    NewsEnquete,
+    NewsEnqueteOpcao,
+    NewsEnqueteVoto,
+)
 from app.admin_routes.utils import permission_required, salvar_foto
 from sqlalchemy.orm import joinedload
 from flask_login import current_user
@@ -170,7 +179,14 @@ def editar(id):
 @colaborador_bp.route('/remover/<int:id>', methods=['POST'])
 @permission_required('gerenciar_colaboradores')
 def remover(id):
-    """Remove um colaborador e a sua foto associada."""
+    """Remove um colaborador e todo o conteúdo associado na Newsletter.
+
+    Política aplicada:
+      - Reações, comentários, avaliações do colaborador: removidos.
+      - Posts em que é autor: removidos (com cascade para filhos).
+      - Enquetes em que é autor: removidas (votos/opções limpos antes).
+      - Votos em enquetes (usuario_id): removidos.
+    """
     colaborador = Colaborador.query.get_or_404(id)
     if colaborador.foto_filename:
         try:
@@ -182,6 +198,28 @@ def remover(id):
             print(f"Erro ao remover foto do colaborador {id}: {e}")
 
     nome_completo = f"{colaborador.nome} {colaborador.sobrenome}"
+
+    # 1) Conteúdos do colaborador na Newsletter
+    # 1.1 Reações, comentários, avaliações que ele fez em posts de terceiros
+    NewsReacao.query.filter_by(usuario_id=id).delete(synchronize_session=False)
+    NewsComentario.query.filter_by(usuario_id=id).delete(synchronize_session=False)
+    NewsAvaliacao.query.filter_by(usuario_id=id).delete(synchronize_session=False)
+    NewsEnqueteVoto.query.filter_by(usuario_id=id).delete(synchronize_session=False)
+
+    # 1.2 Posts de autoria do colaborador (remover individualmente para honrar cascata ORM)
+    posts_autor = NewsPost.query.filter_by(autor_id=id).all()
+    for post in posts_autor:
+        db.session.delete(post)  # comentários/reações/avaliações do post caem por cascade
+
+    # 1.3 Enquetes de autoria do colaborador
+    enqs = NewsEnquete.query.filter_by(autor_id=id).all()
+    for e in enqs:
+        # Remove votos e opções desse enquete antes de remover o registro principal
+        NewsEnqueteVoto.query.filter_by(enquete_id=e.id).delete(synchronize_session=False)
+        NewsEnqueteOpcao.query.filter_by(enquete_id=e.id).delete(synchronize_session=False)
+        db.session.delete(e)
+
+    # 2) Finalmente, remove o colaborador
     db.session.delete(colaborador)
     db.session.commit()
     return jsonify({'success': True, 'message': f'Colaborador {nome_completo} e a sua foto foram removidos com sucesso!'})
