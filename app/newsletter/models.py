@@ -24,9 +24,17 @@ class NewsPost(db.Model):
     # ADICIONE A LINHA ABAIXO PARA CRIAR A RELAÇÃO 'autor'
     autor = db.relationship('Colaborador', backref='news_posts')
 
-    comentarios = db.relationship('NewsComentario', backref='post', lazy=True)
-    reacoes = db.relationship('NewsReacao', backref='post', lazy=True)
-    avaliacoes = db.relationship('NewsAvaliacao', backref='post', lazy=True)
+    # Cascateia a exclusão do post para filhos no nível do ORM,
+    # evitando tentativas de setar post_id = NULL (coluna NOT NULL)
+    comentarios = db.relationship(
+        'NewsComentario', backref='post', lazy=True,
+        cascade='all, delete-orphan')
+    reacoes = db.relationship(
+        'NewsReacao', backref='post', lazy=True,
+        cascade='all, delete-orphan')
+    avaliacoes = db.relationship(
+        'NewsAvaliacao', backref='post', lazy=True,
+        cascade='all, delete-orphan')
 
 
 class NewsReacao(db.Model):

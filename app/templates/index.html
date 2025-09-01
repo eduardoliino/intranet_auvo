@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/newsletter.css') }}">
 <div x-data="dashboard">
 
   <div class="row">
@@ -28,50 +29,124 @@
             </div>
         </div>
 
-        <div class="card card-eventos mb-4">
-            <div class="card-header bg-transparent">
-                <h5 class="card-title mb-0"><i class="bi bi-award-fill me-2" style="color: var(--cor-secundaria);"></i> Aniversariantes de Casa</h5>
+        <!-- Último post da Newsletter -->
+        <div class="card card-eventos mb-4" x-data="latestNewsCard({{ latest_post.id if latest_post else 'null' }}, {{ latest_post.reacoes|length if latest_post else 0 }}, {{ latest_post.comentarios|selectattr('excluido','equalto',False)|list|length if latest_post else 0 }})">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                  <i class="bi bi-newspaper me-2" style="color: var(--cor-secundaria);"></i>
+                  Última da Newsletter
+                </h5>
+                <a href="{{ url_for('newsletter.feed') }}" class="btn btn-sm btn-success">Ver tudo</a>
             </div>
             <div class="card-body">
-                {% if aniversariantes_empresa %}
-                <div id="carouselAniversarioCasa" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        {% for aniv in aniversariantes_empresa %}
-                        <div class="carousel-item {{ 'active' if loop.first else '' }}">
-                            <div class="carousel-card-item text-center">
-                                {% if aniv.foto_filename %}
-                                    <img src="{{ url_for('static', filename='fotos_colaboradores/' + aniv.foto_filename) }}" class="aniversario-casa-avatar" alt="Foto de {{ aniv.nome }}">
-                                {% else %}
-                                    <div class="aniversario-casa-avatar d-inline-flex justify-content-center align-items-center" :style="`background-color: ${getAvatarColor('{{ aniv.nome }}')}`">
-                                        <span class="fs-1 fw-bold text-white" x-text="getInitials('{{ aniv.nome }}', '{{ aniv.sobrenome }}')"></span>
-                                    </div>
-                                {% endif %}
-                                <h5 class="fw-bold mb-1 mt-3">{{ aniv.nome }} {{ aniv.sobrenome }}</h5>
-                                <h6 class="mb-2 text-muted">{{ aniv.cargo.titulo or 'Colaborador(a)' }}</h6>
-                                <p class="aniversario-casa-texto">
-                                    Parabéns pelos <strong style="color: var(--cor-primaria);">{{ aniv.anos_de_casa }}</strong> {{ 'ano' if aniv.anos_de_casa == 1 else 'anos' }} de dedicação!
-                                </p>
-                            </div>
-                        </div>
-                        {% endfor %}
+              {% if latest_post %}
+                <article class="nl-card" @click="openModal($event, {{ latest_post.id }})" style="cursor:pointer;" tabindex="0" @keydown.enter.prevent="openModal($event, {{ latest_post.id }})">
+                  <header class="nl-hd">
+                    {% if latest_post.autor.foto_filename %}
+                    <img src="{{ url_for('static', filename='fotos_colaboradores/' + latest_post.autor.foto_filename) }}" class="nl-avatar" alt="Foto de {{ latest_post.autor.nome }}">
+                    {% else %}
+                    <div class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white">
+                      <span>{{ latest_post.autor.nome[0] }}{{ latest_post.autor.sobrenome[0] }}</span>
                     </div>
-                    {% if aniversariantes_empresa|length > 1 %}
-                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselAniversarioCasa" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#carouselAniversarioCasa" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Next</span>
-                    </button>
                     {% endif %}
+                    <div>
+                      <h5>{{ latest_post.autor.nome }} {{ latest_post.autor.sobrenome }}</h5>
+                      <div class="nl-meta">{{ latest_post.publicado_em.strftime('%d de %B de %Y') }}</div>
+                    </div>
+                  </header>
+                  <div class="nl-body">
+                    <h5>{{ latest_post.titulo }}</h5>
+                    <p class="nl-content">{{ latest_post.conteudo_md | striptags | truncate(240) }}</p>
+                  </div>
+                  <footer class="nl-ft">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                      <div class="text-muted small">
+                        <i class="bi bi-hand-thumbs-up-fill nl-counter-icon"></i> <span x-text="latestCounts.reactions">{{ latest_post.reacoes|length if latest_post else 0 }}</span>
+                        <i class="bi bi-chat-text nl-counter-icon ms-3"></i> <span x-text="latestCounts.comments">{{ latest_post.comentarios|selectattr('excluido','equalto',False)|list|length if latest_post else 0 }}</span>
+                      </div>
+                    </div>
+                  </footer>
+                </article>
+              {% else %}
+                <div class="text-center text-muted py-3">
+                  <p>Nenhuma publicação encontrada.</p>
                 </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <i class="bi bi-award fs-1 text-muted"></i>
-                    <h6 class="mt-3 text-muted">Nenhum aniversário de empresa este mês.</h6>
+              {% endif %}
+
+              <!-- Modal de Post (mesma experiência da página Newsletter) -->
+              <div x-show="isModalOpen" @click.self="closeModal()" @keydown.escape.window="closeModal()" class="nl-modal-overlay" x-cloak>
+                <div x-show="isModalOpen" class="nl-modal-dialog" role="dialog" aria-modal="true">
+                  <header class="nl-modal-header">
+                    <h5 class="nl-modal-title" x-text="modalContent.postTitle || 'Detalhes'"></h5>
+                    <div class="nl-modal-actions">
+                      <button type="button" class="nl-btn-icon" @click="closeModal" aria-label="Fechar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="nl-progress"><span :style="{ width: scrollPct + '%' }"></span></div>
+                  </header>
+                  <div class="nl-modal-body nl-scrollfade custom-scrollbar" x-ref="modalBody" @scroll.debounce.100ms="onBodyScroll($event)" :aria-busy="isLoading">
+                    <div x-show="isLoading" class="embed-placeholder aspect-og"></div>
+                    <div x-show="!isLoading" class="w-100">
+                      <div x-ref="embedContent" class="nl-embed-wrap" x-html="modalContent.post_html"></div>
+                      <hr class="my-4" />
+                      <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                        <template x-for="reactionType in reactionTypes" :key="reactionType.type">
+                          <button :class="['nl-reaction-chip', { 'selected': modalContent.reactions.user_reaction === reactionType.type, 'zero-count': !(modalContent.reactions.counts[reactionType.type] > 0) }]" :style="modalContent.reactions.user_reaction === reactionType.type ? 'background-color: var(--cor-primaria-muito-clara); border-color: var(--cor-primaria); color: var(--cor-primaria-escura);' : ''" @click="toggleReaction(reactionType.type)">
+                            <i class="bi" :class="reactionType.icon"></i>
+                            <span class="nl-count" x-text="modalContent.reactions.counts[reactionType.type] || 0"></span>
+                          </button>
+                        </template>
+                      </div>
+                      <h6>Comentários</h6>
+                      <div class="mb-4">
+                        <template x-for="comment in modalContent.comments" :key="comment.id">
+                          <div class="d-flex align-items-start my-3">
+                            <template x-if="comment.user_photo">
+                              <img :src="comment.user_photo" class="nl-avatar me-3" :alt="'Foto de ' + comment.user_name" />
+                            </template>
+                            <template x-if="!comment.user_photo">
+                              <div class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0">
+                                <span x-text="comment.user_initials"></span>
+                              </div>
+                            </template>
+                            <div class="w-100">
+                              <strong x-text="comment.user_name"></strong>
+                              <p class="mb-0" style="white-space: pre-wrap; word-break: break-word" x-text="comment.text"></p>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                  <footer class="nl-modal-footer">
+                    <form class="nl-comment-bar" @submit.prevent="submitComment()">
+                      <div class="nl-comment-field">
+                        <!-- Botão Emoji -->
+                        <button type="button" class="nl-emoji-btn" @click="showEmojiPicker = !showEmojiPicker" :aria-expanded="showEmojiPicker ? 'true' : 'false'" aria-label="Inserir emoji">
+                          <i class="bi bi-emoji-smile"></i>
+                        </button>
+
+                        <textarea x-model="newCommentText" x-ref="commentInput" rows="1" class="nl-comment-input" placeholder="Adicionar um comentário..." @keydown.enter.prevent.stop="handleCommentKey($event)" @input="autosizeTextarea($event.target)" aria-label="Adicionar um comentário"></textarea>
+                        <button type="submit" class="nl-comment-send" :disabled="isSubmitting || !newCommentText.trim()" aria-label="Enviar comentário">
+                          <i class="bi bi-send-fill" aria-hidden="true"></i>
+                        </button>
+
+                        <!-- Popover do Emoji Picker -->
+                        <div class="nl-emoji-popover" x-show="showEmojiPicker" x-transition @click.outside="showEmojiPicker=false">
+                          <emoji-picker @emoji-click="onEmojiClick"></emoji-picker>
+                        </div>
+                      </div>
+                    </form>
+                  </footer>
+
+                  <!-- Alerta de novo comentário -->
+                  <div class="nl-new-comment-toast-wrapper" x-show="showNewCommentButton" x-transition x-cloak>
+                    <button type="button" class="nl-new-comment-toast" @click="scrollToBottom()">
+                      <i class="bi bi-arrow-down-circle-fill"></i>
+                      <span x-text="newCommentCount > 1 ? `${newCommentCount} novos comentários` : 'Novo comentário'"></span>
+                    </button>
+                  </div>
                 </div>
-                {% endif %}
+              </div>
             </div>
         </div>
 
@@ -264,5 +339,8 @@
 {% endblock content %}
 
 {% block page_scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/latest_news_card.js') }}"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 {% endblock page_scripts %}

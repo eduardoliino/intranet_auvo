@@ -11,6 +11,7 @@ from .models import (
     NewsPost,
     NewsReacao,
     NewsComentario,
+    NewsAvaliacao,
     NewsEnquete,
     NewsEnqueteOpcao,
     NewsEnqueteVoto,
@@ -221,6 +222,10 @@ def excluir_post(post_id: int):
     if not current_user.is_admin:
         abort(403)
     post = NewsPost.query.get_or_404(post_id)
+    # Remoção defensiva dos dependentes para evitar violação de NOT NULL
+    NewsComentario.query.filter_by(post_id=post_id).delete(synchronize_session=False)
+    NewsReacao.query.filter_by(post_id=post_id).delete(synchronize_session=False)
+    NewsAvaliacao.query.filter_by(post_id=post_id).delete(synchronize_session=False)
     db.session.delete(post)
     db.session.commit()
     return jsonify({'status': 'ok'})

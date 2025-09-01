@@ -4,6 +4,7 @@ from datetime import datetime, date, timedelta
 from sqlalchemy import extract, desc, or_
 from . import db
 from .models import Aviso, Colaborador, Destaque, FaqCategoria, FaqPergunta, Ouvidoria, Evento, ConfigLink, Cargo
+from app.newsletter.models import NewsPost
 import locale
 try:
     locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
@@ -64,6 +65,9 @@ def index():
         'indicacao': link_indicacao_obj.valor if link_indicacao_obj else None
     }
 
+    # Post mais recente da Newsletter (publicado)
+    latest_post = NewsPost.query.filter_by(status='publicado').order_by(NewsPost.publicado_em.desc()).first()
+
     return render_template(
         'index.html',
         total_colaboradores=total_colaboradores,
@@ -74,6 +78,7 @@ def index():
         aniversariantes_empresa=aniversariantes_empresa,
         eventos=eventos_proximos_dict,
         links_carreira=links_carreira,
+        latest_post=latest_post,
         current_user=current_user
     )
 
