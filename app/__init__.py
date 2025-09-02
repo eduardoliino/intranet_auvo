@@ -37,7 +37,7 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
     sess.init_app(app)
-    socketio.init_app(app)
+    socketio.init_app(app, cors_allowed_origins="*")
 
     @app.template_filter('datetimeformat')
     def datetimeformat(value, format='%d/%m/%Y %H:%M'):
@@ -114,7 +114,7 @@ def create_app():
         print('Seed completed')
 
     @app.cli.command('seed_newsletter')
-    def seed_newsletter():
+    def seed__newsletter():
         from datetime import date
         from .models import Colaborador
         from .newsletter.models import (
