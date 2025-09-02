@@ -71,6 +71,7 @@ def get_post_details():
     comments_data = [{
         'id': c.id,
         'text': c.texto,
+        'user_id': c.usuario_id,
         'user_name': f"{c.usuario.nome} {c.usuario.sobrenome}",
         'user_initials': f"{c.usuario.nome[0] if c.usuario.nome else ''}{c.usuario.sobrenome[0] if c.usuario.sobrenome else ''}",
         'user_photo': url_for('static', filename=f'fotos_colaboradores/{c.usuario.foto_filename}') if c.usuario.foto_filename else None,
@@ -84,7 +85,9 @@ def get_post_details():
         # <-- CORREÇÃO: Enviando o conteúdo HTML completo do post.
         'post_html': post.conteudo_md,
         'reactions': {'counts': dict(reaction_counts), 'user_reaction': user_reaction},
-        'comments': comments_data
+        'comments': comments_data,
+        'current_user_id': current_user.id,
+        'current_user_is_admin': bool(current_user.is_admin),
     })
 
 # --- ROTA RESTAURADA ---
@@ -148,6 +151,7 @@ def criar_comentario(post_id: int):
         'id': comentario.id,
         'post_id': post_id,  # <<< ADICIONE ESTA LINHA
         'text': comentario.texto,
+        'user_id': current_user.id,
         'user_name': f"{current_user.nome} {current_user.sobrenome}",
         'user_initials': f"{(current_user.nome or ' ')[0]}{(current_user.sobrenome or ' ')[0]}",
         'user_photo': url_for('static', filename=f'fotos_colaboradores/{current_user.foto_filename}') if current_user.foto_filename else None
@@ -156,6 +160,29 @@ def criar_comentario(post_id: int):
     socketio.emit('new_comment', {'comment': comment_data})
 
     return jsonify({'success': True, 'comment': comment_data})
+
+
+@newsletter_bp.delete('/api/news/comentarios/<int:comentario_id>')
+@login_required
+def excluir_comentario(comentario_id: int):
+    comentario = NewsComentario.query.get_or_404(comentario_id)
+    # Permite ao autor ou administrador excluir
+    if not (current_user.is_admin or comentario.usuario_id == current_user.id):
+        abort(403)
+
+    comentario.excluido = True
+    db.session.commit()
+
+    # Emite evento em tempo real para atualizar UIs conectadas
+    try:
+        socketio.emit('comment_deleted', {
+            'post_id': comentario.post_id,
+            'comment_id': comentario.id,
+        })
+    except Exception:
+        pass
+
+    return jsonify({'success': True})
 
 # --- Rotas de Admin ---
 

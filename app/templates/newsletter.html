@@ -15,6 +15,22 @@
   }
 </style>
 
+<style>
+  /* Botão de exclusão de comentário (aparece no hover) */
+  .nl-comment-item { position: relative; }
+  .nl-comment-delete-btn {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    opacity: 0;
+    transition: opacity .15s ease-in-out;
+  }
+  .nl-comment-item:hover .nl-comment-delete-btn { opacity: 1; }
+  /* Garante que o modal de confirmação fique acima do modal customizado */
+  #confirmRemoveCommentModal.modal { z-index: 5000; }
+  .modal-backdrop.confirm-remove-comment { z-index: 4990 !important; }
+</style>
+
 <div class="nl-feed py-4" x-data="newsletterFeed()">
   <h1 class="mb-4">Auvo News</h1>
 
@@ -222,7 +238,7 @@
               x-for="comment in modalContent.comments"
               :key="comment.id"
             >
-              <div class="d-flex align-items-start my-3">
+              <div class="d-flex align-items-start my-3 nl-comment-item">
                 <template x-if="comment.user_photo">
                   <img
                     :src="comment.user_photo"
@@ -245,6 +261,13 @@
                     x-text="comment.text"
                   ></p>
                 </div>
+                <template x-if="modalContent.current_user_is_admin || comment.user_id === modalContent.current_user_id">
+                  <button type="button" class="btn btn-sm btn-outline-danger nl-comment-delete-btn"
+                          @click.stop="confirmarRemocaoComentario(comment)"
+                          aria-label="Excluir comentário">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </template>
               </div>
             </template>
           </div>
@@ -342,7 +365,11 @@
         post_html: "",
         reactions: { counts: {}, user_reaction: null },
         comments: [],
+        current_user_id: null,
+        current_user_is_admin: false,
       },
+      deleteComment: { id: null, post_id: null, text: '' },
+      confirmDeleteModal: null,
       reactionTypes: [
         { type: "heart", icon: "bi-heart-fill" },
         { type: "lightbulb", icon: "bi-lightbulb-fill" },
@@ -639,6 +666,20 @@
               }
           }
       },
+      handleCommentDeleted(data) {
+          const postId = data.post_id;
+          const commentId = data.comment_id;
+          const item = this.feed.find(p => p.type === 'post' && p.id === postId);
+          if (item && item.total_comentarios > 0) {
+              item.total_comentarios--;
+          }
+          if (this.isModalOpen && this.modalContent.postId === postId) {
+              const idx = this.modalContent.comments.findIndex(c => c.id === commentId);
+              if (idx !== -1) {
+                  this.modalContent.comments.splice(idx, 1);
+              }
+          }
+      },
       async fetchFeed() {
         if (this.isLoadingFeed || !this.hasMore) return;
         this.isLoadingFeed = true;
@@ -679,12 +720,15 @@
         this.socket = io();
         this.socket.on("connect", () => console.log("Socket.IO Conectado!"));
 
-        // ESTAS DUAS LINHAS ABAIXO SUBSTITUEM OS LISTENERS ANTIGOS
         this.socket.on("update_reactions", (data) => this.handleReactionUpdate(data));
         this.socket.on("new_comment", (data) => this.handleNewComment(data));
+        this.socket.on("comment_deleted", (data) => this.handleCommentDeleted(data));
         
-        // ESTA LINHA É NOVA
         this.fetchFeed();
+
+        // Exponho um callback global para o modal de confirmação fora do x-data
+        const self = this;
+        window.__nl_removeComment = () => self.removerComentarioConfirmado();
       },
 
       // OPEN/CLOSE
@@ -832,7 +876,59 @@
           this.isSubmitting = false;
         }
       },
+      // CONFIRM/DELETE COMMENT
+      confirmarRemocaoComentario(comment) {
+        this.deleteComment = { id: comment.id, post_id: comment.post_id, text: comment.text };
+        if (!this.confirmDeleteModal) {
+          const el = document.getElementById('confirmRemoveCommentModal');
+          this.confirmDeleteModal = new bootstrap.Modal(el);
+          // Ajusta z-index do backdrop quando o modal for mostrado
+          el.addEventListener('shown.bs.modal', () => {
+            document.querySelectorAll('.modal-backdrop').forEach(b => b.classList.add('confirm-remove-comment'));
+          });
+          el.addEventListener('hidden.bs.modal', () => {
+            document.querySelectorAll('.modal-backdrop.confirm-remove-comment').forEach(b => b.classList.remove('confirm-remove-comment'));
+          });
+        }
+        this.confirmDeleteModal.show();
+      },
+      async removerComentarioConfirmado() {
+        const id = this.deleteComment.id;
+        if (!id) return;
+        try {
+          const resp = await fetch(`/api/news/comentarios/${id}`, { method: 'DELETE' });
+          if (!resp.ok) {
+            if (resp.status === 403) alert('Você não tem permissão para excluir este comentário.');
+            else alert('Erro ao excluir comentário.');
+            return;
+          }
+          this.handleCommentDeleted({ post_id: this.deleteComment.post_id, comment_id: id });
+        } finally {
+          this.confirmDeleteModal?.hide();
+          this.deleteComment = { id: null, post_id: null, text: '' };
+        }
+      },
     };
   }
 </script>
+
+<!-- Modal de confirmação para excluir comentário -->
+<div class="modal fade" id="confirmRemoveCommentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Excluir comentário</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza de que deseja excluir este comentário?</p>
+        <p class="small text-muted mb-0" x-text="deleteComment.text"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" onclick="window.__nl_removeComment && window.__nl_removeComment()">Excluir</button>
+      </div>
+    </div>
+  </div>
+  </div>
 {% endblock %}
