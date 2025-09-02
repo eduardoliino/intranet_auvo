@@ -41,12 +41,3 @@ build/
 
 # Arquivos de testes ou deploy locais
 instance/
-
-# Sessões do Flask (runtime)
-flask_session/
-
-# Ignorar migrations (ambiente de testes)
-migrations/
-
-# Uploads de fotos de colaboradores (ambiente de testes)
-app/static/fotos_colaboradores/
