@@ -1,8 +1,8 @@
-"""Criacao inicial do banco de dados
+"""primeira migration
 
-Revision ID: 47c2b8001272
+Revision ID: ad40d7b8db57
 Revises: 
-Create Date: 2025-08-28 23:13:54.863811
+Create Date: 2025-09-01 08:30:38.014081
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '47c2b8001272'
+revision = 'ad40d7b8db57'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -162,6 +162,19 @@ def upgrade():
     sa.ForeignKeyConstraint(['autor_id'], ['colaborador.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('tb_sentimento_dia',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('usuario_id', sa.Integer(), nullable=False),
+    sa.Column('data', sa.Date(), nullable=False),
+    sa.Column('sentimento', sa.Enum('muito_triste', 'triste', 'neutro', 'feliz', 'muito_feliz', name='sentimento_dia_enum'), nullable=False),
+    sa.Column('criado_em', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['usuario_id'], ['colaborador.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('usuario_id', 'data', name='uix_sentimento_usuario_data')
+    )
+    with op.batch_alter_table('tb_sentimento_dia', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_tb_sentimento_dia_data'), ['data'], unique=False)
+
     op.create_table('tb_news_avaliacao',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('post_id', sa.Integer(), nullable=False),
@@ -228,6 +241,10 @@ def downgrade():
     op.drop_table('tb_news_enquete_opcao')
     op.drop_table('tb_news_comentario')
     op.drop_table('tb_news_avaliacao')
+    with op.batch_alter_table('tb_sentimento_dia', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_tb_sentimento_dia_data'))
+
+    op.drop_table('tb_sentimento_dia')
     op.drop_table('tb_news_post')
     op.drop_table('tb_news_enquete')
     op.drop_table('evento')
