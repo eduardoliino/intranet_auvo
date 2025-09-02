@@ -705,3 +705,23 @@
   transform: scale(1.05);
   background-color: var(--cor-primaria-escura);
 }
+
+/* Container do comentário */
+.nl-comment-item {
+    position: relative;
+    padding-right: 40px; /* Garante espaço para o botão não sobrepor o texto */
+}
+
+/* Botão de exclusão */
+.nl-comment-delete-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    opacity: 0; /* Começa invisível */
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Exibe o botão ao passar o mouse sobre o container do comentário */
+.nl-comment-item:hover .nl-comment-delete-btn {
+    opacity: 1;
+}

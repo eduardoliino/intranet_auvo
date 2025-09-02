@@ -218,32 +218,28 @@
 
           <h6>Comentários</h6>
           <div class="mb-4">
-            <template
-              x-for="comment in modalContent.comments"
-              :key="comment.id"
-            >
-              <div class="d-flex align-items-start my-3">
+            <template x-for="comment in modalContent.comments" :key="comment.id">
+              <div class="d-flex align-items-start my-3 nl-comment-item" @mouseenter="comment.showDelete = true" @mouseleave="comment.showDelete = false">
                 <template x-if="comment.user_photo">
-                  <img
-                    :src="comment.user_photo"
-                    class="nl-avatar me-3"
-                    :alt="'Foto de ' + comment.user_name"
-                  />
+                  <img :src="comment.user_photo" class="nl-avatar me-3" :alt="'Foto de ' + comment.user_name" />
                 </template>
                 <template x-if="!comment.user_photo">
-                  <div
-                    class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0"
-                  >
+                  <div class="nl-avatar d-flex justify-content-center align-items-center bg-secondary text-white me-3 flex-shrink-0">
                     <span x-text="comment.user_initials"></span>
                   </div>
                 </template>
-                <div class="w-100">
+                <div class="w-100 position-relative">
                   <strong x-text="comment.user_name"></strong>
-                  <p
-                    class="mb-0"
-                    style="white-space: pre-wrap; word-break: break-word"
-                    x-text="comment.text"
-                  ></p>
+                  <p class="mb-0" style="white-space: pre-wrap; word-break: break-word" x-text="comment.text"></p>
+            
+                  <button
+                      x-show="comment.showDelete && (modalContent.current_user.id === comment.user_id || modalContent.current_user.is_admin)"
+                      @click.stop="confirmDeleteComment(comment.id)"
+                      class="btn btn-sm btn-outline-danger nl-comment-delete-btn"
+                      aria-label="Remover comentário"
+                      x-cloak>
+                      <i class="bi bi-trash"></i>
+                  </button>
                 </div>
               </div>
             </template>
@@ -311,6 +307,25 @@
       </div>
     </div>
   </div>
+
+<div class="modal fade" id="confirmDeleteCommentModal" tabindex="-1" aria-hidden="true" style="z-index: 2050;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Remover Comentário</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza de que deseja remover este comentário?</p>
+        <p class="text-danger small mt-2">Esta ação é permanente.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" @click="deleteComment()">Remover</button>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 {% endblock %}
 
@@ -336,12 +351,15 @@
       emojiPickerObserver: null,
       showNewCommentButton: false, // Controla a visibilidade do alerta
       newCommentCount: 0, // Conta novos comentários
+      commentToDeleteId: null,
+      deleteModal: null,
       modalContent: {
         postId: null,
         postTitle: "Carregando...",
         post_html: "",
         reactions: { counts: {}, user_reaction: null },
         comments: [],
+        current_user: { id: null, is_admin: false },
       },
       reactionTypes: [
         { type: "heart", icon: "bi-heart-fill" },
@@ -621,24 +639,43 @@
               this.modalContent.reactions.counts = data.counts;
           }
       },
+
       handleNewComment(data) {
-          const postId = data.comment.post_id;
-          const item = this.feed.find(p => p.type === 'post' && p.id === postId);
-          if (item) {
-              item.total_comentarios++;
-          }
-          if (this.isModalOpen && this.modalContent.postId === postId) {
-              if (!this.modalContent.comments.some((c) => c.id === data.comment.id)) {
-                  const el = this.$refs.modalBody;
-                  const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-                  this.modalContent.comments.push(data.comment);
-                  this.$nextTick(() => {
-                      if (isNearBottom) { this.scrollToBottom(); } 
-                      else { this.showNewCommentButton = true; this.newCommentCount++; }
-                  });
-              }
-          }
+        const postId = data.comment.post_id;
+        const item = this.feed.find(p => p.type === 'post' && p.id === postId);
+        if (item) {
+            item.total_comentarios++;
+        }
+        if (this.isModalOpen && this.modalContent.postId === postId) {
+            if (!this.modalContent.comments.some((c) => c.id === data.comment.id)) {
+                const el = this.$refs.modalBody;
+                const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+                data.comment.showDelete = false; // Adiciona a propriedade ao novo comentário
+                this.modalContent.comments.push(data.comment);
+                this.$nextTick(() => {
+                    if (isNearBottom) { this.scrollToBottom(); } 
+                    else { this.showNewCommentButton = true; this.newCommentCount++; }
+                });
+            }
+        }
       },
+
+      handleCommentDeleted(data) {
+        const { comment_id, post_id } = data;
+
+        const feedItem = this.feed.find(p => p.type === 'post' && p.id === post_id);
+        if (feedItem && feedItem.total_comentarios > 0) {
+            feedItem.total_comentarios--;
+        }
+
+        if (this.isModalOpen && this.modalContent.postId === post_id) {
+            const index = this.modalContent.comments.findIndex(c => c.id === comment_id);
+            if (index > -1) {
+                this.modalContent.comments.splice(index, 1);
+            }
+        }
+      },
+
       async fetchFeed() {
         if (this.isLoadingFeed || !this.hasMore) return;
         this.isLoadingFeed = true;
@@ -678,13 +715,13 @@
       init() {
         this.socket = io();
         this.socket.on("connect", () => console.log("Socket.IO Conectado!"));
-
-        // ESTAS DUAS LINHAS ABAIXO SUBSTITUEM OS LISTENERS ANTIGOS
         this.socket.on("update_reactions", (data) => this.handleReactionUpdate(data));
         this.socket.on("new_comment", (data) => this.handleNewComment(data));
-        
-        // ESTA LINHA É NOVA
+        this.socket.on('comment_deleted', (data) => this.handleCommentDeleted(data)); // <-- Adicione esta linha
         this.fetchFeed();
+
+        // Inicializa o modal de confirmação
+        this.deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteCommentModal'));
       },
 
       // OPEN/CLOSE
@@ -699,32 +736,32 @@
         fetch(`/api/news/post_details?post_id=${postId}`)
           .then((res) => res.json())
           .then(async (data) => {
-            if (!data.success) {
+            if (data.success) {
+              data.comments.forEach(c => c.showDelete = false); // Adiciona a propriedade para controle de hover
+              this.modalContent = data;
+              this.placeholderClass = this.guessPlaceholderClass(
+                this.modalContent.post_html
+              );
+
+              await this.$nextTick();
+              this.normalizeEmbeds(
+                this.$refs.embedContent || this.$refs.modalBody
+              );
+              try {
+                this.onBodyScroll();
+                this.setSourceLink();
+                await this.waitForEmbeds(this.$refs.embedContent, 2500);
+              } finally {
+                this.isLoading = false;
+                // Instagram reprocess
+                try {
+                  window.instgrm && window.instgrm.Embeds.process();
+                } catch (_) {}
+              }
+            } else {
               this.modalContent.postTitle = "Erro";
               this.modalContent.post_html = `<p class="text-danger text-center">${data.error}</p>`;
               this.isLoading = false;
-              return;
-            }
-
-            this.modalContent = data;
-            this.placeholderClass = this.guessPlaceholderClass(
-              this.modalContent.post_html
-            );
-
-            await this.$nextTick();
-            this.normalizeEmbeds(
-              this.$refs.embedContent || this.$refs.modalBody
-            );
-            try {
-              this.onBodyScroll();
-              this.setSourceLink();
-              await this.waitForEmbeds(this.$refs.embedContent, 2500);
-            } finally {
-              this.isLoading = false;
-              // Instagram reprocess
-              try {
-                window.instgrm && window.instgrm.Embeds.process();
-              } catch (_) {}
             }
           });
       },
@@ -830,6 +867,28 @@
           }
         } finally {
           this.isSubmitting = false;
+        }
+      },
+
+      confirmDeleteComment(commentId) {
+        this.commentToDeleteId = commentId;
+        this.deleteModal.show();
+      },
+
+      async deleteComment() {
+        if (!this.commentToDeleteId) return;
+        const commentId = this.commentToDeleteId;
+        try {
+          const response = await fetch(`/api/news/comment/${commentId}`, {
+            method: 'DELETE'
+          });
+          if (!response.ok) {
+            alert('Erro ao remover o comentário.');
+          }
+          // A atualização da UI será feita pelo evento do Socket.IO
+        } finally {
+          this.deleteModal.hide();
+          this.commentToDeleteId = null;
         }
       },
     };

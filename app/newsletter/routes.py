@@ -70,6 +70,7 @@ def get_post_details():
 
     comments_data = [{
         'id': c.id,
+        'user_id': c.usuario_id,
         'text': c.texto,
         'user_name': f"{c.usuario.nome} {c.usuario.sobrenome}",
         'user_initials': f"{c.usuario.nome[0] if c.usuario.nome else ''}{c.usuario.sobrenome[0] if c.usuario.sobrenome else ''}",
@@ -84,7 +85,11 @@ def get_post_details():
         # <-- CORREÇÃO: Enviando o conteúdo HTML completo do post.
         'post_html': post.conteudo_md,
         'reactions': {'counts': dict(reaction_counts), 'user_reaction': user_reaction},
-        'comments': comments_data
+        'comments': comments_data,
+        'current_user': {
+            'id': current_user.id,
+            'is_admin': current_user.is_admin
+        }
     })
 
 # --- ROTA RESTAURADA ---
@@ -223,9 +228,12 @@ def excluir_post(post_id: int):
         abort(403)
     post = NewsPost.query.get_or_404(post_id)
     # Remoção defensiva dos dependentes para evitar violação de NOT NULL
-    NewsComentario.query.filter_by(post_id=post_id).delete(synchronize_session=False)
-    NewsReacao.query.filter_by(post_id=post_id).delete(synchronize_session=False)
-    NewsAvaliacao.query.filter_by(post_id=post_id).delete(synchronize_session=False)
+    NewsComentario.query.filter_by(
+        post_id=post_id).delete(synchronize_session=False)
+    NewsReacao.query.filter_by(post_id=post_id).delete(
+        synchronize_session=False)
+    NewsAvaliacao.query.filter_by(
+        post_id=post_id).delete(synchronize_session=False)
     db.session.delete(post)
     db.session.commit()
     return jsonify({'status': 'ok'})
@@ -302,3 +310,20 @@ def api_feed():
         'feed': feed_data,
         'has_next': has_next
     })
+
+
+@newsletter_bp.delete('/api/news/comment/<int:comment_id>')
+@login_required
+def excluir_comentario(comment_id: int):
+    comentario = NewsComentario.query.get_or_404(comment_id)
+    if not (current_user.id == comentario.usuario_id or current_user.is_admin):
+        abort(403)  # Forbidden
+
+    comentario.excluido = True
+    db.session.commit()
+
+    # Emite um evento via Socket.IO para notificar todos os clientes conectados
+    socketio.emit('comment_deleted', {
+                  'comment_id': comment_id, 'post_id': comentario.post_id})
+
+    return jsonify({'success': True})
