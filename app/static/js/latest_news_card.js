@@ -158,6 +158,7 @@ document.addEventListener('alpine:init', () => {
           const data = await response.json();
           this.newCommentText = '';
           if(data && data.comment){
+            data.comment.showDelete = false;
             // Usa nova referência e deduplica por id (evita duplicação com socket)
             this.modalContent.comments = this.uniqById([...(this.modalContent.comments || []), data.comment]);
             // Não incrementa latestCounts aqui; deixa o socket fazer

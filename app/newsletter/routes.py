@@ -151,7 +151,8 @@ def criar_comentario(post_id: int):
 
     comment_data = {
         'id': comentario.id,
-        'post_id': post_id,  # <<< ADICIONE ESTA LINHA
+        'user_id': current_user.id,
+        'post_id': post_id,
         'text': comentario.texto,
         'user_name': f"{current_user.nome} {current_user.sobrenome}",
         'user_initials': f"{(current_user.nome or ' ')[0]}{(current_user.sobrenome or ' ')[0]}",
