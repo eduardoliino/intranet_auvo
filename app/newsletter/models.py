@@ -127,3 +127,4 @@ class NewsEnqueteVoto(db.Model):
         db.UniqueConstraint('enquete_id', 'hash_anon',
                             'opcao_id', name='uix_voto_anon'),
     )
+

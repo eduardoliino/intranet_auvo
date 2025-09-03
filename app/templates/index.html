@@ -137,7 +137,7 @@
                       <h6>Comentários</h6>
                       <div class="mb-4">
                         <template x-for="comment in modalContent.comments" :key="comment.id">
-                          <div class="d-flex align-items-start my-3">
+                          <div class="d-flex align-items-start my-3 nl-comment-item" @mouseenter="comment.showDelete = true" @mouseleave="comment.showDelete = false">
                             <template x-if="comment.user_photo">
                               <img :src="comment.user_photo" class="nl-avatar me-3" :alt="'Foto de ' + comment.user_name" />
                             </template>
@@ -146,9 +146,18 @@
                                 <span x-text="comment.user_initials"></span>
                               </div>
                             </template>
-                            <div class="w-100">
+                            <div class="w-100 position-relative">
                               <strong x-text="comment.user_name"></strong>
                               <p class="mb-0" style="white-space: pre-wrap; word-break: break-word" x-text="comment.text"></p>
+                        
+                              <button
+                                  x-show="comment.showDelete && (modalContent.current_user.id === comment.user_id || modalContent.current_user.is_admin)"
+                                  @click.stop="confirmDeleteComment(comment.id)"
+                                  class="btn btn-sm btn-outline-danger nl-comment-delete-btn"
+                                  aria-label="Remover comentário"
+                                  x-cloak>
+                                  <i class="bi bi-trash"></i>
+                              </button>
                             </div>
                           </div>
                         </template>
@@ -182,6 +191,24 @@
                       <i class="bi bi-arrow-down-circle-fill"></i>
                       <span x-text="newCommentCount > 1 ? `${newCommentCount} novos comentários` : 'Novo comentário'"></span>
                     </button>
+                  </div>
+                </div>
+              </div>
+              <div class="modal fade" id="confirmDeleteCommentModal" tabindex="-1" aria-hidden="true" style="z-index: 2050;">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Remover Comentário</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Tem certeza de que deseja remover este comentário?</p>
+                      <p class="text-danger small mt-2">Esta ação é permanente.</p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="button" class="btn btn-danger" @click="deleteComment()">Remover</button>
+                    </div>
                   </div>
                 </div>
               </div>

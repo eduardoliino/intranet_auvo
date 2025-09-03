@@ -12,12 +12,15 @@ document.addEventListener('alpine:init', () => {
     showEmojiPicker: false,
     showNewCommentButton: false,
     newCommentCount: 0,
+    commentToDeleteId: null,
+    deleteModal: null,
     modalContent: {
       postId: postId || null,
       postTitle: 'Carregando...',
       post_html: '',
       reactions: { counts: {}, user_reaction: null },
       comments: [],
+      current_user: { id: null, is_admin: false },
     },
     reactionTypes: [
       { type: 'heart', icon: 'bi-heart-fill' },
@@ -43,6 +46,7 @@ document.addEventListener('alpine:init', () => {
       // Home: não abre Socket.IO na carga para evitar atrasos.
       // Conectamos apenas quando o modal é aberto.
       this.socket = null;
+      this.deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteCommentModal'));
     },
 
     onBodyScroll(e){
@@ -70,6 +74,7 @@ document.addEventListener('alpine:init', () => {
           this.socket = io({ transports: ['websocket'] });
           this.socket.on('update_reactions', (data) => this.handleReactionUpdate(data));
           this.socket.on('new_comment', (data) => this.handleNewComment(data));
+          this.socket.on('comment_deleted', (data) => this.handleCommentDeleted(data));
         }catch{}
       }
       this.isModalOpen = true;
@@ -88,6 +93,7 @@ document.addEventListener('alpine:init', () => {
         } else {
           // Garante que comments sempre exista e sem duplicatas
           data.comments = this.uniqById(data.comments || []);
+          data.comments.forEach(c => c.showDelete = false);
           this.modalContent = data;
           // Sincroniza os contadores do card com os dados carregados
           try {
@@ -186,6 +192,7 @@ document.addEventListener('alpine:init', () => {
         if(this.isModalOpen && this.modalContent.postId === pid){
           const el = this.$refs.modalBody;
           const isNearBottom = el ? (el.scrollHeight - el.scrollTop - el.clientHeight < 100) : true;
+          data.comment.showDelete = false;
           const next = this.uniqById([...(this.modalContent.comments || []), data.comment]);
           const grew = next.length > (this.modalContent.comments || []).length;
           this.modalContent.comments = next;
@@ -202,6 +209,38 @@ document.addEventListener('alpine:init', () => {
           this.latestCounts.comments++;
         }
       }
+    },
+
+    handleCommentDeleted(data) {
+      const { comment_id, post_id } = data;
+      if (this.modalContent.postId === post_id) {
+        const index = this.modalContent.comments.findIndex(c => c.id === comment_id);
+        if (index > -1) {
+            this.modalContent.comments.splice(index, 1);
+            this.latestCounts.comments = this.modalContent.comments.length;
+        }
+      }
+    },
+
+    confirmDeleteComment(commentId) {
+        this.commentToDeleteId = commentId;
+        this.deleteModal.show();
+    },
+
+    async deleteComment() {
+        if (!this.commentToDeleteId) return;
+        const commentId = this.commentToDeleteId;
+        try {
+            const response = await fetch(`/api/news/comment/${commentId}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                alert('Erro ao remover o comentário.');
+            }
+        } finally {
+            this.deleteModal.hide();
+            this.commentToDeleteId = null;
+        }
     },
 
     // UX helpers (scroll + emoji)
