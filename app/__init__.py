@@ -5,6 +5,11 @@ from flask_login import LoginManager, current_user
 from flask_session import Session
 from datetime import datetime, timedelta
 from flask_socketio import SocketIO
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -22,7 +27,7 @@ def create_app():
     app = Flask(__name__)
 
     app.config['SECRET_KEY'] = 'uma-chave-secreta-muito-forte-e-diferente'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///intranet.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Configuração de sessão

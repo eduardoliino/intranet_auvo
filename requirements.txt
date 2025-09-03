@@ -14,3 +14,5 @@ beautifulsoup4
 requests
 Flask-SocketIO
 eventlet
+PyMySQL
+cryptography
