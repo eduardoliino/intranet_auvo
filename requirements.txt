@@ -16,3 +16,4 @@ Flask-SocketIO
 eventlet
 PyMySQL
 cryptography
+gunicorn

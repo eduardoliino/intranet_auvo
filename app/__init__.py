@@ -26,7 +26,7 @@ def create_app():
     """Cria e configura a aplicação Flask."""
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = 'uma-chave-secreta-muito-forte-e-diferente'
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -76,11 +76,11 @@ def create_app():
     app.register_blueprint(admin_blueprint)
     from .colaborador_routes import colaborador_bp
     app.register_blueprint(colaborador_bp)
-    from .newsletter import newsletter_bp  # Newsletter blueprint
+    from .newsletter import newsletter_bp  
     app.register_blueprint(newsletter_bp)
 
-    # Import models for migrations
-    from .newsletter import models as _newsletter_models  # noqa: F401
+  
+    from .newsletter import models as _newsletter_models  
 
     @app.cli.command('seed')
     def seed():

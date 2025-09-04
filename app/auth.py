@@ -32,9 +32,8 @@ def login():
 def logout():
     """Encerra a sessão do utilizador e limpa os dados temporários."""
     logout_user()
-    # Limpa a sessão para garantir que todos os dados sejam removidos.
+
     session.clear()
 
-    # Após o logout, redireciona sempre para a nova tela de login unificada
     flash('Você saiu do sistema.', 'info')
     return redirect(url_for('auth.login'))

@@ -9,7 +9,6 @@ env/
 venv/
 ENV/
 .venv/
-.env/
 
 # Arquivos de configuração locais
 *.env
