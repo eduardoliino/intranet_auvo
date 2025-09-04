@@ -42,7 +42,7 @@ class Colaborador(UserMixin, db.Model):
     password_hash = db.Column(db.String(256))
     foto_filename = db.Column(db.String(120), nullable=True)
 
-    superior_id = db.Column(db.Integer, db.ForeignKey('colaborador.id'))
+    superior_id = db.Column(db.Integer, db.ForeignKey('colaborador.id', ondelete='SET NULL'))
     superior = db.relationship('Colaborador', remote_side=[
                                id], backref='subordinados')
 
@@ -56,6 +56,19 @@ class Colaborador(UserMixin, db.Model):
         secondary=colaborador_permissoes,
         backref=db.backref('colaboradores', lazy='dynamic')
     )
+
+    news_posts = db.relationship(
+        'NewsPost', back_populates='autor', cascade='all, delete-orphan', lazy=True)
+    news_comentarios = db.relationship(
+        'NewsComentario', back_populates='usuario', cascade='all, delete-orphan', lazy=True)
+    news_reacoes = db.relationship(
+        'NewsReacao', back_populates='usuario', cascade='all, delete-orphan', lazy=True)
+    news_avaliacoes = db.relationship(
+        'NewsAvaliacao', back_populates='usuario', cascade='all, delete-orphan', lazy=True)
+    news_enquetes = db.relationship(
+        'NewsEnquete', back_populates='autor', cascade='all, delete-orphan', lazy=True)
+    eventos = db.relationship(
+        'Evento', backref='colaborador', cascade='all, delete-orphan', lazy=True)
 
     def get_id(self):
         return str(self.id)
@@ -91,8 +104,8 @@ class Destaque(db.Model):
     ano = db.Column(db.Integer, nullable=False)
     imagem_filename = db.Column(db.String(120), nullable=True)
     colaborador_id = db.Column(db.Integer, db.ForeignKey(
-        'colaborador.id'), nullable=False)
-    colaborador = db.relationship('Colaborador', backref='destaques')
+        'colaborador.id', ondelete='CASCADE'), nullable=False)
+    colaborador = db.relationship('Colaborador', backref=db.backref('destaques', cascade='all, delete-orphan'))
 
 
 class FaqCategoria(db.Model):
@@ -148,7 +161,7 @@ class Evento(db.Model):
     end = db.Column(db.DateTime, nullable=True)
     location = db.Column(db.String(200), nullable=True)
     color = db.Column(db.String(20), nullable=True, default='#3788d8')
-    colaborador_id = db.Column(db.Integer, db.ForeignKey('colaborador.id'), nullable=False)
+    colaborador_id = db.Column(db.Integer, db.ForeignKey('colaborador.id', ondelete='CASCADE'), nullable=False)
 
     def to_dict(self):
         return {
@@ -178,7 +191,7 @@ def load_user(user_id):
 class SentimentoDia(db.Model):
     __tablename__ = 'tb_sentimento_dia'
     id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('colaborador.id'), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('colaborador.id', ondelete='CASCADE'), nullable=False)
     data = db.Column(db.Date, nullable=False, index=True)
     sentimento = db.Column(db.Enum(
         'muito_triste', 'triste', 'neutro', 'feliz', 'muito_feliz',
@@ -186,7 +199,7 @@ class SentimentoDia(db.Model):
     ), nullable=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
-    usuario = db.relationship('Colaborador', backref='sentimentos_dia')
+    usuario = db.relationship('Colaborador', backref=db.backref('sentimentos_dia', cascade='all, delete-orphan'))
 
     __table_args__ = (
         db.UniqueConstraint('usuario_id', 'data', name='uix_sentimento_usuario_data'),

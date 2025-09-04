@@ -8,7 +8,7 @@ class NewsPost(db.Model):
     __tablename__ = 'tb_news_post'
     id = db.Column(db.Integer, primary_key=True)
     autor_id = db.Column(db.Integer, db.ForeignKey(
-        'colaborador.id'), nullable=False)
+        'colaborador.id', ondelete='CASCADE'), nullable=False)
     titulo = db.Column(db.String(200), nullable=False)
     conteudo_md = db.Column(db.Text, nullable=True)
     midias_json = db.Column(db.JSON, nullable=True)
@@ -19,7 +19,7 @@ class NewsPost(db.Model):
     status = db.Column(db.Enum('rascunho', 'publicado',
                        name='news_post_status'), default='publicado')
 
-    autor = db.relationship('Colaborador', backref='news_posts')
+    autor = db.relationship('Colaborador', back_populates='news_posts')
 
     comentarios = db.relationship(
         'NewsComentario', backref='post', lazy=True,
@@ -38,7 +38,9 @@ class NewsReacao(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey(
         'tb_news_post.id'), nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey(
-        'colaborador.id'), nullable=False)
+        'colaborador.id', ondelete='CASCADE'), nullable=False)
+    
+    usuario = db.relationship('Colaborador', back_populates='news_reacoes')
     tipo = db.Column(db.Enum('like', 'palmas', 'coracao', 'genial', 'feliz', 'heart', 'lightbulb',
                      'surprise', 'rocket', 'grin', 'hearteyes', name='news_reacao_tipo'), nullable=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
@@ -52,14 +54,14 @@ class NewsComentario(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey(
         'tb_news_post.id'), nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey(
-        'colaborador.id'), nullable=False)
+        'colaborador.id', ondelete='CASCADE'), nullable=False)
     texto = db.Column(db.Text, nullable=False)
     gif_id = db.Column(db.String(64), nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     editado_em = db.Column(db.DateTime, nullable=True)
     excluido = db.Column(db.Boolean, default=False)
 
-    usuario = db.relationship('Colaborador', backref='news_comentarios')
+    usuario = db.relationship('Colaborador', back_populates='news_comentarios')
 
 
 class NewsAvaliacao(db.Model):
@@ -68,7 +70,9 @@ class NewsAvaliacao(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey(
         'tb_news_post.id'), nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey(
-        'colaborador.id'), nullable=False)
+        'colaborador.id', ondelete='CASCADE'), nullable=False)
+    
+    usuario = db.relationship('Colaborador', back_populates='news_avaliacoes')
     estrelas = db.Column(db.Integer, nullable=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     __table_args__ = (db.UniqueConstraint(
@@ -79,7 +83,7 @@ class NewsEnquete(db.Model):
     __tablename__ = 'tb_news_enquete'
     id = db.Column(db.Integer, primary_key=True)
     autor_id = db.Column(db.Integer, db.ForeignKey(
-        'colaborador.id'), nullable=False)
+        'colaborador.id', ondelete='CASCADE'), nullable=False)
     pergunta = db.Column(db.Text, nullable=False)
     descricao = db.Column(db.Text, nullable=True)
     tipo_selecao = db.Column(
@@ -93,7 +97,9 @@ class NewsEnquete(db.Model):
     status = db.Column(db.Enum('rascunho', 'aberta', 'encerrada',
                        name='news_enquete_status'), default='aberta')
 
-    opcoes = db.relationship('NewsEnqueteOpcao', backref='enquete', lazy=True)
+    autor = db.relationship('Colaborador', back_populates='news_enquetes')
+
+    opcoes = db.relationship('NewsEnqueteOpcao', backref='enquete', lazy=True, cascade='all, delete-orphan')
 
 
 class NewsEnqueteOpcao(db.Model):
@@ -121,4 +127,3 @@ class NewsEnqueteVoto(db.Model):
         db.UniqueConstraint('enquete_id', 'hash_anon',
                             'opcao_id', name='uix_voto_anon'),
     )
-
