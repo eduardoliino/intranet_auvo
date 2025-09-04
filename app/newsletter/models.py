@@ -1,8 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
 from app import db
-
-# ADICIONE ESTA IMPORTAÇÃO PARA ACESSAR O MODELO COLABORADOR
 from app.models import Colaborador
 
 
@@ -14,18 +12,15 @@ class NewsPost(db.Model):
     titulo = db.Column(db.String(200), nullable=False)
     conteudo_md = db.Column(db.Text, nullable=True)
     midias_json = db.Column(db.JSON, nullable=True)
-    publicado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    publicado_em = db.Column(db.DateTime, default=datetime.now)
     atualizado_em = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+        db.DateTime, default=datetime.now, onupdate=datetime.now)
     fixado_ordem = db.Column(db.Integer, nullable=True)
     status = db.Column(db.Enum('rascunho', 'publicado',
                        name='news_post_status'), default='publicado')
 
-    # ADICIONE A LINHA ABAIXO PARA CRIAR A RELAÇÃO 'autor'
     autor = db.relationship('Colaborador', backref='news_posts')
 
-    # Cascateia a exclusão do post para filhos no nível do ORM,
-    # evitando tentativas de setar post_id = NULL (coluna NOT NULL)
     comentarios = db.relationship(
         'NewsComentario', backref='post', lazy=True,
         cascade='all, delete-orphan')
@@ -64,7 +59,6 @@ class NewsComentario(db.Model):
     editado_em = db.Column(db.DateTime, nullable=True)
     excluido = db.Column(db.Boolean, default=False)
 
-    # ADICIONE A LINHA ABAIXO PARA CRIAR A RELAÇÃO 'usuario'
     usuario = db.relationship('Colaborador', backref='news_comentarios')
 
 

@@ -52,7 +52,6 @@ def feed():
 @login_required
 def get_post_details():
     post_id = request.args.get('post_id', type=int)
-    # A linha abaixo que pegava a 'url' não é mais necessária e foi removida.
 
     if not post_id:
         return jsonify({'success': False, 'error': 'Post ID não fornecido'}), 400
@@ -61,8 +60,6 @@ def get_post_details():
         subqueryload(NewsPost.comentarios).joinedload(NewsComentario.usuario),
         subqueryload(NewsPost.reacoes)
     ).get_or_404(post_id)
-
-    # A lógica de 'generate_embed_data' foi removida daqui.
 
     reaction_counts = Counter(r.tipo for r in post.reacoes)
     user_reaction = next(
@@ -82,7 +79,6 @@ def get_post_details():
         'success': True,
         'postId': post.id,
         'postTitle': post.titulo,
-        # <-- CORREÇÃO: Enviando o conteúdo HTML completo do post.
         'post_html': post.conteudo_md,
         'reactions': {'counts': dict(reaction_counts), 'user_reaction': user_reaction},
         'comments': comments_data,
@@ -92,15 +88,11 @@ def get_post_details():
         }
     })
 
-# --- ROTA RESTAURADA ---
-
 
 @newsletter_bp.route('/enquete/<int:enquete_id>')
 @login_required
 def ver_enquete(enquete_id: int):
     enquete = NewsEnquete.query.get_or_404(enquete_id)
-    # Esta rota pode simplesmente renderizar um fragmento de HTML ou retornar JSON
-    # Por simplicidade, vamos mantê-la retornando o template do modal de enquete
     return render_template('newsletter_enquete_modal.html', enquete=enquete)
 
 
@@ -158,12 +150,9 @@ def criar_comentario(post_id: int):
         'user_initials': f"{(current_user.nome or ' ')[0]}{(current_user.sobrenome or ' ')[0]}",
         'user_photo': url_for('static', filename=f'fotos_colaboradores/{current_user.foto_filename}') if current_user.foto_filename else None
     }
-    # Agora o evento 'new_comment' leva o post_id junto com os dados do comentário
     socketio.emit('new_comment', {'comment': comment_data})
 
     return jsonify({'success': True, 'comment': comment_data})
-
-# --- Rotas de Admin ---
 
 
 @newsletter_bp.route('/admin')
@@ -171,18 +160,15 @@ def criar_comentario(post_id: int):
 def admin_page():
     if not current_user.is_admin:
         abort(403)
-    # Paginação: 15 por página
     page = request.args.get('page', 1, type=int)
     pagination = NewsPost.query.order_by(NewsPost.publicado_em.desc()).paginate(
         page=page, per_page=15, error_out=False)
-    # Render parcial para SPA-like updates
     if request.args.get('_partial') or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render_template(
             'admin/_newsletter_posts_list.html',
             posts=pagination.items,
             pagination=pagination,
         )
-    # Render page completa
     return render_template(
         'admin/gerenciar_newsletter.html',
         posts=pagination.items,
@@ -200,7 +186,7 @@ def criar_post():
         autor_id=current_user.id,
         titulo=data.get('titulo'),
         conteudo_md=data.get('conteudo_md'),
-        publicado_em=datetime.utcnow(),
+        publicado_em=datetime.now(),
         status='publicado',
     )
     db.session.add(post)
@@ -228,7 +214,6 @@ def excluir_post(post_id: int):
     if not current_user.is_admin:
         abort(403)
     post = NewsPost.query.get_or_404(post_id)
-    # Remoção defensiva dos dependentes para evitar violação de NOT NULL
     NewsComentario.query.filter_by(
         post_id=post_id).delete(synchronize_session=False)
     NewsReacao.query.filter_by(post_id=post_id).delete(
@@ -267,8 +252,6 @@ def api_feed():
         enquetes_q = enquetes_q.filter(
             NewsEnquete.pergunta.ilike(search_filter))
 
-    # Combina e ordena os resultados
-    # Esta é uma forma simplificada de combinar. Para grandes volumes, uma abordagem mais complexa seria necessária.
     all_items = sorted(
         posts_q.all() + enquetes_q.all(),
         key=lambda x: getattr(x, 'publicado_em', getattr(
@@ -276,7 +259,6 @@ def api_feed():
         reverse=True
     )
 
-    # Paginação manual da lista combinada
     per_page = 12
     start = (page - 1) * per_page
     end = start + per_page
@@ -290,7 +272,7 @@ def api_feed():
                 'type': 'post',
                 'id': item.id,
                 'titulo': item.titulo,
-                'conteudo_resumo': item.conteudo_md,  # Pode ser truncado se necessário
+                'conteudo_resumo': item.conteudo_md,
                 'autor_nome': f"{item.autor.nome} {item.autor.sobrenome}",
                 'autor_foto': url_for('static', filename=f'fotos_colaboradores/{item.autor.foto_filename}') if item.autor.foto_filename else None,
                 'autor_iniciais': f"{(item.autor.nome or ' ')[0]}{(item.autor.sobrenome or ' ')[0]}",
@@ -323,7 +305,6 @@ def excluir_comentario(comment_id: int):
     comentario.excluido = True
     db.session.commit()
 
-    # Emite um evento via Socket.IO para notificar todos os clientes conectados
     socketio.emit('comment_deleted', {
                   'comment_id': comment_id, 'post_id': comentario.post_id})
 

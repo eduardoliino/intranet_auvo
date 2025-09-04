@@ -140,22 +140,13 @@ def create_app():
             db.session.commit()
 
         post = NewsPost(autor_id=admin.id, titulo='Post de exemplo',
-                        conteudo_md='Conteúdo *markdown*', publicado_em=datetime.utcnow())
+                        conteudo_md='Conteúdo *markdown*', publicado_em=datetime.now())
         db.session.add(post)
         db.session.flush()
         db.session.add(NewsComentario(post_id=post.id,
                        usuario_id=colaborador.id, texto='Primeiro!'))
         db.session.add(NewsReacao(post_id=post.id,
                        usuario_id=colaborador.id, tipo='like'))
-
-        enquete = NewsEnquete(
-            autor_id=admin.id, pergunta='Qual seu emoji favorito?')
-        db.session.add(enquete)
-        db.session.flush()
-        opcoes = ['😀', '😎', '🤖']
-        for idx, texto in enumerate(opcoes):
-            db.session.add(NewsEnqueteOpcao(
-                enquete_id=enquete.id, texto=texto, ordem=idx))
 
         db.session.commit()
         print('Newsletter seed completed')

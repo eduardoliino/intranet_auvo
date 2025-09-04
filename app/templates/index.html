@@ -4,7 +4,6 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/newsletter.css') }}">
 <div x-data="dashboard">
 
-  <!-- Sentimento do Dia - full width, some após responder -->
   <div class="row" x-data>
     <div class="col-12" x-data="sentimentoDia()" x-show="visible" x-cloak x-transition.opacity.duration.400ms>
       <div class="card mb-4">
@@ -67,7 +66,6 @@
             </div>
         </div>
 
-        <!-- Último post da Newsletter -->
         <div class="card card-eventos mb-4" x-data="latestNewsCard({{ latest_post.id if latest_post else 'null' }}, {{ latest_post.reacoes|length if latest_post else 0 }}, {{ latest_post.comentarios|selectattr('excluido','equalto',False)|list|length if latest_post else 0 }})">
             <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
@@ -111,7 +109,6 @@
                 </div>
               {% endif %}
 
-              <!-- Modal de Post (mesma experiência da página Newsletter) -->
               <div x-show="isModalOpen" @click.self="closeModal()" @keydown.escape.window="closeModal()" class="nl-modal-overlay" x-cloak>
                 <div x-show="isModalOpen" class="nl-modal-dialog" role="dialog" aria-modal="true">
                   <header class="nl-modal-header">
@@ -167,7 +164,6 @@
                   <footer class="nl-modal-footer">
                     <form class="nl-comment-bar" @submit.prevent="submitComment()">
                       <div class="nl-comment-field">
-                        <!-- Botão Emoji -->
                         <button type="button" class="nl-emoji-btn" @click="showEmojiPicker = !showEmojiPicker" :aria-expanded="showEmojiPicker ? 'true' : 'false'" aria-label="Inserir emoji">
                           <i class="bi bi-emoji-smile"></i>
                         </button>
@@ -177,7 +173,6 @@
                           <i class="bi bi-send-fill" aria-hidden="true"></i>
                         </button>
 
-                        <!-- Popover do Emoji Picker -->
                         <div class="nl-emoji-popover" x-show="showEmojiPicker" x-transition @click.outside="showEmojiPicker=false">
                           <emoji-picker @emoji-click="onEmojiClick"></emoji-picker>
                         </div>
@@ -185,7 +180,6 @@
                     </form>
                   </footer>
 
-                  <!-- Alerta de novo comentário -->
                   <div class="nl-new-comment-toast-wrapper" x-show="showNewCommentButton" x-transition x-cloak>
                     <button type="button" class="nl-new-comment-toast" @click="scrollToBottom()">
                       <i class="bi bi-arrow-down-circle-fill"></i>
@@ -416,14 +410,6 @@
       visible: true,
       loaded: false,
       icons: {
-        // Ajuste os arquivos conforme os nomes colocados em /static/img/sentimento
-        // Mapeamento: 01 = triste, 05 = muito feliz (conforme instrução)
-        // Para cobrir 5 níveis, usamos:
-        // 01 – muito_triste (ou triste mais forte)
-        // 02 – triste
-        // 03 – neutro
-        // 04 – feliz
-        // 05 – muito_feliz
         muito_triste: '{{ url_for('static', filename='img/sentimento/01.png') }}',
         triste: '{{ url_for('static', filename='img/sentimento/02.png') }}',
         neutro: '{{ url_for('static', filename='img/sentimento/03.png') }}',
@@ -431,7 +417,6 @@
         muito_feliz: '{{ url_for('static', filename='img/sentimento/05.png') }}',
       },
       async init(){
-        // Evita flicker: começa oculto (x-cloak) e só decide visibilidade após carregar status
         this.visible = false;
         try{
           const r = await fetch('/api/sentimento/status');
@@ -439,7 +424,7 @@
           this.reacted = !!d.reacted;
         }catch{}
         this.loaded = true;
-        this.visible = !this.reacted; // mostra somente se não respondeu hoje
+        this.visible = !this.reacted;
       },
       async enviar(tipo){
         if(this.reacted || this.loading) return;
@@ -449,7 +434,6 @@
           const d = await r.json();
           if(r.ok && d.success){
             this.reacted = true;
-            // Mostra agradecimento por alguns milissegundos e some suavemente
             setTimeout(() => { this.visible = false; }, 1000);
           }
           else { window.dispatchEvent(new CustomEvent('toast', { detail: { type:'warning', message: d.error || 'Não foi possível registrar seu sentimento.' } })); }

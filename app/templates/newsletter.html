@@ -4,7 +4,6 @@
   href="{{ url_for('static', filename='css/newsletter.css') }}"
 />
 <style>
-  /* Estilo para destacar a reação selecionada pelo usuário */
   .nl-reaction-chip.selected {
     background-color: #e8e3ff; /* Um tom de roxo bem claro (lilás) */
     border-color: #a891f2;   /* Borda em um tom de roxo mais forte */
@@ -140,7 +139,6 @@
           x-text="modalContent.postTitle || 'Detalhes'"
         ></h5>
         <div class="nl-modal-actions">
-          <!-- aparece se encontrarmos um link de origem no conteúdo -->
           <a
             x-show="sourceLink"
             :href="sourceLink"
@@ -168,7 +166,6 @@
           </button>
         </div>
 
-        <!-- progresso de leitura -->
         <div class="nl-progress">
           <span :style="{ width: scrollPct + '%' }"></span>
         </div>
@@ -186,7 +183,6 @@
           :class="'embed-placeholder ' + (placeholderClass || 'aspect-video')"
         ></div>
 
-        <!-- Container para todo o conteúdo que aparece após o carregamento -->
         <div x-show="!isLoading" class="w-100">
           <div
             x-ref="embedContent"
@@ -250,7 +246,6 @@
       <footer class="nl-modal-footer">
         <form class="nl-comment-bar" @submit.prevent="submitComment()">
           <div class="nl-comment-field">
-            <!-- Botão Emoji -->
             <button
               type="button"
               class="nl-emoji-btn"
@@ -267,7 +262,7 @@
               rows="1"
               class="nl-comment-input"
               placeholder="Adicionar um comentário..."
-              @keydown.enter.prevent.stop="handleCommentSubmit($event)"  <!-- Enter envia / Shift+Enter quebra linha -->
+              @keydown.enter.prevent.stop="handleCommentSubmit($event)"
               @input="autosizeTextarea($event.target)"
               aria-label="Adicionar um comentário"
             ></textarea>
@@ -281,7 +276,6 @@
               <i class="bi bi-send-fill" aria-hidden="true"></i>
             </button>
 
-            <!-- Popover do Emoji Picker -->
             <div
               class="nl-emoji-popover"
               x-show="showEmojiPicker"
@@ -298,7 +292,6 @@
         </form>
       </footer>
 
-      <!-- Alerta de novo comentário -->
       <div class="nl-new-comment-toast-wrapper" x-show="showNewCommentButton" x-transition x-cloak>
           <button type="button" class="nl-new-comment-toast" @click="scrollToBottom()">
               <i class="bi bi-arrow-down-circle-fill"></i>
@@ -330,13 +323,11 @@
 {% endblock %}
 
 {% block page_scripts %}
-<!-- Emoji Picker (Web Component) -->
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
   function newsletterFeed() {
     return {
-      // STATE
       isModalOpen: false,
       isLoading: true,
       newCommentText: "",
@@ -349,8 +340,8 @@
       showEmojiPicker: false,
       emojiPickerStyled: false,
       emojiPickerObserver: null,
-      showNewCommentButton: false, // Controla a visibilidade do alerta
-      newCommentCount: 0, // Conta novos comentários
+      showNewCommentButton: false,
+      newCommentCount: 0,
       commentToDeleteId: null,
       deleteModal: null,
       modalContent: {
@@ -372,14 +363,12 @@
       lastTrigger: null,
       socket: null,
 
-      // NOVO: ESTADO DO FEED
       feed: [],
       isLoadingFeed: false,
       currentPage: 1,
       hasMore: true,
       searchTerm: '',
 
-      // HELPERS
       guessPlaceholderClass(html) {
         const h = (html || "").toLowerCase();
         if (h.includes("instagram.com")) return "aspect-square";
@@ -409,8 +398,6 @@
             el.addEventListener("load", () => res(), { once: true });
             setTimeout(() => res(), 1200); // fallback
           });
-
-        // Instagram que usa <blockquote>
         try {
           if (
             window.instgrm &&
@@ -423,7 +410,6 @@
         await new Promise((r) => requestAnimationFrame(r));
         let { iframes, imgs } = collect();
 
-        // Se ainda não veio o iframe do Instagram, observa rapidinho
         if (
           iframes.length === 0 &&
           container.querySelector("blockquote.instagram-media")
@@ -461,7 +447,6 @@
       normalizeEmbeds(container) {
         if (!container) return;
 
-        // largura total e centralização
         container.querySelectorAll("iframe").forEach((f) => {
           f.removeAttribute("width");
           f.style.width = "100%";
@@ -488,7 +473,6 @@
             } catch (_) {}
           });
 
-        // Wrap 16:9 para players de vídeo
         container.querySelectorAll("iframe").forEach((f) => {
           const src = (f.getAttribute("src") || "").toLowerCase();
           const isVideo =
@@ -516,24 +500,20 @@
         const picker = this.$refs.emojiPicker;
         if (!picker) return;
 
-        // Tenta setar locale (só muda textos/labels; a busca do componente é em inglês)
         try { picker.locale = 'pt'; picker.setAttribute('locale','pt'); } catch {}
 
         const root = picker.shadowRoot;
         if (!root) {
-          // algumas versões expõem evento de pronto; tenta de novo
           picker.addEventListener('ready', () => this.customizeEmojiPicker(), { once:true });
           return;
         }
 
-        // CSS dentro do Shadow para esconder a busca em QUALQUER marcação
         const styleId = 'nl-emoji-shadow-style';
         let style = root.getElementById(styleId);
         if (!style) {
           style = document.createElement('style');
           style.id = styleId;
           style.textContent = `
-      /* esconde a barra de busca e qualquer input de busca */
       [part="search"],
       [part="search-row"],
       [part="search-input"],
@@ -551,12 +531,10 @@
           root.appendChild(style);
         }
 
-        // Remove programaticamente (caso o CSS aplique 1 frame depois)
         const hideSearch = () => {
           root.querySelectorAll(
             '[part="search"],[part="search-row"],[part="search-input"],header,.search-row,.search,input[type="search"]'
           ).forEach(el => {
-            // se for o input, tenta esconder o contêiner mais próximo
             if (el.matches('input[type="search"]')) {
               const row = el.closest('[part="search-row"], .search-row, header, div, section');
               if (row) row.style.display = 'none';
@@ -567,7 +545,6 @@
         };
         hideSearch();
 
-        // Observa re-render do web component e reaplica
         if (!this.emojiPickerObserver) {
           this.emojiPickerObserver = new MutationObserver(() => hideSearch());
         }
@@ -581,7 +558,6 @@
         const el = this.$refs.commentInput;
         this.insertAtCursor(el, emoji);
         this.autosizeTextarea(el);
-        // NÃO fecha aqui. Fica aberto para escolher mais emojis.
       },
 
       insertAtCursor(el, text){
@@ -592,7 +568,7 @@
         const after  = el.value.slice(end);
         const next   = before + text + after;
         el.value = next;
-        this.newCommentText = next;              // mantém Alpine em sincronia
+        this.newCommentText = next;
         const pos = start + text.length;
         requestAnimationFrame(()=>{ el.setSelectionRange(pos, pos); el.focus(); });
       },
@@ -605,7 +581,6 @@
         this.atTop = el.scrollTop <= 2;
         this.atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
 
-        // Se o usuário rolar para o final, esconde a notificação
         if (this.atBottom) {
             this.showNewCommentButton = false;
             this.newCommentCount = 0;
@@ -628,8 +603,6 @@
         }
       },
 
-      // ... (pode ser antes da seção //OPEN/CLOSE)
-
       handleReactionUpdate(data) {
           const item = this.feed.find(p => p.type === 'post' && p.id === data.post_id);
           if (item) {
@@ -649,8 +622,8 @@
         if (this.isModalOpen && this.modalContent.postId === postId) {
             if (!this.modalContent.comments.some((c) => c.id === data.comment.id)) {
                 const el = this.$refs.modalBody;
-                const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-                data.comment.showDelete = false; // Adiciona a propriedade ao novo comentário
+                const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100; // Adiciona a propriedade ao novo comentário
+                data.comment.showDelete = false;
                 this.modalContent.comments.push(data.comment);
                 this.$nextTick(() => {
                     if (isNearBottom) { this.scrollToBottom(); } 
@@ -687,10 +660,8 @@
             const data = await response.json();
             
             if (this.currentPage === 1) {
-                // Se for a primeira página (uma nova busca), substitui o feed
                 this.feed = data.feed;
             } else {
-                // Se for "Carregar Mais", adiciona ao final
                 this.feed.push(...data.feed);
             }
 
@@ -704,40 +675,36 @@
       },
 
       performSearch() {
-        // Apenas reseta o estado. A função fetchFeed vai lidar com a substituição dos dados.
         this.currentPage = 1;
         this.hasMore = true;
-        this.feed = []; // Limpa o feed para garantir que a transição funcione corretamente
+        this.feed = [];
         this.fetchFeed();
       },
 
-      // LIFECYCLE / SOCKET
       init() {
         this.socket = io();
         this.socket.on("connect", () => console.log("Socket.IO Conectado!"));
         this.socket.on("update_reactions", (data) => this.handleReactionUpdate(data));
         this.socket.on("new_comment", (data) => this.handleNewComment(data));
-        this.socket.on('comment_deleted', (data) => this.handleCommentDeleted(data)); // <-- Adicione esta linha
+        this.socket.on('comment_deleted', (data) => this.handleCommentDeleted(data));
         this.fetchFeed();
 
-        // Inicializa o modal de confirmação
         this.deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteCommentModal'));
       },
 
-      // OPEN/CLOSE
       openModal(event, postId) {
         this.lastTrigger = event.currentTarget;
         document.body.style.overflow = "hidden";
         this.isModalOpen = true;
         this.isLoading = true;
-        this.showNewCommentButton = false; // Reseta a notificação
+        this.showNewCommentButton = false;
         this.newCommentCount = 0;
 
         fetch(`/api/news/post_details?post_id=${postId}`)
           .then((res) => res.json())
           .then(async (data) => {
             if (data.success) {
-              data.comments.forEach(c => c.showDelete = false); // Adiciona a propriedade para controle de hover
+              data.comments.forEach(c => c.showDelete = false);
               this.modalContent = data;
               this.placeholderClass = this.guessPlaceholderClass(
                 this.modalContent.post_html
@@ -753,7 +720,6 @@
                 await this.waitForEmbeds(this.$refs.embedContent, 2500);
               } finally {
                 this.isLoading = false;
-                // Instagram reprocess
                 try {
                   window.instgrm && window.instgrm.Embeds.process();
                 } catch (_) {}
@@ -770,9 +736,8 @@
         this.isModalOpen = false;
         document.body.style.overflow = "";
         this.lastTrigger?.focus();
-        this.showNewCommentButton = false; // Reseta a notificação
+        this.showNewCommentButton = false;
         this.newCommentCount = 0;
-        // Limpa o conteúdo ao fechar
         this.modalContent = {
           postId: null,
           postTitle: "Carregando...",
@@ -809,7 +774,6 @@
         this.isLoading = false;
       },
 
-      // REACTIONS / COMMENTS
       async toggleReaction(type) {
         const postId = this.modalContent.postId;
         const current = this.modalContent.reactions.user_reaction;
@@ -857,7 +821,7 @@
 
           if (response.ok) {
             this.newCommentText = "";
-            this.showEmojiPicker = false;   // fecha somente ao enviar
+            this.showEmojiPicker = false;
             this.$nextTick(() => {
               const input = this.$refs.commentInput;
               if (input) this.autosizeTextarea(input);
@@ -885,7 +849,6 @@
           if (!response.ok) {
             alert('Erro ao remover o comentário.');
           }
-          // A atualização da UI será feita pelo evento do Socket.IO
         } finally {
           this.deleteModal.hide();
           this.commentToDeleteId = null;

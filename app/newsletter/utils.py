@@ -31,7 +31,6 @@ def extract_source_url(html_content):
     if iframe and iframe.get('src'):
         src = iframe['src']
         if 'instagram.com' in src:
-            # Para o Instagram, removemos '/embed' para ter a URL original
             return src.replace('/embed', '').split('?')[0]
         return src
 
