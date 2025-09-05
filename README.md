@@ -2,208 +2,214 @@
 
 ![Logo](app/static/img/logo_nova.png)
 
-## 📖 Sobre o Projeto
+## Sobre o Projeto
 
-A Intranet Auvo é uma aplicação web desenvolvida em Python com o framework Flask, projetada para ser o portal interno de comunicação e gestão de recursos humanos da empresa Auvo. A plataforma centraliza informações importantes, promove a interação entre os colaboradores e otimiza processos internos.
+A Intranet Auvo é uma aplicação web desenvolvida em Python (Flask) para comunicação interna e gestão de RH. Centraliza avisos, eventos, FAQ, organograma, ouvidoria e um módulo de Newsletter (posts, reações, comentários e enquetes) em um único portal.
 
-O sistema conta com dois níveis de acesso:
-
-* **Colaborador:** Acesso às funcionalidades gerais da intranet, como visualização de avisos, calendário de eventos, organograma, FAQ e envio de mensagens para a ouvidoria.
-* **Administrador:** Acesso total a todas as funcionalidades, incluindo o gerenciamento de colaboradores, avisos, eventos, destaques, links úteis, FAQ, e a configuração geral do sistema.
-
----
-
-## ✨ Funcionalidades Principais
-
-### Para Colaboradores
-
-* **Dashboard Inicial:** Visualização rápida de aniversariantes do dia, próximos eventos e os últimos avisos.
-* **Avisos:** Acesso a todos os comunicados importantes da empresa.
-* **Organograma:** Visualização da estrutura hierárquica da empresa de forma interativa.
-* **Lista de Colaboradores:** Encontre informações de contato de outros funcionários.
-* **Calendário de Eventos:** Fique por dentro de todos os eventos da empresa.
-* **FAQ:** Consulte respostas para as perguntas mais frequentes.
-* **Ouvidoria:** Envie sugestões, elogios ou reclamações de forma anônima ou identificada.
-
-### Para Administradores
-
-* **Gerenciamento Completo de Colaboradores:** Adicione (manualmente ou via importação de arquivo .xlsx), edite e remova colaboradores.
-
-* **Gestão de Conteúdo:**
-
-  * Crie e gerencie avisos, destaques da home e eventos do calendário.
-  * Administre o FAQ, incluindo categorias e perguntas/respostas.
-  * Gerencie os links úteis disponíveis na plataforma.
-
-* **Ouvidoria:** Visualize e gerencie as mensagens recebidas.
-
-* **Configuração do Sistema:**
-
-  * Gerencie cargos e departamentos.
-  * Configure a exibição do organograma.
+Perfis de acesso:
+- Colaborador: acesso ao conteúdo e interações.
+- Administrador: gerenciamento de colaboradores e conteúdos (avisos, eventos, destaques, links, FAQ, newsletter) e configurações.
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## Funcionalidades
 
-O projeto foi construído com as seguintes tecnologias:
+Para Colaboradores
+- Dashboard com aniversariantes, próximos eventos e últimos avisos
+- Avisos, Organograma, Lista de Colaboradores, Calendário de Eventos, FAQ
+- Ouvidoria (anônima ou identificada)
+- Newsletter: visualizar posts, reagir, comentar e participar de enquetes
 
-### Backend
-
-* Python 3.8+
-* Flask
-* Flask-SQLAlchemy
-* Flask-Migrate
-* Flask-Login
-* Pandas
-* OpenPyXL
-
-### Frontend
-
-* HTML5 + Jinja2
-* CSS3
-* JavaScript
-* Bootstrap 5
-* Alpine.js
-* Tom Select
-
-### Banco de Dados
-
-* SQLite
+Para Administradores
+- Gestão de colaboradores (adicionar manualmente, importar .xlsx, editar, remover)
+- Gestão de avisos, destaques, eventos, links úteis, FAQ
+- Newsletter: criar/editar posts, gerenciar enquetes e resultados
+- Configurações de cargos, departamentos e organograma
 
 ---
 
-## ⚙️ Instalação e Configuração
+## Tecnologias
 
-Siga os passos abaixo para configurar e executar o projeto numa nova máquina.
+Backend
+- Python 3.8+
+- Flask, Flask-SQLAlchemy, Flask-Migrate, Flask-Login, Flask-Session
+- Flask-SocketIO (eventlet)
+- Pandas, OpenPyXL
 
-### Pré-requisitos
+Frontend
+- HTML5 + Jinja2, CSS, JavaScript
+- Bootstrap 5, Alpine.js, Tom Select
 
-* Python 3 instalado.
-
-### Passo a Passo
-
-1. **Copie a Pasta do Projeto**
-   Transfira a pasta `intranet_auvo` para a nova máquina.
-
-2. **Abra o Terminal**
-   Navegue até à raiz da pasta do projeto (`intranet_auvo`).
-
-3. **Crie e Ative um Ambiente Virtual**
-
-   ```bash
-   # Criar o ambiente
-   python -m venv venv
-
-   # Ativar no Windows
-   venv\Scripts\activate
-
-   # Ativar no macOS/Linux
-   source venv/bin/activate
-   ```
-
-4. **Instale as Dependências**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-5. **Configure a Base de Dados**
-   Este comando cria o ficheiro `intranet.db` e todas as tabelas necessárias.
-
-   ```bash
-   flask db upgrade
-   ```
-
-6. **Crie o Utilizador Administrador**
-   Abra o shell interativo do Flask para criar o primeiro administrador.
-
-   ```bash
-   flask seed
-   ```
+Banco de Dados
+- MySQL/MariaDB (recomendado) ou SQLite para desenvolvimento
 
 ---
 
-## ▶️ Executar a Aplicação
+## Instalação e Configuração
 
-Com tudo configurado, inicie o servidor Flask.
+Pré-requisitos
+- Python 3 instalado
 
-1. **Execute o Ficheiro `run.py`**
-   Este comando irá iniciar o servidor de forma que ele seja acessível na sua rede local.
+Passo a passo
+1) Criar e ativar o ambiente virtual
+   - Windows: `python -m venv venv && venv\Scripts\activate`
+   - macOS/Linux: `python -m venv venv && source venv/bin/activate`
 
-   ```bash
-   python run.py
-   ```
+2) Instalar dependências
+   - `pip install -r requirements.txt`
 
-2. **Aceda à Aplicação**
-   O terminal irá mostrar um endereço de IP local (ex: `http://192.168.1.10:5000`). Use este endereço em qualquer navegador na mesma rede para aceder à intranet. Para aceder no próprio computador, pode usar `http://127.0.0.1:5000`.
+3) Configurar variáveis de ambiente
+   - Copie `.env.example` para `.env` e ajuste valores:
+     - `SECRET_KEY`: chave secreta da aplicação
+     - `DATABASE_URL`: URL do banco (ex.: `mysql+pymysql://usuario:senha@localhost/intranet_auvo`)
+     - `FLASK_ENV`: `development` ou `production`
 
-**Nota:** Lembre-se de verificar as regras do **firewall** da máquina para garantir que as ligações na porta `5000` são permitidas.
+4) Migrar o banco de dados
+   - `flask db upgrade`
+
+5) Popular dados básicos
+   - Permissões e usuário admin: `flask seed`
+   - Dados de exemplo da Newsletter (opcional): `flask seed_newsletter`
 
 ---
 
-## 🗂️ Estrutura do Projeto
+## Execução
+
+Inicie o servidor:
+- `python run.py`
+
+Acesse:
+- Local: `http://127.0.0.1:5000`
+- Rede local: use o IP exibido no terminal (ex.: `http://192.168.x.x:5000`)
+
+Observação: verifique o firewall liberando a porta 5000 quando necessário.
+
+---
+
+## Estrutura do Projeto (completa, exceto migrations e venv)
 
 ```
 intranet_auvo/
-├── app/
-│   ├── static/             # Arquivos estáticos (CSS, JS, Imagens)
-│   ├── templates/          # Templates HTML (Jinja2)
-│   │   ├── admin/          # Templates da área administrativa
-│   │   └── ...
-│   ├── __init__.py         # Inicialização do Flask
-│   ├── admin_routes/       # Rotas admin
-│   │   ├── __init__.py
-│   │   ├── utils.py
-│   │   ├── cargos_departamentos.py
-│   │   ├── avisos.py
-│   │   ├── destaques.py
-│   │   ├── faq.py
-│   │   ├── ouvidoria.py
-│   │   ├── eventos.py
-│   │   └── links.py
-│   ├── auth.py             # Autenticação
-│   ├── colaborador_routes.py # Rotas colaborador
-│   ├── models.py           # Modelos SQLAlchemy
-│   └── routes.py           # Rotas públicas
-├── migrations/             # Migrações do banco
-├── venv/                   # Ambiente virtual
-├── .gitignore              # Ignorados pelo Git
-├── app.db                  # Banco SQLite
-├── README.md               # Este arquivo
-├── requirements.txt        # Dependências
-└── run.py                  # Ponto de entrada
+  .env
+  .env.example
+  .gitignore
+  gunicorn.conf.py
+  pap.md
+  README.md
+  requirements.txt
+  run.py
+  app/
+    __init__.py
+    auth.py
+    colaborador_routes.py
+    models.py
+    routes.py
+    admin_routes/
+      __init__.py
+      avisos.py
+      cargos_departamentos.py
+      destaques.py
+      eventos.py
+      faq.py
+      links.py
+      ouvidoria.py
+      sentimento.py
+      utils.py
+    newsletter/
+      __init__.py
+      models.py
+      routes.py
+      utils.py
+    static/
+      css/
+        newsletter.css
+        style.css
+      js/
+        dashboard.js
+        faqPublico.js
+        gerenciarAvisos.js
+        gerenciarCalendario.js
+        gerenciarDestaques.js
+        gerenciarEventos.js
+        gerenciarFaq.js
+        gerenciarOuvidoria.js
+        latest_news_card.js
+        listarColaboradores.js
+        newsletter-api.js
+        newsletter-ui.js
+        organograma.js
+        ouvidoria.js
+        reactions-ui.js
+      img/
+        logo.png
+        logo_nova.png
+        default_avatar.png
+        sentimento/ (ícones)
+      fotos_colaboradores/ (imagens de colaboradores)
+    templates/
+      base.html
+      index.html
+      login.html
+      aviso_detalhe.html
+      faq.html
+      newsletter.html
+      newsletter_enquete_modal.html
+      newsletter_post_modal.html
+      organograma.html
+      ouvidoria.html
+      admin/
+        _newsletter_posts_list.html
+        adicionar_colaborador_manual.html
+        adicionar_faq_pergunta.html
+        calendario.html
+        edit_colaborador.html
+        edit_faq_pergunta.html
+        gerenciar_avisos.html
+        gerenciar_cargos_departamentos.html
+        gerenciar_colaboradores.html
+        gerenciar_colaboradores_hub.html
+        gerenciar_destaques.html
+        gerenciar_eventos.html
+        gerenciar_faq.html
+        gerenciar_faq_categorias.html
+        gerenciar_links.html
+        gerenciar_newsletter.html
+        gerenciar_organograma_config.html
+        gerenciar_ouvidoria.html
+        importar_colaboradores.html
+        listar_colaboradores.html
+        sentimento.html
+      partials/
+        _multi_swap_reactions.html
+        _news_post_comments.html
+        _news_post_footer.html
+        _news_post_reactions.html
+        _url_preview.html
+        news_enquete_card.html
+        news_post_card.html
 ```
 
 ---
 
-## 📰 Newsletter
+## Newsletter (resumo)
 
-Rotas e página dedicadas ao painel de posts e enquetes em `/newsletter`.
+Rotas e páginas dedicadas em `/newsletter`. Exemplos de uso da API:
 
-### Migração e Seed
-
-```bash
-flask db upgrade
-flask seed_newsletter
+Reagir a um post
 ```
-
-### Exemplos de payload
-
-Reação a post:
-
-```http
-POST /api/news/post/1/reacao
+POST /api/news/post/<post_id>/reacao
 {"tipo":"like"}
 ```
 
-Voto em enquete:
-
-```http
-POST /api/news/enquete/1/voto
+Votar em uma enquete
+```
+POST /api/news/enquete/<enquete_id>/voto
 {"opcoes":[1]}
 ```
 
-## 👨‍💻 Autor
+---
 
-**Eduardo Lino** - [eduardoliino](mailto:eduardoliino)
+## Autor
+
+Eduardo Lino — [eduardoliino](mailto:eduardoliino)
+
